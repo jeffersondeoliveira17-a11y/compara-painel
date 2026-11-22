@@ -34,7 +34,7 @@
       const m = q.match(/http_get\('(https:\/\/api\.open-meteo\.com\/[^']+)'/);
       if (m) { // clima: o navegador busca direto (o banco não é preciso aqui)
         const r = await fetch(m[1]); if (!r.ok) throw new Error('clima ' + r.status);
-        const j = await r.json(); return { payload: embrulha([{ c: j.current }]) };
+        const j = await r.json(); return { payload: embrulha([{ c: j.current, h: j.hourly }]) };
       }
       const { data, error } = await sb.rpc('painel_sql', { q });
       if (error) throw new Error(error.message);

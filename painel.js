@@ -553,30 +553,37 @@ if (c >= 51 && c <= 86) return NUV(-3) + GOTA;
 return NUV(1);
 };
 const TXT = (c) => c === 0 ? 'Céu limpo' : c === 1 ? 'Quase limpo' : c === 2 ? 'Parcialmente nublado' : c === 3 ? 'Nublado' : c < 50 ? 'Neblina' : c < 60 ? 'Garoa' : c < 70 ? 'Chuva' : c < 80 ? 'Neve' : c < 90 ? 'Pancadas de chuva' : 'Tempestade';
-const pinta = (c) => {
-g('cl-t').textContent = Math.round(c.temperature_2m) + '°';
+const DIR = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];
+const dec = (n, d) => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const pinta = (c, uv) => {
+g('cl-t').textContent = Math.round(c.temperature_2m);
 g('cl-i').innerHTML = icone(c.weather_code, c.is_day === 1);
-g('cl-s').textContent = TXT(c.weather_code);
-g('cl-v').textContent = Math.round(c.wind_speed_10m) + ' km/h';
-g('cl-u').textContent = Math.round(c.relative_humidity_2m) + '%';
+const s = g('cl-s'); s.textContent = TXT(c.weather_code); s.classList.remove('erro');
+const cp = g('cp-clima'); if (cp) cp.title = TXT(c.weather_code);
+g('cl-d').textContent = typeof c.wind_direction_10m === 'number' ? DIR[Math.round(c.wind_direction_10m / 45) % 8] : 'Vento';
+g('cl-v').textContent = dec(c.wind_speed_10m, 1) + ' km/h';
+g('cl-f').textContent = typeof c.apparent_temperature === 'number' ? dec(c.apparent_temperature, 1) + ' °C' : '--';
+g('cl-uv').textContent = typeof uv === 'number' ? dec(uv, 0) : '--';
+g('cl-p').textContent = typeof c.pressure_msl === 'number' ? Math.round(c.pressure_msl) + ' hPa' : '--';
 };
 (async () => {
-const CH = 'cp-clima-cache';
-try { const k = JSON.parse(localStorage.getItem(CH) || 'null'); if (k && Date.now() - k.at < 9e5) { pinta(k.c); return; } } catch (e) { }
+const CH = 'cp-clima-cache2';
+try { const k = JSON.parse(localStorage.getItem(CH) || 'null'); if (k && Date.now() - k.at < 9e5) { pinta(k.c, k.uv); return; } } catch (e) { }
 let mcp = null;
 try { mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { mcp = null; }
-if (!mcp) { g('cl-s').textContent = 'Clima indisponível aqui'; return; }
+if (!mcp) { g('cl-s').textContent = 'Clima indisponível aqui'; g('cl-s').classList.add('erro'); return; }
 try {
-const q = "select (content::json)->'current' as c from extensions.http_get('https://api.open-meteo.com/v1/forecast?latitude=-23.51&longitude=-46.88&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&timezone=America%2FSao_Paulo');";
+const q = "select (content::json)->'current' as c, (content::json)->'hourly' as h from extensions.http_get('https://api.open-meteo.com/v1/forecast?latitude=-23.51&longitude=-46.88&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl,is_day&hourly=uv_index&forecast_days=1&timezone=America%2FSao_Paulo');";
 const res = await mcp.callTool('Supabase', 'execute_sql', { project_id: 'ckhaolaprrtvwoadnnty', query: q }, { cache: false });
 let p = res && res.payload !== undefined ? res.payload : res;
 if (p && typeof p === 'object' && typeof p.result === 'string') p = p.result;
 if (typeof p === 'string') { const f = p.lastIndexOf('</untrusted-data'), i = p.lastIndexOf('<untrusted-data-', f), j = p.indexOf('>', i); p = JSON.parse(p.slice(j + 1, f).trim()); }
-const c = (Array.isArray(p) ? p[0] : p).c;
+const r0 = Array.isArray(p) ? p[0] : p, c = r0.c;
 if (typeof c.temperature_2m !== 'number') throw new Error('sem dados');
-pinta(c);
-try { localStorage.setItem(CH, JSON.stringify({ at: Date.now(), c })); } catch (e) { }
-} catch (e) { g('cl-s').textContent = 'Clima indisponível agora'; }
+let uv = null; try { const hh = r0.h, ix = Math.min(23, new Date().getHours()); if (hh && hh.uv_index) uv = hh.uv_index[ix]; } catch (e) { }
+pinta(c, uv);
+try { localStorage.setItem(CH, JSON.stringify({ at: Date.now(), c, uv })); } catch (e) { }
+} catch (e) { g('cl-s').textContent = 'Clima indisponível agora'; g('cl-s').classList.add('erro'); }
 })();
 })();
 (() => {

@@ -146,3 +146,11 @@
 .cp-kpis .cp-k{min-height:140px;align-self:end}
 .cp-atalhos button{padding:12px 0}
 .cp-atalhos{padding:0 6px}.cp-atalhos h3{margin:0 0 8px}
+
+/* Widget do tempo: só Sensação e Umidade; Barueri dentro do cartão azul claro, que cresce na vertical */
+.cp-oi .cp-clima{align-self:stretch;display:flex;flex-direction:column}
+.cp-clima .cp-oi-d{position:relative;top:3px}
+.cp-clima .cl-box{flex:1 1 auto;display:flex;flex-direction:column;margin-top:8px}
+.cp-clima .cl-g>div:nth-child(2){border-right-width:1px;border-bottom-width:0}.cp-clima .cl-g>div:nth-child(4){border-width:0}
+.cp-clima .cl-c{margin-top:auto;padding:10px 0 7px}
+@media (min-width:761px){.cp-oi .cp-clima{min-height:228px}}

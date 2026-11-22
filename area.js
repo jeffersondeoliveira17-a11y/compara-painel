@@ -41,13 +41,13 @@
   // notas rápidas
   const nt = $('nt-txt'), st = $('nt-st'); let tm = null, pronto = false;
   (async () => {
-    try { const r = await sql(`select valor from public.painel_config where chave = 'notas_rapidas'`); nt.value = r[0] ? tx(r[0].valor) : ''; } catch (e) { st.textContent = 'sem conexão'; }
+    try { const r = await sql(`select valor from public.painel_arquivo where chave = 'notas_rapidas'`); nt.value = r[0] ? tx(r[0].valor) : ''; } catch (e) { st.textContent = 'sem conexão'; }
     pronto = true;
   })();
   nt.addEventListener('input', () => {
     if (!pronto) return; st.textContent = 'salvando…'; clearTimeout(tm);
     tm = setTimeout(async () => {
-      try { await sql(`insert into public.painel_config (chave, valor) values ('notas_rapidas', ${sq(nt.value)}) on conflict (chave) do update set valor = excluded.valor, atualizado_em = now()`); st.textContent = 'salvo'; }
+      try { await sql(`insert into public.painel_arquivo (chave, valor) values ('notas_rapidas', ${sq(nt.value)}) on conflict (chave) do update set valor = excluded.valor, atualizado_em = now()`); st.textContent = 'salvo'; }
       catch (e) { st.textContent = 'não salvou'; }
     }, 800);
   });

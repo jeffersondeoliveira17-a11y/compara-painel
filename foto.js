@@ -14,11 +14,11 @@
     const rm = $('cp-foto-rm'); if (rm) rm.hidden = !url;
   }
   try { aplica(localStorage.getItem(LS)); } catch (e) { /* sem cache */ }
-  (async () => { try { const r = await sql(`select valor from public.painel_config where chave = 'avatar'`); const v = r[0] && r[0].valor; aplica(v || null); try { v ? localStorage.setItem(LS, v) : localStorage.removeItem(LS); } catch (e) { /* ok */ } } catch (e) { /* mantém o cache */ } })();
+  (async () => { try { const r = await sql(`select valor from public.painel_arquivo where chave = 'avatar'`); const v = r[0] && r[0].valor; aplica(v || null); try { v ? localStorage.setItem(LS, v) : localStorage.removeItem(LS); } catch (e) { /* ok */ } } catch (e) { /* mantém o cache */ } })();
   const aviso = (t) => { const b = $('cp-foto-item'); if (b) { const s = b.querySelector('small'); if (s) s.textContent = t; } };
   const guarda = async (url) => {
-    if (url) await sql(`insert into public.painel_config (chave, valor) values ('avatar', ${sq(url)}) on conflict (chave) do update set valor = excluded.valor, atualizado_em = now()`);
-    else await sql(`delete from public.painel_config where chave = 'avatar'`);
+    if (url) await sql(`insert into public.painel_arquivo (chave, valor) values ('avatar', ${sq(url)}) on conflict (chave) do update set valor = excluded.valor, atualizado_em = now()`);
+    else await sql(`delete from public.painel_arquivo where chave = 'avatar'`);
     try { url ? localStorage.setItem(LS, url) : localStorage.removeItem(LS); } catch (e) { /* ok */ }
     aplica(url);
   };

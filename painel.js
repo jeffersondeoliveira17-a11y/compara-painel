@@ -565,7 +565,7 @@ g('cl-d').textContent = typeof c.wind_direction_10m === 'number' ? DIR[Math.roun
 g('cl-v').textContent = dec(c.wind_speed_10m, 1) + ' km/h';
 g('cl-f').textContent = typeof c.apparent_temperature === 'number' ? dec(c.apparent_temperature, 1) + ' °C' : '--';
 g('cl-uv').textContent = typeof uv === 'number' ? dec(uv, 0) : '--';
-g('cl-p').textContent = typeof c.pressure_msl === 'number' ? Math.round(c.pressure_msl) + ' hPa' : '--';
+g('cl-p').textContent = typeof c.relative_humidity_2m === 'number' ? Math.round(c.relative_humidity_2m) + '%' : '--';
 };
 (async () => {
 const CH = 'cp-clima-cache2';

@@ -21,7 +21,7 @@ html.bloqueado .cp-app{display:none}
 .lg-card .lk{background:none;border:0;padding:0;margin-top:14px;color:#138A9C;font:inherit;font-size:13px;cursor:pointer}
 #lg-msg{min-height:18px;margin-top:12px;font-size:13px;color:#c0392b}#lg-msg.ok{color:#1e8e5a}
 .lg-top{display:flex;align-items:center;gap:10px;margin-bottom:18px;font-weight:600;color:#138A9C}</style>
-<link rel="stylesheet" href="painel.css">
+<link rel="stylesheet" href="painel.css?v=4">
 </head>
 <body>
 <div id="login"><div class="lg-card"><div class="lg-top">Compara · Painel</div><form id="lg-entrar" autocomplete="on" hidden><h1>Entrar</h1><p>Acesso só para administradores.</p><label for="e-email">E-mail</label><input id="e-email" type="email" autocomplete="username" required><label for="e-senha">Senha</label><input id="e-senha" type="password" autocomplete="current-password" required><button class="pri" type="submit">Entrar</button><br><button type="button" class="lk" data-lg="esqueci">Esqueci a senha</button></form><form id="lg-criar" autocomplete="on" hidden><h1>Criar conta</h1><p>Depois de criar, o administrador libera o seu e-mail.</p><label for="c-email">E-mail</label><input id="c-email" type="email" autocomplete="username" required><label for="c-senha">Senha (8 ou mais caracteres)</label><input id="c-senha" type="password" autocomplete="new-password" required><button class="pri" type="submit">Criar conta</button><br><button type="button" class="lk" data-lg="entrar">Já tenho conta</button></form><form id="lg-esqueci" autocomplete="on" hidden><h1>Nova senha</h1><p>Mandamos um link para o seu e-mail.</p><label for="s-email">E-mail</label><input id="s-email" type="email" autocomplete="username" required><button class="pri" type="submit">Enviar link</button><br><button type="button" class="lk" data-lg="entrar">Voltar</button></form><form id="lg-nova" autocomplete="on" hidden><h1>Definir a senha</h1><p>Escolha a senha nova para entrar.</p><label for="n-senha">Senha nova (8 ou mais caracteres)</label><input id="n-senha" type="password" autocomplete="new-password" required><button class="pri" type="submit">Salvar senha</button></form><div id="lg-msg" role="alert"></div></div></div>
@@ -510,7 +510,7 @@ html.bloqueado .cp-app{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="dados.js"></script>
-<script src="shim.js"></script>
-<script src="carrega.js"></script>
+<script src="shim.js?v=4"></script>
+<script src="carrega.js?v=4"></script>
 </body>
 </html>

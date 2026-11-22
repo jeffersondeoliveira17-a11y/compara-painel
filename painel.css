@@ -65,3 +65,4 @@
 .rod-dots{position:absolute;right:0;top:0;height:36px;display:flex;flex-direction:column;justify-content:center;gap:4px}
 .rod-dots span{width:5px;height:5px;border-radius:50%;background:#c3cbd3;transition:background .3s,height .3s}.rod-dots span.on{background:var(--cp-acc);height:12px;border-radius:3px}
 .cp-oi-chips .rod .pg button{white-space:nowrap}
+.cp-ava.com-foto{background-size:cover;background-position:center;font-size:0;color:transparent}

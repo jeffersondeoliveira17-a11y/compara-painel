@@ -543,7 +543,7 @@ const nuv = (dx, dy, f) => '<g transform="translate(' + dx + ' ' + dy + ')" fill
 const NUV = (dx, dy) => nuv(dx, dy + 2, '#cfe2f6') + nuv(dx, dy, '#ffffff');
 const sol = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (17 * k) + '" fill="#FFFFFF" opacity=".28"/><circle cx="' + x + '" cy="' + y + '" r="' + (11 * k) + '" fill="#FFC93C"/>';
 const lua = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (18 * k) + '" fill="#FFE9A8" opacity=".25"/><path transform="translate(' + (x - 32 * k) + ' ' + (y - 32 * k) + ') scale(' + k + ')" d="M44 38A14 14 0 1 1 28 18a11 11 0 0 0 16 20z" fill="#FFE9A8"/>';
-const GOTA = '<path d="M24 56l-2 5M33 56l-2 5M42 56l-2 5" stroke="#CFE8FF" stroke-width="3" stroke-linecap="round"/>';
+const GOTA = '<path d="M24 51l-2 5M33 51l-2 5M42 51l-2 5" stroke="#CFE8FF" stroke-width="3" stroke-linecap="round"/>';
 const icone = (c, dia) => {
 if (c <= 1) return dia ? sol(32, 32, 1.45) : lua(32, 32, 1.1);
 if (c === 2) return (dia ? sol(45, 19, 1.05) : lua(45, 19, .75)) + NUV(0, 3);

@@ -57,3 +57,11 @@
 .cp-hj li{background:#f1f4f7}.cp-hj .cb{background:#fff}
 #nt-txt{background:#f1f4f7}#nt-txt:focus{background:#fff}
 #nt-txt{background:#fff3b0;border-radius:0;box-shadow:0 1px 3px rgba(60,50,0,.18)}#nt-txt:focus{background:#fff3b0;outline-color:#d9b800}#nt-txt::placeholder{color:#8a7a2e}
+/* Tarefas em rodízio */
+.cp-oi-chips .rod{position:relative;width:100%;height:36px;overflow:hidden}
+.rod .pg{position:absolute;left:0;right:34px;top:0;height:36px;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(110%);transition:transform .55s cubic-bezier(.22,.84,.3,1),opacity .4s ease;pointer-events:none}
+.rod .pg.on{opacity:1;transform:none;pointer-events:auto}.rod .pg.sai{opacity:0;transform:translateY(-110%)}
+.rod.reduz .pg{transform:none}
+.rod-dots{position:absolute;right:0;top:0;height:36px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.rod-dots span{width:5px;height:5px;border-radius:50%;background:#c3cbd3;transition:background .3s,height .3s}.rod-dots span.on{background:var(--cp-acc);height:12px;border-radius:3px}
+.cp-oi-chips .rod .pg button{white-space:nowrap}

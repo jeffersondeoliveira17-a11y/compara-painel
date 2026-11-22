@@ -539,18 +539,19 @@ corpo.replaceChildren(linha('Não consegui ler os avisos', 'O Supabase recusou o
 })();
 (() => {
 const g = (i) => document.getElementById(i);
-const SOL = '<g stroke="#FFC93C" stroke-width="2" stroke-linecap="round"><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g><circle cx="12" cy="12" r="5" fill="#FFC93C"/>';
-const LUA = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="#FFE9A8"/>';
-const NUV = (y) => '<path transform="translate(0 ' + (y || 0) + ')" d="M18 17H8a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 19.4 9.6 3.8 3.8 0 0 1 18 17z" fill="#fff"/>';
-const GOTA = '<path d="M8 19l-1 2.4M12 19l-1 2.4M16 19l-1 2.4" stroke="#BFE3FF" stroke-width="2" stroke-linecap="round"/>';
+const nuv = (dx, dy, f) => '<g transform="translate(' + dx + ' ' + dy + ')" fill="' + f + '"><circle cx="21" cy="42" r="9"/><circle cx="33" cy="36" r="13"/><circle cx="46" cy="43" r="8"/><rect x="21" y="42" width="25" height="9" rx="4.5"/></g>';
+const NUV = (dx, dy) => nuv(dx, dy + 2, '#cfe2f6') + nuv(dx, dy, '#ffffff');
+const sol = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (17 * k) + '" fill="#FFFFFF" opacity=".28"/><circle cx="' + x + '" cy="' + y + '" r="' + (11 * k) + '" fill="#FFC93C"/>';
+const lua = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (18 * k) + '" fill="#FFE9A8" opacity=".25"/><path transform="translate(' + (x - 32 * k) + ' ' + (y - 32 * k) + ') scale(' + k + ')" d="M44 38A14 14 0 1 1 28 18a11 11 0 0 0 16 20z" fill="#FFE9A8"/>';
+const GOTA = '<path d="M24 56l-2 5M33 56l-2 5M42 56l-2 5" stroke="#CFE8FF" stroke-width="3" stroke-linecap="round"/>';
 const icone = (c, dia) => {
-if (c <= 1) return dia ? SOL : LUA;
-if (c === 2) return (dia ? '<g transform="translate(-3 -3) scale(.8)">' + SOL + '</g>' : '<g transform="translate(-4 -3) scale(.8)">' + LUA + '</g>') + NUV(2);
-if (c === 3) return NUV(1);
-if (c === 45 || c === 48) return NUV(-1) + '<path d="M6 19h12M8 22h8" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>';
-if (c >= 95) return NUV(-2) + '<path d="M12 14l-2.5 4h3L11 22" fill="none" stroke="#FFC93C" stroke-width="2" stroke-linejoin="round"/>';
-if (c >= 51 && c <= 86) return NUV(-3) + GOTA;
-return NUV(1);
+if (c <= 1) return dia ? sol(32, 32, 1.45) : lua(32, 32, 1.1);
+if (c === 2) return (dia ? sol(45, 19, 1.05) : lua(45, 19, .75)) + NUV(0, 3);
+if (c === 3) return nuv(8, -9, '#b9cfe8') + NUV(0, 3);
+if (c === 45 || c === 48) return NUV(0, -2) + '<path d="M16 55h32M22 60h20" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".75"/>';
+if (c >= 95) return NUV(0, -4) + '<path d="M35 44l-7 10h6l-4 9 11-13h-6z" fill="#FFC93C"/>';
+if (c >= 51 && c <= 86) return NUV(0, -6) + GOTA;
+return NUV(0, 3);
 };
 const TXT = (c) => c === 0 ? 'Céu limpo' : c === 1 ? 'Quase limpo' : c === 2 ? 'Parcialmente nublado' : c === 3 ? 'Nublado' : c < 50 ? 'Neblina' : c < 60 ? 'Garoa' : c < 70 ? 'Chuva' : c < 80 ? 'Neve' : c < 90 ? 'Pancadas de chuva' : 'Tempestade';
 const DIR = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];

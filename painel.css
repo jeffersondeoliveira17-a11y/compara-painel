@@ -53,3 +53,6 @@
 #nt-txt:focus{outline:2px solid var(--cp-acc);outline-offset:0}
 .cp-st{font-size:10.5px;color:var(--color-fg-muted);text-transform:none;letter-spacing:0;font-weight:500}
 .cp-oi-r{grid-template-columns:1.4fr 1.1fr 1fr;flex:1.8 1 640px}.cp-oi .cp-oi-t{max-width:420px}.cp-qa{font-size:12px;word-break:normal;overflow-wrap:normal;hyphens:none}
+.cp-pn{background:#fff;border:1px solid #dfe3e8}
+.cp-hj li{background:#f1f4f7}.cp-hj .cb{background:#fff}
+#nt-txt{background:#f1f4f7}#nt-txt:focus{background:#fff}

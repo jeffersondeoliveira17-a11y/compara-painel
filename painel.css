@@ -57,3 +57,14 @@
 .cp-hj li{background:#f1f4f7}.cp-hj .cb{background:#fff}
 #nt-txt{background:#f1f4f7}#nt-txt:focus{background:#fff}
 #nt-txt{background:#fff3b0;border-radius:0;box-shadow:0 1px 3px rgba(60,50,0,.18)}#nt-txt:focus{background:#fff3b0;outline-color:#d9b800}#nt-txt::placeholder{color:#8a7a2e}
+/* cartão Agenda no estilo da referência */
+.cp-pn-ag{background:#fdc58a;border:0;color:#14213d}.cp-pn-ag h4{color:#6b4a22}.cp-pn-ag .cp-pn-l{color:#14213d;text-decoration:underline}
+.cp-pn-ag .ag-h{margin:0 0 10px;font-size:22px;font-weight:700;letter-spacing:-.01em;color:#14213d}
+.agr label{display:block}.agr small{display:block;font-size:11px;color:#6b4a22;margin-bottom:1px}
+.agr input{width:100%;border:0;border-bottom:1px solid rgba(20,33,61,.5);background:transparent;padding:4px 0 6px;font:inherit;font-size:14.5px;color:#14213d;border-radius:0}
+.agr input::placeholder{color:#8a6a40}.agr input:focus{outline:0;border-bottom-color:#14213d;border-bottom-width:2px}
+.agr-l{display:flex;align-items:flex-end;gap:12px;margin-top:10px}.agr-l label{flex:1;min-width:0}
+.agr-ok{width:44px;height:44px;border-radius:50%;border:0;background:var(--cp-acc);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}.agr-ok svg{width:20px;height:20px}.agr-ok:disabled{opacity:.6}
+.agr-sub{margin:14px 0 6px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#6b4a22;font-weight:600}
+.cp-pn-ag .cp-hj li{background:rgba(255,255,255,.6)}.cp-pn-ag .cp-hj .cb{border-color:#14213d;background:transparent}.cp-pn-ag .cp-hj small,.cp-pn-ag .cp-hj li.cp-vz{color:#6b4a22}
+.cp-oi .cp-clima{align-self:flex-start}.cp-pn-ag .ag-h{font-size:20px;margin-bottom:6px}.agr-l{margin-top:6px}.agr-sub{margin-top:10px}.cp-qa{min-height:52px}.cp-oi-r{align-items:stretch}

@@ -16,9 +16,9 @@
   const vazio = (t) => { lista.innerHTML = ''; const li = document.createElement('li'); li.className = 'cp-vz'; li.textContent = t; lista.append(li); };
   async function carregaHoje() {
     try {
-      let rows = await sql(`select id, to_char(data,'DD/MM') as d, data::text as iso, titulo, to_char(hora_ini,'HH24:MI') as h from public.lembrete where status = 'ativo' and not feito and data <= ${sq(hoje)}::date order by data, hora_ini nulls last limit 4`);
+      let rows = await sql(`select id, to_char(data,'DD/MM') as d, data::text as iso, titulo, to_char(hora_ini,'HH24:MI') as h from public.lembrete where status = 'ativo' and not feito and data <= ${sq(hoje)}::date order by data, hora_ini nulls last limit 2`);
       let tit = 'Hoje';
-      if (!rows.length) { rows = await sql(`select id, to_char(data,'DD/MM') as d, data::text as iso, titulo, to_char(hora_ini,'HH24:MI') as h from public.lembrete where status = 'ativo' and not feito and data > ${sq(hoje)}::date order by data, hora_ini nulls last limit 3`); tit = 'Próximos'; }
+      if (!rows.length) { rows = await sql(`select id, to_char(data,'DD/MM') as d, data::text as iso, titulo, to_char(hora_ini,'HH24:MI') as h from public.lembrete where status = 'ativo' and not feito and data > ${sq(hoje)}::date order by data, hora_ini nulls last limit 2`); tit = 'Próximos'; }
       $('hj-tit').textContent = tit;
       if (!rows.length) return vazio('Nada marcado. Dia livre.');
       lista.innerHTML = '';
@@ -37,6 +37,19 @@
     } catch (e) { vazio('Não consegui carregar os lembretes.'); }
   }
   carregaHoje();
+  // novo lembrete direto do cartão
+  const fd = $('agr-d'); fd.value = hoje; fd.min = '';
+  $('agr').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = $('agr-t').value.trim(); if (!t) return;
+    const bt = e.submitter || $('agr').querySelector('.agr-ok'); bt.disabled = true;
+    try {
+      await sql(`insert into public.lembrete (data, titulo) values (${sq(fd.value || hoje)}::date, ${sq(t)})`);
+      $('agr-t').value = ''; await carregaHoje();
+      if (window.cpAgendaRecarrega) window.cpAgendaRecarrega(); if (window.cpCalRecarrega) window.cpCalRecarrega();
+    } catch (err) { $('agr-t').placeholder = 'Não consegui salvar. Tente de novo.'; }
+    bt.disabled = false;
+  });
 
   // notas rápidas
   const nt = $('nt-txt'), st = $('nt-st'); let tm = null, pronto = false;

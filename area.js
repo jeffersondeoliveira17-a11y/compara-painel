@@ -56,7 +56,7 @@
       ]);
       const prev = rol.scrollTop;
       pinta(rows, (at[0] && +at[0].n) || 0);
-      if (rolar) { const h = rows.map((r) => hm(r.hi)).filter((x) => x != null).sort((a, b) => a - b)[0]; const alvo = diaSel === hoje ? agora() : (h != null ? h : 8 * 60); rol.scrollTop = Math.max(0, alvo / 60 * ROW - ROW * 0.8); } else rol.scrollTop = prev;
+      if (rolar) { const h = rows.map((r) => hm(r.hi)).filter((x) => x != null).sort((a, b) => a - b)[0]; const alvo = diaSel === hoje ? agora() : (h != null ? h : 8 * 60); rol.scrollTop = Math.max(0, inn.offsetTop + alvo / 60 * ROW - ROW * 0.8); } else rol.scrollTop = prev;
     } catch (e) { barra.className = 'ag-bar'; inn.innerHTML = '<div class="cp-vz" style="padding:10px">Não consegui carregar a agenda.</div>'; }
   }
   dia.addEventListener('change', () => { diaSel = dia.value || hoje; carregaAgenda(true); });

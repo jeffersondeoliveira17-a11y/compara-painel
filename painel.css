@@ -141,3 +141,8 @@
 .ag-wrap #ag-dia{position:absolute;right:16px;bottom:10px;width:34px;height:34px;opacity:0;pointer-events:none;border:0;padding:0}
 #ag-cal{position:absolute;right:14px;bottom:8px;z-index:4;width:34px;height:34px;border-radius:50%;border:0;background:#4a525c;color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}#ag-cal:hover{background:#1b2430}#ag-cal.out{background:#e8933a}
 @media (prefers-reduced-motion:reduce){.ag-rol{scroll-behavior:auto}}
+/* Setores: cartões e Atalhos alinhados pela base (como na referência) */
+.cp-kpis{align-items:end}
+.cp-kpis .cp-k{min-height:140px;align-self:end}
+.cp-atalhos button{padding:12px 0}
+.cp-atalhos{padding:0 6px}.cp-atalhos h3{margin:0 0 8px}

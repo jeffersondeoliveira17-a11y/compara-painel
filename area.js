@@ -42,8 +42,10 @@
       inn.append(bloco(e.r, { top: (e.a0 / 60 * ROW + 1) + 'px', height: Math.max(26, (e.a1 - e.a0) / 60 * ROW - 2) + 'px', left: (e.lane * 100 / e.n) + '%', width: (100 / e.n) + '%' }, atras ? ' at' : ''));
     });
     if (ehHoje) { const n = document.createElement('div'); n.className = 'ag-ag'; n.style.top = (ag / 60 * ROW) + 'px'; inn.append(n); }
-    const f = $('ag-sh'); f.innerHTML = ''; f.hidden = !sem.length; // sem hora: faixa fixa acima das horas
-    sem.forEach((r) => f.append(bloco(r, {}, !r.feito && diaSel < hoje ? ' at' : '')));
+    const f = $('ag-sh'); f.innerHTML = ''; f.hidden = !sem.length; // sem hora: por cima das horas, até 2 (o resto vira "+N")
+    sem.slice(0, 2).forEach((r) => f.append(bloco(r, {}, !r.feito && diaSel < hoje ? ' at' : '')));
+    if (sem.length > 2) { const m = document.createElement('div'); m.className = 'ag-mais'; m.textContent = '+' + (sem.length - 2) + ' sem hora'; f.append(m); }
+    $('ag-cal').classList.toggle('out', diaSel !== hoje); $('ag-cal').title = diaSel === hoje ? 'Escolher o dia' : 'Dia ' + diaSel.split('-').reverse().join('/') + ' (toque para trocar)';
   }
   async function carregaAgenda(rolar) {
     try {

@@ -32,3 +32,4 @@
 .cp-setores .cp-sc .cp-btn{background:rgba(255,255,255,.78);color:var(--color-fg);padding:9px 18px;font-weight:600}
 .cp-setores .cp-sc .cp-chip{background:#fff;border:0}
 .cp-setores .cp-sc .cp-chev{background:transparent;border:1.5px solid var(--color-fg);color:var(--color-fg);width:24px;height:24px}
+.cp-oi #cp-oi-frase{white-space:pre-line;max-width:560px}

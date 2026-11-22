@@ -115,3 +115,4 @@
  .cp-clima .cl-g>div{padding:5px 4px 5px 6px}.cp-clima .cl-g small{font-size:8.5px;text-transform:none;letter-spacing:0;padding-right:12px}
  .cp-clima .cl-g b{font-size:10.5px}.cp-clima .cl-g .gi{width:10px;height:10px;right:4px;top:5px}
 }
+@media (min-width:761px){.cp-clima .cl-n{margin-left:2px}.cp-clima .cl-t svg#cl-i{margin-left:-4px}}

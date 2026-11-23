@@ -332,3 +332,8 @@
 .cp-jogo-aviso.on{opacity:1;transform:translate(-50%,0)}
 .cp-jogo-aviso[hidden]{display:none}
 
+
+/* Menu lateral: logo completo com o menu aberto; quadradinho amarelo em pixel com três riscos quando encolhido */
+.cp-logo .cp-pixel-menu{display:none}
+.cp-app.estreito .cp-logo .cp-porco{display:none}
+.cp-app.estreito .cp-logo .cp-pixel-menu{display:block;height:34px;width:auto;image-rendering:pixelated}

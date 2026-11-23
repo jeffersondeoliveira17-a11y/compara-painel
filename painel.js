@@ -1241,15 +1241,18 @@ el.addEventListener('click', () => { fechado = slot(); confere(); });
 confere(); setInterval(confere, 30000);
 })();
 (() => {
-// Fim do expediente: às 19h, durante 15 minutos (ou com ?fim na URL), o widget do tempo mostra GAME OVER. Toque para dispensar.
-const el = document.getElementById('cl-fim'); if (!el) return;
-const forca = /[?&]fim(=|&|$)/.test(location.search);
+// Fim do expediente: às 19h, durante 15 minutos, o widget do tempo mostra GAME OVER (na sexta, SEXTOU!). Toque para dispensar.
+// Para testar: ?fim mostra GAME OVER e ?sexta mostra SEXTOU! na hora.
+const a = document.getElementById('cl-fim'), b = document.getElementById('cl-sexta'); if (!a || !b) return;
+const q = location.search, forcaA = /[?&]fim(=|&|$)/.test(q), forcaB = /[?&]sexta(=|&|$)/.test(q);
 let fechado = '';
 const dia = () => new Date().toDateString();
 const confere = () => {
-const d = new Date(), vez = forca || (d.getHours() === 19 && d.getMinutes() < 15);
-const on = vez && fechado !== dia(); el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.tabIndex = on ? 0 : -1;
+const d = new Date(), hora = d.getHours() === 19 && d.getMinutes() < 15, sexta = d.getDay() === 5;
+const livre = fechado !== dia();
+const onB = livre && (forcaB || (!forcaA && hora && sexta)), onA = livre && !onB && (forcaA || hora);
+[[a, onA], [b, onB]].forEach(([el, on]) => { el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.tabIndex = on ? 0 : -1; });
 };
-el.addEventListener('click', () => { fechado = dia(); confere(); });
+[a, b].forEach((el) => el.addEventListener('click', () => { fechado = dia(); confere(); }));
 confere(); setInterval(confere, 30000);
 })();

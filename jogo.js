@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -25,23 +25,13 @@ const mede = () => {
 // ---------- estado ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
 let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
-const player = { x: 90, y: 0, vy: 0, w: 70, h: 56, noChao: true };
+const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
 const chaoY = () => H - CHAO_H;
 const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
-const LINHA = { gato: 24, gato3: 23, gato2: 22, gato4: 23 }; // última linha com desenho em cada pose do gato
 const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
-// 6 quadros medidos no GIF do cachorro: pose do gato, pés no ar (fração da altura; no GIF só o quadro 4 sai do chão), esticada, inclinação da cabeça
-const CORRIDA = [
-  { p: 'gato2', lift: 0.00, sx: 0.94, rot: 0.03 },   // 0 agachado, junta tudo
-  { p: 'gato4', lift: 0.00, sx: 0.96, rot: -0.04 },  // 1 impulso
-  { p: 'gato3', lift: 0.00, sx: 1.05, rot: -0.08 },  // 2 sobe esticando
-  { p: 'gato',  lift: 0.00, sx: 1.07, rot: -0.08 },  // 3 pico
-  { p: 'gato',  lift: 0.07, sx: 1.10, rot: -0.04 },  // 4 voo esticado
-  { p: 'gato3', lift: 0.00, sx: 0.93, rot: 0.03 },   // 5 aterrissa
-];
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
@@ -75,7 +65,7 @@ const passo = (agora) => {
     obst.forEach((o) => { o.x -= vel * dt; });
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
-    const a = { x: player.x + 12, y: player.y + 8, w: player.w - 24, h: player.h - 12 };
+    const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     for (const o of obst) {
       const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
@@ -107,15 +97,12 @@ const desenha = () => {
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
-  // corrida copiada do GIF do cachorro: 6 quadros (agacha, impulso, sobe esticando, pico, voo, aterrissa)
-  const sobe = (player.noChao && estado === 'jogando');
-  const q = sobe ? Math.floor(dist / PASSO) % 6 : 0;
-  const F = sobe ? CORRIDA[q] : CORRIDA[3];
-  const pose = IM[F.p];
-  const queda = player.noChao ? (24 - LINHA[F.p]) * (player.h / 25) + AFUNDA : 0;
-  const lift = sobe ? -F.lift * player.h : 0;
-  cx.translate(sx, sy + lift + queda); cx.rotate(player.noChao ? (sobe ? F.rot : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
-  cx.scale(player.noChao && sobe ? -F.sx : -1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
+  // cachorro: 6 quadros do GIF (agacha, impulso, sobe esticando, pico, voo, aterrissa)
+  const corre = (player.noChao && estado === 'jogando');
+  const q = corre ? Math.floor(dist / PASSO) % 6 : 0;
+  const pose = player.noChao ? IM['cao' + (q + 1)] : IM.cao5; // no pulo: quadro do voo esticado
+  const queda = AFUNDA - 2; // pés um pouco dentro da grama
+  cx.translate(sx, sy + queda); if (!player.noChao) cx.rotate(Math.max(-0.12, Math.min(0.12, player.vy / 6500)));
   cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar
@@ -178,14 +165,14 @@ document.addEventListener('touchend', (e) => {
   if (g === KT[tp]) { tp++; if (tp === KT.length) { tp = 0; abre(); } } else tp = (g === KT[0]) ? 1 : 0;
 }, { passive: true });
 
-// ---------- palavra no teclado: digitar "gato" ----------
+// ---------- palavra no teclado: digitar "gato", "dog" ou "cao" ----------
 let pal = '', palT = 0;
 document.addEventListener('keydown', (e) => {
   if (aberto || e.key.length !== 1) return;
   const t = e.target, tag = t && t.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
   const agora = Date.now(); if (agora - palT > 2500) pal = ''; palT = agora;
-  pal = (pal + e.key.toLowerCase()).slice(-4); if (pal === 'gato') { pal = ''; abre(); }
+  pal = (pal + e.key.toLowerCase()).slice(-4); if (pal === 'gato' || pal.endsWith('dog') || pal.endsWith('cao')) { pal = ''; abre(); }
 });
 
 // ---------- 5 toques em "Hi, Jeff" ----------

@@ -16,12 +16,41 @@ const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: ho
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
 const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg') };
+// ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
+// Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
+const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
+let noite = flagNoite;
+const NOITE_FUNDO = '#0d1117';
+const toRgb = (l) => l.map((h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)));
+const TOM_OBJETO = toRgb(['#0d1117', '#4a5568', '#9aa5b5', '#e8edf3']); // cachorro, pedras, balão, portal: claros sobre o fundo escuro
+const TOM_CENARIO = toRgb(['#0d1117', '#171d27', '#232b38', '#323c4c']); // chão, moitas e nuvens: quase do tom do fundo, sem cansar
+const NOITE_TOM = ['#e8edf3', '#9aa5b5'];
+const monoC = new Map();
+const mono = (im, cen) => {
+  if (!im.complete || !im.naturalWidth) return im;
+  let c = monoC.get(im); if (c) return c;
+  const k = /\.svg/.test(im.src) ? Math.max(1, Math.round(160 / Math.max(im.naturalWidth, im.naturalHeight))) : 1; // SVG ganha resolução; o portal (PNG) mantém o tamanho dos quadros
+  c = document.createElement('canvas'); c.width = im.naturalWidth * k; c.height = im.naturalHeight * k;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, c.width, c.height);
+  let d; try { d = g.getImageData(0, 0, c.width, c.height); } catch (e) { monoC.set(im, im); return im; } // sem permissão de leitura: usa o desenho normal
+  const p = d.data;
+  for (let n = 0; n < p.length; n += 4) {
+    if (p[n + 3] < 8) continue;
+    const t = (cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(3, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / 64))];
+    p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
+  }
+  g.putImageData(d, 0, 0); monoC.set(im, c); return c;
+};
+const S = (im) => (noite ? mono(im, im === IM.chao || im === IM.mato || im === IM.nuvem) : im);
+const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? NOITE_TOM[1] : '#2c4a5c');
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
 box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou barra de espaço para pular · Esc para sair</div>';
 area.append(box);
+const aplicaTema = () => { box.classList.toggle('noite', noite); };
+aplicaTema();
 const aviso = document.createElement('div');
 aviso.className = 'cp-jogo-aviso'; aviso.setAttribute('role', 'status'); aviso.hidden = true; area.append(aviso);
 let avT = 0;
@@ -64,7 +93,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6;
+  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -107,7 +136,7 @@ const passoPortal = (dt) => {
   tPortal += dt;
   if (tPortal < T_SUGA) { vel = fasePt * Math.max(0, 1 - tPortal / T_SUGA); }
   else {
-    if (!viraFeito) { viraFeito = true; fase++; espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
+    if (!viraFeito) { viraFeito = true; fase++; noite = flagNoite || fase % 2 === 1; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
       portal = { x: player.x + player.w / 2 - portalAlt() * PORT_W / PORT_H / 2, w: portalAlt() * PORT_W / PORT_H, h: portalAlt() }; }
     if (tPortal >= T_SUGA + T_VIRA + T_SOLTA) { portal = null; vel = 520 + 50 * fase; estado = 'jogando'; }
   }
@@ -179,7 +208,7 @@ const desenha = () => {
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.8;
-  nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
+  nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(S(IM.nuvem), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
   cx.restore();
   // chão
   // balão: atrás das moitas e do chão
@@ -187,14 +216,14 @@ const desenha = () => {
     cx.save(); cx.globalAlpha = balao.a;
     const bx = espelho ? W - balao.x - balao.w : balao.x; // posição na tela vira posição do mundo espelhado
     if (espelho) { cx.translate(bx + balao.w / 2, 0); cx.scale(-1, 1); cx.translate(-(bx + balao.w / 2), 0); }
-    cx.drawImage(IM.balao, bx, balao.y, balao.w, balao.h);
+    cx.drawImage(S(IM.balao), bx, balao.y, balao.w, balao.h);
     cx.restore();
   }
   // moitas ao fundo (andam mais devagar que o chão)
-  for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(IM.mato, x, cy - MATO_H + 4, MATO_W, MATO_H);
-  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(IM.chao, Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
+  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // pedras
-  obst.forEach((o) => cx.drawImage(IM.pedra, o.x, cy - o.h + AFUNDA, o.w, o.h));
+  obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
@@ -210,30 +239,30 @@ const desenha = () => {
     else if (tPortal < T_SUGA + T_VIRA) esc = 0;
     else esc = Math.min(1, (tPortal - T_SUGA - T_VIRA) / T_SOLTA);
   }
-  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); }
+  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(S(pose), -player.w / 2, -player.h / 2, player.w, player.h); }
   cx.restore();
   // portal (10 quadros do GIF, 10 por segundo)
   if (portal) {
     let a = 1;
     if (estado === 'portal' && tPortal >= T_SUGA + T_VIRA + T_SOLTA * 0.4) a = Math.max(0, 1 - (tPortal - T_SUGA - T_VIRA - T_SOLTA * 0.4) / (T_SOLTA * 0.6));
     cx.save(); cx.globalAlpha = a;
-    cx.drawImage(IM.portal, (Math.floor(performance.now() / 100) % PORT_N) * PORT_W, 0, PORT_W, PORT_H, portal.x, cy + AFUNDA - portal.h, portal.w, portal.h);
+    cx.drawImage(S(IM.portal), (Math.floor(performance.now() / 100) % PORT_N) * PORT_W, 0, PORT_W, PORT_H, portal.x, cy + AFUNDA - portal.h, portal.w, portal.h);
     cx.restore();
   }
   cx.restore(); // fim da parte espelhada; placar e textos ficam sempre na posição normal
   if (estado === 'portal') { // clarão azul na hora da virada
     const d = Math.abs(tPortal - T_SUGA - T_VIRA / 2) / (T_VIRA / 2 + 0.15);
-    if (d < 1) { cx.fillStyle = 'rgba(35,62,246,' + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
+    if (d < 1) { cx.fillStyle = (noite ? 'rgba(154,165,181,' : 'rgba(35,62,246,') + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
   }
   if (avisoFase > 0 && estado !== 'portal') {
-    cx.globalAlpha = Math.min(1, avisoFase); cx.fillStyle = '#102532'; cx.textAlign = 'center'; cx.font = '700 18px system-ui, sans-serif';
+    cx.globalAlpha = Math.min(1, avisoFase); cx.fillStyle = TINTA(); cx.textAlign = 'center'; cx.font = '700 18px system-ui, sans-serif';
     cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
     cx.globalAlpha = 1;
   }
   // placar
-  cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
+  cx.fillStyle = TINTA(); cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
-  if (estado !== 'fim') { cx.fillStyle = '#2c4a5c'; cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
+  if (estado !== 'fim') { cx.fillStyle = TINTA2(); cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
   if (estado === 'fim') {
     cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);
     cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);
@@ -241,8 +270,8 @@ const desenha = () => {
   }
   if (estado === 'morto') {
     const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
-    cx.drawImage(IM.fim, (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
-    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = '#102532';
+    cx.drawImage(S(IM.fim), (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
+    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = TINTA();
     cx.fillText('Toque ou espaço para jogar de novo', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 24);
   }
 };
@@ -271,6 +300,7 @@ window.addEventListener('resize', () => { if (aberto) { mede(); } });
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
+document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; aplicaTema(); } });
 document.addEventListener('keydown', (e) => {
   if (aberto) {
     if (e.key === 'Escape') { e.preventDefault(); fecha(); return; }

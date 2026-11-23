@@ -364,3 +364,10 @@
 
 /* o cartão da homenagem herda a classe cl-fim, que faz piscar: aqui fica parado */
 .cp-clima .cl-cafe.cl-fim.cl-flor.on img.cl-go{animation:none;opacity:1}
+
+/* Jogo: tema noite (tons de cinza, estilo Game Boy) */
+#cp-jogo{transition:opacity .25s ease,transform .25s ease,background-color .5s ease}
+#cp-jogo.noite{background:#0d1117}
+#cp-jogo.noite .jg-x{background:rgba(232,237,243,.9);color:#0d1117}
+#cp-jogo.noite .jg-x:hover{background:#e8edf3}
+#cp-jogo.noite .jg-dica{color:#9aa5b5}

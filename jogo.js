@@ -121,7 +121,9 @@ const pula = () => {
   if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; }
   else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; }
 };
+const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)
 const novoObst = () => {
+  const n0 = obst.length;
   const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
@@ -133,6 +135,7 @@ const novoObst = () => {
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);
     fim = P(b2.x + b2.w + vel * (0.5 + Math.random() * 0.06)); obst.push(fim);
   } else if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
+  if (ave && fim.x + fim.w > ave.x - 70 && o.x < ave.x + AVE_W + 70) { const dx = ave.x + AVE_W + 70 - o.x; for (let q = n0; q < obst.length; q++) obst[q].x += dx; fim = obst[obst.length - 1]; } // pedra nunca nasce em cima do passarinho
   return fim.x + fim.w - o.x; // largura do conjunto, para o espaçamento da próxima
 };
 
@@ -206,7 +209,7 @@ const passo = (agora) => {
   if (estado === 'portal') { if (ave) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
-    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 60 }; } // passarinho com ponto de exclamação aparece no chão de vez em quando
+    if (!ave) { aveEm -= dt; if (aveEm <= 0 && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) ave = { x: W + 60 }; } // passarinho com ponto de exclamação aparece no chão de vez em quando
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -275,7 +278,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  if (ave && IM.ave.complete && IM.ave.naturalWidth) { const u = 3, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; cx.save(); cx.translate(Math.round(ave.x) + w, cy + 5 - h); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); } // de pé no chão, olhando para o cachorro
+  if (ave && IM.ave.complete && IM.ave.naturalWidth) { const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; cx.save(); cx.translate(Math.round(ave.x) + w, cy + 5 - h); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); } // de pé no chão, olhando para o cachorro
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

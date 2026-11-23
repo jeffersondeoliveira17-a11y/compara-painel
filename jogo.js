@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), m1: img('icones/menina1.svg'), m2: img('icones/menina2.svg'), m3: img('icones/menina3.svg'), m4: img('icones/menina4.svg'), m5: img('icones/menina5.svg'), m6: img('icones/menina6.svg'), m7: img('icones/menina7.svg'), m8: img('icones/menina8.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -38,7 +38,6 @@ const mede = () => {
 // ---------- estado ----------
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
 let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
-const menina = { x: 232, y: 0, vy: 0, w: 62, h: 62, noChao: true }; // corre à frente do cachorro e pula as pedras sozinha
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -51,7 +50,6 @@ const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
   nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
-  menina.y = chaoY() - menina.h; menina.vy = 0; menina.noChao = true;
 };
 const pula = () => {
   if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); }
@@ -83,11 +81,6 @@ const passo = (agora) => {
     if (prox <= 0) { novoObst(); prox = vel * (0.85 + Math.random() * 0.8) + 120; }
     obst.forEach((o) => { o.x -= vel * dt; });
     obst = obst.filter((o) => o.x + o.w > -10);
-    // a menina enxerga a pedra chegando e pula
-    if (menina.noChao && obst.some((o) => { const d = o.x - (menina.x + menina.w - 8); return d > 0 && d < vel * 0.2; })) { menina.vy = -PULO; menina.noChao = false; }
-    menina.vy += GRAV * dt; menina.y += menina.vy * dt;
-    const soloM = chaoY() - menina.h;
-    if (menina.y >= soloM) { menina.y = soloM; menina.vy = 0; menina.noChao = true; }
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     for (const o of obst) {
@@ -121,9 +114,6 @@ const desenha = () => {
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
-  // menina (8 quadros do GIF, 80 ms cada) correndo à frente do cachorro
-  const qm = estado === 'jogando' ? Math.floor(dist / 2.45) % 8 : 0;
-  cx.drawImage(IM['m' + (qm + 1)], Math.round(menina.x), Math.round(menina.y + AFUNDA - 2), menina.w, menina.h);
   // cachorro: 6 quadros do GIF (agacha, impulso, sobe esticando, pico, voo, aterrissa)
   const corre = (player.noChao && estado === 'jogando');
   const q = corre ? Math.floor(dist / PASSO) % 6 : 0;

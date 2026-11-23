@@ -37,7 +37,7 @@ const mede = () => {
 
 // ---------- estado ----------
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let gigantes = [], matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -46,13 +46,17 @@ const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: lar
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
 const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
 const GRAV = 2600, PULO = 880;
-const novaGigante = (x) => { const w = 380 + Math.random() * 620; return { x, y: -60 + Math.random() * H * 0.55, w, e: 0.7 + Math.random() * 0.7, f: Math.random() < 0.5, v: 4 + Math.random() * 9 }; };
+// nuvens de tamanhos variados (pequenas, médias, grandes e bem grandes), bem espaçadas e aleatórias
+const novaNuvem = (x) => {
+  const r = Math.random(); let w;
+  if (r < 0.34) w = 50 + Math.random() * 45; else if (r < 0.64) w = 115 + Math.random() * 90; else if (r < 0.9) w = 250 + Math.random() * 130; else w = 430 + Math.random() * 150;
+  const h = w * 107.2 / 171;
+  return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
+};
 const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
-  // nuvens enormes bem ao fundo (poucas, cores originais): tudo aleatório (tamanho, altura, espelhada ou não, espaçamento)
-  gigantes = []; let gx = -Math.random() * 300;
-  while (gx < W * 1.6) { gigantes.push(novaGigante(gx)); gx += 700 + Math.random() * 1500; }
-  nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
+  nuvensF = []; let nx = -Math.random() * 200;
+  while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
 const pula = () => {
@@ -98,12 +102,11 @@ const passo = (agora) => {
     }
   }
   if (estado !== 'morto' && estado !== 'fim') {
-    gigantes.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 800 : 1); });
-    gigantes = gigantes.filter((n) => n.x + n.w > -20);
-    const ult = gigantes.reduce((m, n) => Math.max(m, n.x + n.w), 0);
-    if (ult < W + 200) gigantes.push(novaGigante(Math.max(W + 40, ult) + 500 + Math.random() * 1500));
+    nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); });
+    nuvensF = nuvensF.filter((n) => n.x + n.w > -10);
+    const ult = nuvensF.reduce((m, n) => Math.max(m, n.x + n.w), 0);
+    if (ult < W + 120) nuvensF.push(novaNuvem(Math.max(W + 30, ult) + 150 + Math.random() * 450));
   }
-  if (estado !== 'morto' && estado !== 'fim') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
   desenha();
 };
 const pts5 = (n) => String(Math.floor(n)).padStart(5, '0');
@@ -111,17 +114,9 @@ const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
   const cy = chaoY();
-  // nuvens enormes (atrás de tudo)
-  gigantes.forEach((n) => {
-    const hh = n.w * 107.2 / 171 * n.e;
-    cx.save(); cx.globalAlpha = 0.85;
-    if (n.f) { cx.translate(n.x + n.w, n.y); cx.scale(-1, 1); cx.drawImage(IM.nuvem, 0, 0, n.w, hh); }
-    else cx.drawImage(IM.nuvem, n.x, n.y, n.w, hh);
-    cx.restore();
-  });
   // nuvenzinhas ao fundo
-  cx.save(); cx.globalAlpha = 0.35;
-  nuvensF.forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171));
+  cx.save(); cx.globalAlpha = 0.8;
+  nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
   cx.restore();
   // chão
   // moitas ao fundo (andam mais devagar que o chão)

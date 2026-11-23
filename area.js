@@ -60,6 +60,7 @@
     } catch (e) { barra.className = 'ag-bar'; inn.innerHTML = '<div class="cp-vz" style="padding:10px">Não consegui carregar a agenda.</div>'; }
   }
   dia.addEventListener('change', () => { diaSel = dia.value || hoje; carregaAgenda(true); });
+  $('ag-exp').addEventListener('click', () => { const p = $('ag-exp').closest('.cp-ag'), ab = p.classList.toggle('aberto'); $('ag-exp').setAttribute('aria-expanded', ab); $('ag-exp').title = ab ? 'Recolher' : 'Expandir'; });
   $('ag-cal').addEventListener('click', () => { try { dia.showPicker(); } catch (e) { dia.focus(); } });
   carregaAgenda(true); setInterval(() => carregaAgenda(false), 60000);
   window.cpAgendaPainel = carregaAgenda;

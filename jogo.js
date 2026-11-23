@@ -22,9 +22,13 @@ const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
 let noite = flagNoite;
 const NOITE_FUNDO = '#26303f';
 const toRgb = (l) => l.map((h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)));
-const TOM_OBJETO = toRgb(['#1a212c', '#6b7a90', '#b4bfce', '#f1f4f8']); // cachorro, pedras, balão, portal: claros sobre o fundo escuro
-const TOM_CENARIO = toRgb(['#26303f', '#323e50', '#42516a', '#566883']); // chão, moitas e nuvens: quase do tom do fundo, sem cansar
-const NOITE_TOM = ['#f1f4f8', '#b4bfce'];
+// rampas de 8 tons (do escuro ao claro) entre duas cores: mais degraus de cinza e branco
+const rampa = (de, ate, n) => { const r = toRgb([de, ate]); return Array.from({ length: n }, (_, i) => r[0].map((v, k) => Math.round(v + (r[1][k] - v) * i / (n - 1)))); };
+const NIV = 8;
+const TOM_OBJETO = rampa('#1a212c', '#ffffff', NIV); // cachorro, pedras, balão, portal: cinzas até o branco
+const TOM_NUVEM = rampa('#26303f', '#e3e9f2', NIV); // nuvens chegam quase ao branco
+const TOM_CENARIO = rampa('#26303f', '#8b9bb3', NIV); // chão, moitas e nuvens: cinzas azulados, sem cansar
+const NOITE_TOM = ['#ffffff', '#c3ccd9'];
 const monoC = new Map();
 const mono = (im, cen) => {
   if (!im.complete || !im.naturalWidth) return im;
@@ -36,12 +40,12 @@ const mono = (im, cen) => {
   const p = d.data;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
-    const t = (cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(3, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / 64))];
+    const t = (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
 };
-const S = (im) => (noite ? mono(im, im === IM.chao || im === IM.mato || im === IM.nuvem) : im);
+const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao || im === IM.mato ? 1 : 0)) : im);
 const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? NOITE_TOM[1] : '#2c4a5c');
 
 // ---------- camada do jogo ----------

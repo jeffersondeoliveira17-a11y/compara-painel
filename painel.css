@@ -237,3 +237,9 @@
 .cp-menu.mp .it[aria-disabled="true"]{opacity:.6}
 .mp-ft{border-top:1px solid var(--color-border-line);padding:8px}
 .cp-menu.mp .mp-out{color:#c0392b}.mp-out .mp-ic{background:#fbe0dc;color:#c0392b}
+.mp-chave{width:26px;height:13px;margin-left:8px;flex:none;image-rendering:pixelated;opacity:1}
+.cp-menu.mp .it[aria-disabled="true"] .mp-chave{filter:none}
+.mp-em{margin-left:auto}
+.cp-menu.mp .it[aria-disabled="true"]{gap:10px;white-space:nowrap}
+.cp-menu.mp .it[aria-disabled="true"] .mp-em{padding:2px 7px;font-size:9.5px}
+.mp-chave{width:22px;height:11px;margin-left:6px}

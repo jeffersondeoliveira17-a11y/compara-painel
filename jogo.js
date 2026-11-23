@@ -20,11 +20,11 @@ const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2:
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
 let noite = flagNoite;
-const NOITE_FUNDO = '#0d1117';
+const NOITE_FUNDO = '#26303f';
 const toRgb = (l) => l.map((h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)));
-const TOM_OBJETO = toRgb(['#0d1117', '#4a5568', '#9aa5b5', '#e8edf3']); // cachorro, pedras, balão, portal: claros sobre o fundo escuro
-const TOM_CENARIO = toRgb(['#0d1117', '#171d27', '#232b38', '#323c4c']); // chão, moitas e nuvens: quase do tom do fundo, sem cansar
-const NOITE_TOM = ['#e8edf3', '#9aa5b5'];
+const TOM_OBJETO = toRgb(['#1a212c', '#6b7a90', '#b4bfce', '#f1f4f8']); // cachorro, pedras, balão, portal: claros sobre o fundo escuro
+const TOM_CENARIO = toRgb(['#26303f', '#323e50', '#42516a', '#566883']); // chão, moitas e nuvens: quase do tom do fundo, sem cansar
+const NOITE_TOM = ['#f1f4f8', '#b4bfce'];
 const monoC = new Map();
 const mono = (im, cen) => {
   if (!im.complete || !im.naturalWidth) return im;

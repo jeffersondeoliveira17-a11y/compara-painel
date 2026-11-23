@@ -38,10 +38,13 @@ const mono = (im, cen) => {
   const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, c.width, c.height);
   let d; try { d = g.getImageData(0, 0, c.width, c.height); } catch (e) { monoC.set(im, im); return im; } // sem permissão de leitura: usa o desenho normal
   const p = d.data;
+  const W2 = c.width, H2 = c.height;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
     const lumi = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2];
-    const t = (cen === 3 && lumi > 140) ? [180, 191, 206] : (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
+    const px = (n / 4) % W2, py = Math.floor(n / 4 / W2);
+    const emenda = cen === 1 && py > H2 * 0.72 && ((Math.floor(px / (W2 / 40)) * 7 + 3) % 5) < 2; // algumas manchas da base da moita ficam no tom da grama do piso
+    const t = (cen === 3 && lumi > 140) || emenda ? [180, 191, 206] : (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
@@ -174,7 +177,7 @@ const passo = (agora) => {
       portal.x -= vel * dt;
       if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
     }
-    obst.forEach((o) => { o.x -= vel * dt; });
+    obst.forEach((o) => { o.x -= vel * dt; if (!o.cor && o.x + o.w / 2 < player.x + player.w / 2) o.cor = true; }); // pedra que o cachorro já pulou fica colorida
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
@@ -260,7 +263,7 @@ const desenha = () => {
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // pedras
-  obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
+  obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;

@@ -252,3 +252,5 @@
 .cp-menu.mp .mp-out .mp-chave{width:55px;height:27.5px}
 .cp-menu.mp .it[aria-disabled="true"] .mp-em{width:50px}
 .cp-menu.mp .mp-out .mp-chave{width:50px;height:25px}
+.cp-menu.mp .it[aria-disabled="true"] .mp-em{width:48px}
+.cp-menu.mp .mp-out .mp-chave{width:48px;height:24px}

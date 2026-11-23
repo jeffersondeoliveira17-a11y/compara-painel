@@ -248,3 +248,5 @@
 /* "Em breve" e chave com a mesma largura e a mesma margem esquerda/direita */
 .cp-menu.mp .it[aria-disabled="true"] .mp-em{width:58px;box-sizing:border-box;text-align:center;padding-left:0;padding-right:0}
 .cp-menu.mp .mp-out .mp-chave{width:58px;height:29px;margin-left:auto}
+.cp-menu.mp .it[aria-disabled="true"] .mp-em{width:55px}
+.cp-menu.mp .mp-out .mp-chave{width:55px;height:27.5px}

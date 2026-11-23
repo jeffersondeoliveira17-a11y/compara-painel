@@ -94,6 +94,7 @@ const desenha = () => {
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
   const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
   cx.translate(sx, sy + quica); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
+  cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
   cx.drawImage(IM.gato, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar

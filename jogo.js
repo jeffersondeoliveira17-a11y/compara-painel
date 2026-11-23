@@ -61,15 +61,13 @@ aviso.className = 'cp-jogo-aviso'; aviso.setAttribute('role', 'status'); aviso.h
 let avT = 0;
 const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 4500); };
 const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
-// letras em pixel (5x7) para o "PRESS START !": branco com contorno escuro e sombra
-const LETRA = { P: ['11110','10001','10001','11110','10000','10000','10000'], R: ['11110','10001','10001','11110','10100','10010','10001'], E: ['11111','10000','10000','11110','10000','10000','11111'], S: ['01111','10000','10000','01110','00001','00001','11110'], T: ['11111','00100','00100','00100','00100','00100','00100'], A: ['01110','10001','10001','11111','10001','10001','10001'], '!': ['00100','00100','00100','00100','00100','00000','00100'], ' ': ['00000','00000','00000','00000','00000','00000','00000'] };
-const pixTexto = (txt, mx, my, u) => {
-  const larg = txt.length * 6 * u - u, x0 = Math.round(mx - larg / 2), y0 = Math.round(my - 3.5 * u);
-  const passo = (dx, dy, cor) => { cx.fillStyle = cor; for (let i = 0; i < txt.length; i++) LETRA[txt[i]].forEach((lin, r) => { for (let c = 0; c < 5; c++) if (lin[c] === '1') cx.fillRect(x0 + i * 6 * u + c * u + dx, y0 + r * u + dy, u, u); }); };
-  const esc = noite ? '#0d1218' : '#102532';
-  passo(0, u, esc); passo(u, u, esc); // sombra
-  [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => passo(a * u * 0.6, b * u * 0.6, esc)); // contorno
-  passo(0, 0, noite ? '#e3e9f2' : '#ffffff');
+// "PRESS START" vetorizado da referência (fonte pixel): 78 x 30 quadradinhos, desenhado como forma única
+const PS_P = new Path2D('M0 0h12v1h-12zM16 0h12v1h-12zM32 0h14v1h-14zM50 0h10v1h-10zM66 0h10v1h-10zM0 1h12v1h-12zM16 1h12v1h-12zM32 1h14v1h-14zM50 1h10v1h-10zM66 1h10v1h-10zM0 2h4v1h-4zM10 2h4v1h-4zM16 2h4v1h-4zM26 2h4v1h-4zM32 2h4v1h-4zM48 2h4v1h-4zM58 2h4v1h-4zM64 2h4v1h-4zM74 2h4v1h-4zM0 3h4v1h-4zM10 3h4v1h-4zM16 3h4v1h-4zM26 3h4v1h-4zM32 3h4v1h-4zM48 3h4v1h-4zM58 3h4v1h-4zM64 3h4v1h-4zM74 3h4v1h-4zM0 4h4v1h-4zM10 4h4v1h-4zM16 4h4v1h-4zM26 4h4v1h-4zM32 4h4v1h-4zM48 4h4v1h-4zM64 4h4v1h-4zM0 5h4v1h-4zM10 5h4v1h-4zM16 5h4v1h-4zM26 5h4v1h-4zM32 5h4v1h-4zM48 5h4v1h-4zM64 5h4v1h-4zM0 6h4v1h-4zM10 6h4v1h-4zM16 6h4v1h-4zM24 6h6v1h-6zM32 6h12v1h-12zM50 6h10v1h-10zM66 6h10v1h-10zM0 7h4v1h-4zM10 7h4v1h-4zM16 7h4v1h-4zM24 7h6v1h-6zM32 7h12v1h-12zM50 7h10v1h-10zM66 7h10v1h-10zM0 8h12v1h-12zM16 8h10v1h-10zM32 8h4v1h-4zM58 8h4v1h-4zM74 8h4v1h-4zM0 9h12v1h-12zM16 9h10v1h-10zM32 9h4v1h-4zM58 9h4v1h-4zM74 9h4v1h-4zM0 10h4v1h-4zM16 10h4v1h-4zM22 10h6v1h-6zM32 10h4v1h-4zM48 10h4v1h-4zM58 10h4v1h-4zM64 10h4v1h-4zM74 10h4v1h-4zM0 11h4v1h-4zM16 11h4v1h-4zM22 11h6v1h-6zM32 11h4v1h-4zM48 11h4v1h-4zM58 11h4v1h-4zM64 11h4v1h-4zM74 11h4v1h-4zM0 12h4v1h-4zM16 12h4v1h-4zM24 12h6v1h-6zM32 12h14v1h-14zM50 12h10v1h-10zM66 12h10v1h-10zM0 13h4v1h-4zM16 13h4v1h-4zM24 13h6v1h-6zM32 13h14v1h-14zM50 13h10v1h-10zM66 13h10v1h-10zM5 16h10v1h-10zM19 16h12v1h-12zM35 16h6v1h-6zM47 16h12v1h-12zM63 16h12v1h-12zM5 17h10v1h-10zM19 17h12v1h-12zM35 17h6v1h-6zM47 17h12v1h-12zM63 17h12v1h-12zM3 18h4v1h-4zM13 18h4v1h-4zM23 18h4v1h-4zM33 18h4v1h-4zM39 18h4v1h-4zM47 18h4v1h-4zM57 18h4v1h-4zM67 18h4v1h-4zM3 19h4v1h-4zM13 19h4v1h-4zM23 19h4v1h-4zM33 19h4v1h-4zM39 19h4v1h-4zM47 19h4v1h-4zM57 19h4v1h-4zM67 19h4v1h-4zM3 20h4v1h-4zM23 20h4v1h-4zM31 20h4v1h-4zM41 20h4v1h-4zM47 20h4v1h-4zM57 20h4v1h-4zM67 20h4v1h-4zM3 21h4v1h-4zM23 21h4v1h-4zM31 21h4v1h-4zM41 21h4v1h-4zM47 21h4v1h-4zM57 21h4v1h-4zM67 21h4v1h-4zM5 22h10v1h-10zM23 22h4v1h-4zM31 22h4v1h-4zM41 22h4v1h-4zM47 22h4v1h-4zM55 22h6v1h-6zM67 22h4v1h-4zM5 23h10v1h-10zM23 23h4v1h-4zM31 23h4v1h-4zM41 23h4v1h-4zM47 23h4v1h-4zM55 23h6v1h-6zM67 23h4v1h-4zM13 24h4v1h-4zM23 24h4v1h-4zM31 24h14v1h-14zM47 24h10v1h-10zM67 24h4v1h-4zM13 25h4v1h-4zM23 25h4v1h-4zM31 25h14v1h-14zM47 25h10v1h-10zM67 25h4v1h-4zM3 26h4v1h-4zM13 26h4v1h-4zM23 26h4v1h-4zM31 26h4v1h-4zM41 26h4v1h-4zM47 26h4v1h-4zM53 26h6v1h-6zM67 26h4v1h-4zM3 27h4v1h-4zM13 27h4v1h-4zM23 27h4v1h-4zM31 27h4v1h-4zM41 27h4v1h-4zM47 27h4v1h-4zM53 27h6v1h-6zM67 27h4v1h-4zM5 28h10v1h-10zM23 28h4v1h-4zM31 28h4v1h-4zM41 28h4v1h-4zM47 28h4v1h-4zM55 28h6v1h-6zM67 28h4v1h-4zM5 29h10v1h-10zM23 29h4v1h-4zM31 29h4v1h-4zM41 29h4v1h-4zM47 29h4v1h-4zM55 29h6v1h-6zM67 29h4v1h-4z');
+const pixTexto = (_txt, mx, my, k) => {
+  const s = k, w = 78 * s, h = 30 * s, x0 = Math.round(mx - w / 2), y0 = Math.round(my - h / 2);
+  cx.save(); cx.translate(x0, y0); cx.scale(s, s);
+  cx.save(); cx.translate(1, 1.4); cx.fillStyle = noite ? '#0d1218' : '#ffffff'; cx.fill(PS_P); cx.restore(); // sombra / contorno para ler em qualquer fundo
+  cx.fillStyle = noite ? '#e3e9f2' : '#3030f0'; cx.fill(PS_P); cx.restore();
 };
 // modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
 const progFase = () => Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS));
@@ -340,11 +338,11 @@ const desenha = () => {
     cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);
     cx.font = '600 15px system-ui, sans-serif'; cx.fillText('Volta ao trabalho!', W / 2, H / 2 + 22);
   }
-  if (estado === 'pronto') pixTexto('PRESS START !', W / 2, H * 0.46, 4);
+  if (estado === 'pronto') pixTexto('', W / 2, H * 0.44, Math.max(1.6, Math.min(2.6, W / 360)));
   if (estado === 'morto') {
     const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
     cx.drawImage(S(IM.fim), (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
-    pixTexto('PRESS START !', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 28, 3);
+    pixTexto('', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 18 + 15 * 1.1, 1.1);
   }
 };
 

@@ -268,3 +268,10 @@
 .cp-clima .cl-cafe{justify-content:flex-start;padding:14px 12px 0}
 .cp-clima .cl-cafe span{order:-1;color:#fff;font-size:12px;font-weight:600;letter-spacing:.05em}
 .cp-clima .cl-cafe img{margin-bottom:0;object-position:center bottom}
+/* animação: o café sobe de baixo, com um pequeno "quique", e desce ao terminar */
+.cl-cafe{transform:translateY(104%);opacity:0;visibility:hidden;transition:transform .7s cubic-bezier(.34,1.45,.5,1),opacity .35s ease,visibility 0s linear .7s}
+.cl-cafe.on{transform:none;opacity:1;visibility:visible;transition:transform .7s cubic-bezier(.34,1.45,.5,1),opacity .35s ease,visibility 0s}
+.cl-cafe img{transform-origin:50% 100%}
+.cl-cafe.on img{animation:cl-bal 3.2s ease-in-out .8s infinite}
+@keyframes cl-bal{0%,100%{transform:rotate(0)}50%{transform:rotate(-1.6deg) translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.cl-cafe,.cl-cafe.on{transition:opacity .2s}.cl-cafe.on img{animation:none}}

@@ -40,12 +40,13 @@ const mono = (im, cen) => {
   const p = d.data;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
-    const t = (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
+    const lumi = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2];
+    const t = (cen === 3 && lumi > 140) ? [180, 191, 206] : (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
 };
-const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao || im === IM.mato ? 1 : 0)) : im);
+const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao ? 3 : im === IM.mato ? 1 : 0)) : im);
 const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? NOITE_TOM[1] : '#2c4a5c');
 
 // ---------- camada do jogo ----------
@@ -190,8 +191,6 @@ const passo = (agora) => {
   if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
-    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 20, y: H * (0.08 + Math.random() * 0.28), v: 60 + Math.random() * 40, t: 0 }; }
-    else { ave.x -= ave.v * dt; ave.t += dt; if (ave.x < -40) { ave = null; aveEm = 7 + Math.random() * 9; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -249,7 +248,6 @@ const desenha = () => {
   nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(S(IM.nuvem), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
   cx.restore();
   // chão
-  if (ave) passaro(ave);
   // balão: atrás das moitas e do chão
   if (balao) {
     cx.save(); cx.globalAlpha = balao.a;
@@ -260,7 +258,6 @@ const desenha = () => {
   }
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
-  for (let b = decoX - DECO_P; b < W + 40; b += DECO_P) { cerca(Math.round(b + 160), cy + 5); banco(Math.round(b + 640), cy + 5); } // atrás do chão, que cobre a base
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // pedras
   obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
@@ -279,7 +276,7 @@ const desenha = () => {
     else if (tPortal < T_SUGA + T_VIRA) esc = 0;
     else esc = Math.min(1, (tPortal - T_SUGA - T_VIRA) / T_SOLTA);
   }
-  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(S(pose), -player.w / 2, -player.h / 2, player.w, player.h); }
+  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); }
   cx.restore();
   // portal (10 quadros do GIF, 10 por segundo)
   if (portal) {

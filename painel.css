@@ -180,3 +180,7 @@
 #ag-exp:hover{background:#d4e5db}
 .cp-ag.aberto #ag-exp{top:auto;bottom:auto}
 .cp-ag h4 .cp-st{margin-left:auto}
+/* Agenda: botão de expandir no estilo da seta dos cartões (círculo vazado) */
+#ag-exp{width:24px;height:24px;border-radius:50%;background:transparent;border:1.5px solid currentColor;color:#3b4552;margin:-2px 0}
+#ag-exp:hover{background:rgba(27,36,48,.08);color:#1b2430}
+#ag-exp svg{width:12px;height:12px}

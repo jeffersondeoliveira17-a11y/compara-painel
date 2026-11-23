@@ -66,8 +66,8 @@ const PS_P = new Path2D('M0 0h12v1h-12zM16 0h12v1h-12zM32 0h14v1h-14zM50 0h10v1h
 const pixTexto = (_txt, mx, my, k) => {
   const s = k, w = 78 * s, h = 30 * s, x0 = Math.round(mx - w / 2), y0 = Math.round(my - h / 2);
   cx.save(); cx.translate(x0, y0); cx.scale(s, s);
-  cx.save(); cx.translate(1, 1.4); cx.fillStyle = noite ? '#0d1218' : '#ffffff'; cx.fill(PS_P); cx.restore(); // sombra / contorno para ler em qualquer fundo
-  cx.fillStyle = noite ? '#e3e9f2' : '#3030f0'; cx.fill(PS_P); cx.restore();
+  cx.save(); cx.translate(1, 1.4); cx.fillStyle = noite ? '#0d1218' : '#102532'; cx.fill(PS_P); cx.restore(); // sombra escura para ler em qualquer fundo
+  cx.fillStyle = '#ffffff'; cx.fill(PS_P); cx.restore();
 };
 // modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
 const progFase = () => Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS));

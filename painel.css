@@ -243,3 +243,5 @@
 .cp-menu.mp .it[aria-disabled="true"]{gap:10px;white-space:nowrap}
 .cp-menu.mp .it[aria-disabled="true"] .mp-em{padding:2px 7px;font-size:9.5px}
 .mp-chave{width:22px;height:11px;margin-left:6px}
+/* chave no fim da linha "Sair", alinhada à direita com o "Em breve" */
+.cp-menu.mp .mp-out .mp-chave{margin-left:auto;width:28px;height:14px}

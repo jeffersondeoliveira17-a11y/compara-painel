@@ -1300,7 +1300,7 @@ return '';
 };
 const confere = () => {
 const k = qual(), on = !!k && fechado !== dia();
-if (k) { im.src = 'icones/dia-das-' + k + '.svg'; im.alt = k === 'maes' ? 'Feliz Dia das Mães' : 'Feliz Dia das Mulheres'; }
+if (k) { im.src = 'icones/dia-das-' + k + '.svg?v=' + (window.PAINEL_VERSAO || 1); im.alt = k === 'maes' ? 'Feliz Dia das Mães' : 'Feliz Dia das Mulheres'; }
 el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.tabIndex = on ? 0 : -1;
 };
 el.addEventListener('click', () => { fechado = dia(); confere(); });

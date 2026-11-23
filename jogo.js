@@ -27,7 +27,7 @@ const rampa = (de, ate, n) => { const r = toRgb([de, ate]); return Array.from({ 
 const NIV = 8;
 const TOM_OBJETO = rampa('#1a212c', '#ffffff', NIV); // cachorro, pedras, balão, portal: cinzas até o branco
 const TOM_NUVEM = rampa('#26303f', '#e3e9f2', NIV); // nuvens chegam quase ao branco
-const TOM_CENARIO = rampa('#26303f', '#8b9bb3', NIV); // chão, moitas e nuvens: cinzas azulados, sem cansar
+const TOM_CENARIO = rampa('#3a4659', '#f2f5fa', NIV); // chão e moitas: do cinza médio ao quase branco (vegetação clara, terra escura)
 const NOITE_TOM = ['#ffffff', '#c3ccd9'];
 const monoC = new Map();
 const mono = (im, cen) => {
@@ -40,7 +40,8 @@ const mono = (im, cen) => {
   const p = d.data;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
-    const t = (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
+    const lum = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2];
+    const t = cen === 1 ? TOM_CENARIO[Math.max(0, Math.min(NIV - 1, Math.floor((lum - 60) / 140 * NIV)))] : (cen === 2 ? TOM_NUVEM : TOM_OBJETO)[Math.min(NIV - 1, Math.floor(lum / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
@@ -213,7 +214,7 @@ const ASA = [['x.......x', '.x.....x.', '..xxxxx..', '.........'], ['.........',
 const cor = (dia, noiteC) => (noite ? noiteC : dia);
 const cerca = (x, yb) => {
   const u = 4;
-  cx.fillStyle = cor('#b9ae98', '#6b7a90'); cx.fillRect(x, yb - 4.5 * u, 7 * 16 - 4, u); cx.fillRect(x, yb - 2 * u, 7 * 16 - 4, u);
+  cx.fillStyle = cor('#b9ae98', '#8e9cb2'); cx.fillRect(x, yb - 4.5 * u, 7 * 16 - 4, u); cx.fillRect(x, yb - 2 * u, 7 * 16 - 4, u);
   for (let i = 0; i < 7; i++) {
     const px = x + i * 16;
     cx.fillStyle = cor('#f6f3ea', '#c3ccd9'); cx.fillRect(px, yb - 6 * u, 3 * u, 6 * u); cx.fillRect(px + u, yb - 7 * u, u, u);
@@ -222,7 +223,7 @@ const cerca = (x, yb) => {
 };
 const banco = (x, yb) => {
   const u = 4;
-  cx.fillStyle = cor('#5d4038', '#6b7a90'); cx.fillRect(x + 2 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 11 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 2 * u, yb - 7 * u, u, 4 * u);
+  cx.fillStyle = cor('#5d4038', '#8e9cb2'); cx.fillRect(x + 2 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 11 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 2 * u, yb - 7 * u, u, 4 * u);
   cx.fillStyle = cor('#8a5a3c', '#c3ccd9'); cx.fillRect(x, yb - 4 * u, 14 * u, u + 2); cx.fillRect(x + u, yb - 7 * u, 12 * u, u);
 };
 const tufo = (x, yb, k) => {

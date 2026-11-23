@@ -1275,3 +1275,26 @@ let n = 0, t0 = 0;
 alvo.addEventListener('click', () => { const agora = Date.now(); if (agora - t0 > 3000) n = 0; if (!n) t0 = agora; n++; if (n >= 5) { n = 0; window.cp404('Brincadeira! O clima está ok.', 5000, null); } });
 if (/[?&]erro404(=|&|$)/.test(location.search)) window.cp404('Clima não encontrado · toque para tentar de novo', 0, null);
 })();
+
+(() => {
+// Homenagens no widget do tempo: Dia das Mulheres (8 de março) e Dia das Mães (2º domingo de maio), o dia todo. Toque para dispensar.
+// Para testar: ?mulheres ou ?maes mostra o cartão na hora.
+const el = document.getElementById('cl-flor'), im = document.getElementById('cl-flor-i'); if (!el || !im) return;
+const q = location.search, fM = /[?&]maes(=|&|$)/.test(q), fW = /[?&]mulheres(=|&|$)/.test(q);
+let fechado = '';
+const dia = () => new Date().toDateString();
+const qual = () => {
+const d = new Date(), m = d.getMonth(), n = d.getDate();
+if (fM) return 'maes'; if (fW) return 'mulheres';
+if (m === 2 && n === 8) return 'mulheres';
+if (m === 4 && d.getDay() === 0 && n >= 8 && n <= 14) return 'maes';
+return '';
+};
+const confere = () => {
+const k = qual(), on = !!k && fechado !== dia();
+if (k) { im.src = 'icones/dia-das-' + k + '.svg'; im.alt = k === 'maes' ? 'Feliz Dia das Mães' : 'Feliz Dia das Mulheres'; }
+el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.tabIndex = on ? 0 : -1;
+};
+el.addEventListener('click', () => { fechado = dia(); confere(); });
+confere(); setInterval(confere, 60000);
+})();

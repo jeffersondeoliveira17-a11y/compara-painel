@@ -341,3 +341,7 @@
 .cp-bar-dir .cp-perfil:active .cp-menu-sq{transform:translateY(2px)}
 .cp-app.estreito .cp-bar-dir .cp-perfil{border-radius:0;overflow:visible}
 .cp-app.estreito .cp-logo .cp-porco{height:34px}
+
+/* Homenagem no widget do tempo: Dia das Mulheres (8/3) e Dia das Mães (2º domingo de maio); toque para voltar ao clima */
+.cp-clima .cl-cafe.cl-flor{padding:0;background:#fbdde3;justify-content:center}
+.cp-clima .cl-cafe.cl-flor img.cl-go{flex:none;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;margin:0;image-rendering:pixelated}

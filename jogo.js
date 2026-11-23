@@ -37,7 +37,7 @@ const mede = () => {
 
 // ---------- estado ----------
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let gigantes = [], matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -48,6 +48,8 @@ const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, c
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
+  // nuvens enormes bem ao fundo: poucas, bem espaçadas e lentas (cortadas pelo alto/pela moita)
+  gigantes = Array.from({ length: 3 }, (_, i) => ({ x: (W / 3) * i + Math.random() * W * 0.25, y: -40 + Math.random() * H * 0.35, w: 520 + Math.random() * 360, v: 5 + Math.random() * 4 }));
   nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
@@ -93,6 +95,7 @@ const passo = (agora) => {
       }
     }
   }
+  if (estado !== 'morto' && estado !== 'fim') gigantes.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 800 : 1); if (n.x + n.w < -20) { n.x = W + 80 + Math.random() * W * 0.5; n.y = -40 + Math.random() * H * 0.35; n.w = 520 + Math.random() * 360; } });
   if (estado !== 'morto' && estado !== 'fim') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
   desenha();
 };
@@ -101,6 +104,10 @@ const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
   const cy = chaoY();
+  // nuvens enormes (atrás de tudo)
+  cx.save(); cx.globalAlpha = 0.22;
+  gigantes.forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171));
+  cx.restore();
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.35;
   nuvensF.forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171));

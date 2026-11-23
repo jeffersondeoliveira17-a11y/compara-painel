@@ -52,7 +52,7 @@ const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
-box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou espaço para pular · Esc para sair</div>';
+box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true" style="display:none"></div>';
 area.append(box);
 const aplicaTema = () => { box.classList.toggle('noite', noite); };
 aplicaTema();
@@ -61,6 +61,16 @@ aviso.className = 'cp-jogo-aviso'; aviso.setAttribute('role', 'status'); aviso.h
 let avT = 0;
 const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 4500); };
 const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
+// letras em pixel (5x7) para o "PRESS START !": branco com contorno escuro e sombra
+const LETRA = { P: ['11110','10001','10001','11110','10000','10000','10000'], R: ['11110','10001','10001','11110','10100','10010','10001'], E: ['11111','10000','10000','11110','10000','10000','11111'], S: ['01111','10000','10000','01110','00001','00001','11110'], T: ['11111','00100','00100','00100','00100','00100','00100'], A: ['01110','10001','10001','11111','10001','10001','10001'], '!': ['00100','00100','00100','00100','00100','00000','00100'], ' ': ['00000','00000','00000','00000','00000','00000','00000'] };
+const pixTexto = (txt, mx, my, u) => {
+  const larg = txt.length * 6 * u - u, x0 = Math.round(mx - larg / 2), y0 = Math.round(my - 3.5 * u);
+  const passo = (dx, dy, cor) => { cx.fillStyle = cor; for (let i = 0; i < txt.length; i++) LETRA[txt[i]].forEach((lin, r) => { for (let c = 0; c < 5; c++) if (lin[c] === '1') cx.fillRect(x0 + i * 6 * u + c * u + dx, y0 + r * u + dy, u, u); }); };
+  const esc = noite ? '#0d1218' : '#102532';
+  passo(0, u, esc); passo(u, u, esc); // sombra
+  [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => passo(a * u * 0.6, b * u * 0.6, esc)); // contorno
+  passo(0, 0, noite ? '#e3e9f2' : '#ffffff');
+};
 // modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
 const progFase = () => Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS));
 const faixa = (a, b) => Math.max(0, Math.min(1, (progFase() - a) / (b - a)));
@@ -324,11 +334,11 @@ const desenha = () => {
     cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);
     cx.font = '600 15px system-ui, sans-serif'; cx.fillText('Volta ao trabalho!', W / 2, H / 2 + 22);
   }
+  if (estado === 'pronto') pixTexto('PRESS START !', W / 2, H * 0.46, 4);
   if (estado === 'morto') {
     const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
     cx.drawImage(S(IM.fim), (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
-    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = TINTA();
-    cx.fillText('Toque ou espaço para jogar de novo', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 24);
+    pixTexto('PRESS START !', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 28, 3);
   }
 };
 

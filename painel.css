@@ -254,3 +254,9 @@
 .cp-menu.mp .mp-out .mp-chave{width:50px;height:25px}
 .cp-menu.mp .it[aria-disabled="true"] .mp-em{width:48px}
 .cp-menu.mp .mp-out .mp-chave{width:48px;height:24px}
+.cp-menu.mp .it[aria-disabled="true"] .mp-em{width:46px}
+.cp-menu.mp .mp-out .mp-chave{width:46px;height:23px}
+/* cabeçalho do menu: foto à direita e maior */
+.mp-hd{flex-direction:row-reverse;justify-content:space-between;gap:14px}
+.mp-id{flex:1 1 auto}
+.cp-bar-dir .cp-menu .mp-ava,.mp-ava{width:76px;height:76px;font-size:28px}

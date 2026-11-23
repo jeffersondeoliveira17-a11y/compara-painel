@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), vivas: ['rosa', 'laranja', 'roxa', 'verde', 'amarela'].map((c) => img('icones/nuvem-' + c + '.svg')), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -46,12 +46,12 @@ const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: lar
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
 const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
 const GRAV = 2600, PULO = 880;
-const novaGigante = (x) => { const w = 380 + Math.random() * 620; return { x, y: -60 + Math.random() * H * 0.55, w, e: 0.7 + Math.random() * 0.7, c: Math.floor(Math.random() * 5), f: Math.random() < 0.5, v: 4 + Math.random() * 9 }; };
+const novaGigante = (x) => { const w = 380 + Math.random() * 620; return { x, y: -60 + Math.random() * H * 0.55, w, e: 0.7 + Math.random() * 0.7, f: Math.random() < 0.5, v: 4 + Math.random() * 9 }; };
 const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
-  // nuvens enormes e coloridas bem ao fundo: tudo aleatório (cor, tamanho, altura, espelhada ou não, espaçamento)
+  // nuvens enormes bem ao fundo (poucas, cores originais): tudo aleatório (tamanho, altura, espelhada ou não, espaçamento)
   gigantes = []; let gx = -Math.random() * 300;
-  while (gx < W * 1.6) { gigantes.push(novaGigante(gx)); gx += 250 + Math.random() * 900; }
+  while (gx < W * 1.6) { gigantes.push(novaGigante(gx)); gx += 700 + Math.random() * 1500; }
   nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
@@ -101,7 +101,7 @@ const passo = (agora) => {
     gigantes.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 800 : 1); });
     gigantes = gigantes.filter((n) => n.x + n.w > -20);
     const ult = gigantes.reduce((m, n) => Math.max(m, n.x + n.w), 0);
-    if (ult < W + 200) gigantes.push(novaGigante(Math.max(W + 40, ult) + 60 + Math.random() * 900));
+    if (ult < W + 200) gigantes.push(novaGigante(Math.max(W + 40, ult) + 500 + Math.random() * 1500));
   }
   if (estado !== 'morto' && estado !== 'fim') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
   desenha();
@@ -114,9 +114,9 @@ const desenha = () => {
   // nuvens enormes (atrás de tudo)
   gigantes.forEach((n) => {
     const hh = n.w * 107.2 / 171 * n.e;
-    cx.save(); cx.globalAlpha = 0.95;
-    if (n.f) { cx.translate(n.x + n.w, n.y); cx.scale(-1, 1); cx.drawImage(IM.vivas[n.c], 0, 0, n.w, hh); }
-    else cx.drawImage(IM.vivas[n.c], n.x, n.y, n.w, hh);
+    cx.save(); cx.globalAlpha = 0.85;
+    if (n.f) { cx.translate(n.x + n.w, n.y); cx.scale(-1, 1); cx.drawImage(IM.nuvem, 0, 0, n.w, hh); }
+    else cx.drawImage(IM.nuvem, n.x, n.y, n.w, hh);
     cx.restore();
   });
   // nuvenzinhas ao fundo

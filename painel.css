@@ -189,3 +189,8 @@
 #ag-exp:hover{background:#ecd9ac;color:#4a3410}
 #ag-exp svg{width:16px;height:16px;transform:none!important}
 #ag-exp .ex-b{display:none}.cp-ag.aberto #ag-exp .ex-a{display:none}.cp-ag.aberto #ag-exp .ex-b{display:inline}
+/* Agenda: botão de expandir só com a setinha, sem fundo */
+#ag-exp{width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:#4a525c;margin:-4px -4px -4px 0}
+#ag-exp:hover{background:rgba(27,36,48,.07);color:#1b2430}
+#ag-exp svg{width:20px;height:20px;transform:none!important;transition:transform .25s}
+.cp-ag.aberto #ag-exp svg{transform:rotate(180deg)!important}

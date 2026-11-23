@@ -1,4 +1,4 @@
-// Joguinho de teste na área de trabalho: o gatinho corre e pula os raios.
+// Joguinho de teste na área de trabalho: o gatinho corre e pula as pedras.
 // Entrar: 5 toques em "Hi, Jeff" (em até 3 s) ou o código Konami (↑ ↑ ↓ ↓ ← → ← → B A). Sair: Esc ou o X.
 (() => {
 const area = document.getElementById('cp-oi'), nome = document.getElementById('cp-oi-nome');
@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), pedra: img('icones/pedra.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -40,10 +40,10 @@ const pula = () => {
   else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; }
 };
 const novoObst = () => {
-  const k = 3 + Math.floor(Math.random() * 2); // tamanho do pixel do raio: 3 ou 4
-  const o = { x: W + 20, w: 11 * k, h: 17 * k, k };
+  const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
+  const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
-  if (Math.random() < 0.28) obst.push({ x: o.x + o.w + 26 + Math.random() * 14, w: 11 * 3, h: 17 * 3, k: 3 }); // dupla
+  if (Math.random() < 0.25) obst.push({ x: o.x + o.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 }); // dupla
 };
 
 // ---------- laço ----------
@@ -63,7 +63,7 @@ const passo = (agora) => {
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 12, y: player.y + 8, w: player.w - 24, h: player.h - 12 };
     for (const o of obst) {
-      const b = { x: o.x + 5, y: chaoY() - o.h + 5, w: o.w - 10, h: o.h - 8 };
+      const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
         estado = 'morto'; morreuEm = performance.now();
         const pts = Math.floor(dist);
@@ -88,8 +88,8 @@ const desenha = () => {
   cx.fillStyle = '#8fcf86'; cx.fillRect(0, cy, W, H - cy);
   cx.fillStyle = '#5faa57'; cx.fillRect(0, cy, W, 5);
   for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x + 6, cy + 5, 4, 4); cx.fillRect(x + 24, cy + 5, 4, 4); cx.fillStyle = '#74bb6b'; cx.fillRect(x, cy + 18, 12, 3); cx.fillRect(x + 22, cy + 30, 8, 3); cx.fillStyle = '#5faa57'; }
-  // raios
-  obst.forEach((o) => cx.drawImage(IM.raio, o.x, cy - o.h, o.w, o.h));
+  // pedras
+  obst.forEach((o) => cx.drawImage(IM.pedra, o.x, cy - o.h, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;

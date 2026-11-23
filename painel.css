@@ -361,3 +361,6 @@
 
 /* ícone do tempo 4px mais baixo */
 .cp-clima .cl-t svg#cl-i{transform:translateY(4px)}
+
+/* o cartão da homenagem herda a classe cl-fim, que faz piscar: aqui fica parado */
+.cp-clima .cl-cafe.cl-fim.cl-flor.on img.cl-go{animation:none;opacity:1}

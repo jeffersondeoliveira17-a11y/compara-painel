@@ -27,7 +27,7 @@ const rampa = (de, ate, n) => { const r = toRgb([de, ate]); return Array.from({ 
 const NIV = 8;
 const TOM_OBJETO = rampa('#1a212c', '#ffffff', NIV); // cachorro, pedras, balão, portal: cinzas até o branco
 const TOM_NUVEM = rampa('#26303f', '#e3e9f2', NIV); // nuvens chegam quase ao branco
-const TOM_CENARIO = rampa('#3a4659', '#f2f5fa', NIV); // chão e moitas: do cinza médio ao quase branco (vegetação clara, terra escura)
+const TOM_CENARIO = rampa('#26303f', '#8b9bb3', NIV); // chão, moitas e nuvens: cinzas azulados, sem cansar
 const NOITE_TOM = ['#ffffff', '#c3ccd9'];
 const monoC = new Map();
 const mono = (im, cen) => {
@@ -40,8 +40,7 @@ const mono = (im, cen) => {
   const p = d.data;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
-    const lum = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2];
-    const t = cen === 1 ? TOM_CENARIO[Math.max(0, Math.min(NIV - 1, Math.floor((lum - 60) / 140 * NIV)))] : (cen === 2 ? TOM_NUVEM : TOM_OBJETO)[Math.min(NIV - 1, Math.floor(lum / (256 / NIV)))];
+    const t = (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
@@ -214,7 +213,7 @@ const ASA = [['x.......x', '.x.....x.', '..xxxxx..', '.........'], ['.........',
 const cor = (dia, noiteC) => (noite ? noiteC : dia);
 const cerca = (x, yb) => {
   const u = 4;
-  cx.fillStyle = cor('#b9ae98', '#8e9cb2'); cx.fillRect(x, yb - 4.5 * u, 7 * 16 - 4, u); cx.fillRect(x, yb - 2 * u, 7 * 16 - 4, u);
+  cx.fillStyle = cor('#b9ae98', '#6b7a90'); cx.fillRect(x, yb - 4.5 * u, 7 * 16 - 4, u); cx.fillRect(x, yb - 2 * u, 7 * 16 - 4, u);
   for (let i = 0; i < 7; i++) {
     const px = x + i * 16;
     cx.fillStyle = cor('#f6f3ea', '#c3ccd9'); cx.fillRect(px, yb - 6 * u, 3 * u, 6 * u); cx.fillRect(px + u, yb - 7 * u, u, u);
@@ -223,7 +222,7 @@ const cerca = (x, yb) => {
 };
 const banco = (x, yb) => {
   const u = 4;
-  cx.fillStyle = cor('#5d4038', '#8e9cb2'); cx.fillRect(x + 2 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 11 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 2 * u, yb - 7 * u, u, 4 * u);
+  cx.fillStyle = cor('#5d4038', '#6b7a90'); cx.fillRect(x + 2 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 11 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 2 * u, yb - 7 * u, u, 4 * u);
   cx.fillStyle = cor('#8a5a3c', '#c3ccd9'); cx.fillRect(x, yb - 4 * u, 14 * u, u + 2); cx.fillRect(x + u, yb - 7 * u, 12 * u, u);
 };
 const tufo = (x, yb, k) => {
@@ -263,7 +262,6 @@ const desenha = () => {
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let b = decoX - DECO_P; b < W + 40; b += DECO_P) { cerca(Math.round(b + 160), cy + 5); banco(Math.round(b + 640), cy + 5); } // atrás do chão, que cobre a base
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  for (let x = chaoX - CHAO_W, k = 0; x < W; x += CHAO_W, k++) [34, 122, 205].forEach((o, q) => tufo(Math.round(x + o), cy + 4, k * 3 + q)); // tufos balançando
   // pedras
   obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

@@ -77,6 +77,7 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
+let decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
@@ -97,7 +98,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6;
+  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 4 + Math.random() * 5;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -156,7 +157,7 @@ const passo = (agora) => {
   if (estado === 'portal') passoPortal(dt);
   if (estado === 'jogando') {
     vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt); dist += vel * dt / 14;
-    chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P;
+    chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
@@ -186,9 +187,11 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; }
+  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
+    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 20, y: H * (0.08 + Math.random() * 0.28), v: 60 + Math.random() * 40, t: 0 }; }
+    else { ave.x -= ave.v * dt; ave.t += dt; if (ave.x < -40) { ave = null; aveEm = 7 + Math.random() * 9; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -204,6 +207,37 @@ const passo = (agora) => {
   desenha();
 };
 const pts5 = (n) => String(Math.floor(n)).padStart(5, '0');
+// ---------- cenário ao fundo: cerquinha, banco, tufos de grama e passarinho (tudo desenhado em código) ----------
+const DECO_P = 1180;
+const ASA = [['x.......x', '.x.....x.', '..xxxxx..', '.........'], ['.........', '..xxxxx..', '.x.....x.', 'x.......x']];
+const cor = (dia, noiteC) => (noite ? noiteC : dia);
+const cerca = (x, yb) => {
+  const u = 4;
+  cx.fillStyle = cor('#b9ae98', '#6b7a90'); cx.fillRect(x, yb - 4.5 * u, 7 * 16 - 4, u); cx.fillRect(x, yb - 2 * u, 7 * 16 - 4, u);
+  for (let i = 0; i < 7; i++) {
+    const px = x + i * 16;
+    cx.fillStyle = cor('#f6f3ea', '#c3ccd9'); cx.fillRect(px, yb - 6 * u, 3 * u, 6 * u); cx.fillRect(px + u, yb - 7 * u, u, u);
+    cx.fillStyle = cor('#cfc7b5', '#8795aa'); cx.fillRect(px + 2 * u, yb - 6 * u, u, 6 * u);
+  }
+};
+const banco = (x, yb) => {
+  const u = 4;
+  cx.fillStyle = cor('#5d4038', '#6b7a90'); cx.fillRect(x + 2 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 11 * u, yb - 3 * u, u, 3 * u); cx.fillRect(x + 2 * u, yb - 7 * u, u, 4 * u);
+  cx.fillStyle = cor('#8a5a3c', '#c3ccd9'); cx.fillRect(x, yb - 4 * u, 14 * u, u + 2); cx.fillRect(x + u, yb - 7 * u, 12 * u, u);
+};
+const tufo = (x, yb, k) => {
+  const t = performance.now();
+  for (let j = 0; j < 3; j++) {
+    const alt = (j === 1 ? 7 : 5) * 3, s = Math.sin(t / 520 + k * 1.7 + j), sw = s > 0.35 ? 3 : (s < -0.35 ? -3 : 0);
+    cx.fillStyle = cor(j === 1 ? '#3f9a39' : '#5fbf4a', j === 1 ? '#e3e9f2' : '#b4bfce');
+    cx.fillRect(x + j * 5, yb - alt / 2, 4, alt / 2); cx.fillRect(x + j * 5 + sw, yb - alt, 4, alt / 2);
+  }
+};
+const passaro = (a) => {
+  const u = 4, m = ASA[Math.floor(a.t * 5) % 2];
+  cx.fillStyle = cor('#2f3d4d', '#e3e9f2');
+  m.forEach((lin, r) => { for (let c = 0; c < lin.length; c++) if (lin[c] === 'x') cx.fillRect(Math.round(a.x + c * u), Math.round(a.y + r * u), u, u); });
+};
 const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
@@ -215,6 +249,7 @@ const desenha = () => {
   nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(S(IM.nuvem), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
   cx.restore();
   // chão
+  if (ave) passaro(ave);
   // balão: atrás das moitas e do chão
   if (balao) {
     cx.save(); cx.globalAlpha = balao.a;
@@ -225,7 +260,9 @@ const desenha = () => {
   }
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
+  for (let b = decoX - DECO_P; b < W + 40; b += DECO_P) { cerca(Math.round(b + 160), cy + 5); banco(Math.round(b + 640), cy + 5); } // atrás do chão, que cobre a base
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  for (let x = chaoX - CHAO_W, k = 0; x < W; x += CHAO_W, k++) [34, 122, 205].forEach((o, q) => tufo(Math.round(x + o), cy + 4, k * 3 + q)); // tufos balançando
   // pedras
   obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

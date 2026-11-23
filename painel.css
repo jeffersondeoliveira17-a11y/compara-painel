@@ -215,3 +215,9 @@
 .cp-side-bot{margin-top:auto}.cp-side-bot .cp-side-foot{margin-top:0}
 .cp-chave-v{width:20px;height:40px}.cp-chave-h{width:40px;height:20px;margin:0 0 12px 12px}
 .cp-app.estreito .cp-chave-v{margin:0 auto 12px}
+/* Topo: foto fora da pílula e um pouco maior */
+.cp-pilula{display:flex;align-items:center;gap:10px}
+.cp-app.estreito .cp-bar-dir{background:none;border:0;border-radius:0;padding:0;gap:12px}
+.cp-app.estreito .cp-pilula{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:999px;padding:4px 6px;gap:2px}
+.cp-bar-dir .cp-ava{width:44px;height:44px;font-size:17px}
+.cp-bar-dir .cp-perfil::after{width:11px;height:11px;right:2px;bottom:2px}

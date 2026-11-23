@@ -485,7 +485,7 @@ b.append(n, s); return b;
 (async () => {
 let mcp = null;
 const dt = document.getElementById('cp-oi-data');
-if (dt) { const w = new Date(), c = (t) => t.charAt(0).toUpperCase() + t.slice(1); dt.textContent = c(w.toLocaleDateString('pt-BR', { weekday: 'long' })) + '\n' + w.getDate() + ' de ' + c(w.toLocaleDateString('pt-BR', { month: 'long' })); }
+if (dt) { const w = new Date(), c = (t) => t.charAt(0).toUpperCase() + t.slice(1); dt.textContent = w.getDate() + ' de ' + c(w.toLocaleDateString('pt-BR', { month: 'long' })) + '\n' + c(w.toLocaleDateString('pt-BR', { weekday: 'long' })); }
 const hojeL = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
 try { mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { mcp = null; }
 if (!mcp) { corpo.replaceChildren(linha('Avisos ainda não ligados', 'Para contar mensagens novas aqui, o painel precisa do Supabase liberado nesta página. Por enquanto, abra o setor Sugestões.', 'sugestoes')); return; }

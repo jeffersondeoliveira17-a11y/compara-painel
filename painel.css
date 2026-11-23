@@ -160,3 +160,5 @@
 .cp-clima .cl-g>div:nth-child(2){border-bottom-width:1px;border-right-width:0}
 .cp-clima .cl-g>div:nth-child(3){border-right-width:0}
 .cp-clima .cl-g .gi{top:50%;margin-top:-7px}
+/* Widget do tempo: data "22 de Novembro / Domingo" com barra amarela à esquerda */
+.cp-clima .cp-oi-d{display:block;width:fit-content;border-left:3px solid #FFE27A;padding-left:8px;white-space:pre-line}

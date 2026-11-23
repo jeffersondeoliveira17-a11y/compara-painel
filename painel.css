@@ -355,5 +355,6 @@
 
 /* Botão menu encolhido: as três linhas se afastam quando o menu abre */
 .cp-menu-sq .mb{transition:transform .18s ease}
-.cp-perfil[aria-expanded="true"] .cp-menu-sq .mb0{transform:translateY(-2px)}
-.cp-perfil[aria-expanded="true"] .cp-menu-sq .mb1{transform:translateY(-1px)}
+.cp-perfil[aria-expanded="true"] .cp-menu-sq .mb0{transform:translateY(-1px)}
+.cp-perfil[aria-expanded="true"] .cp-menu-sq .mb1{transform:translateY(0)}
+.cp-perfil[aria-expanded="true"] .cp-menu-sq .mb2{transform:translateY(1px)}

@@ -61,6 +61,10 @@ aviso.className = 'cp-jogo-aviso'; aviso.setAttribute('role', 'status'); aviso.h
 let avT = 0;
 const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 4500); };
 const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
+// modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
+const progFase = () => Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS));
+const faixa = (a, b) => Math.max(0, Math.min(1, (progFase() - a) / (b - a)));
+const dCor = (im, k, ...a) => { cx.drawImage(S(im), ...a); if (noite && k > 0.01) { const g = cx.globalAlpha; cx.globalAlpha = g * k; cx.drawImage(im, ...a); cx.globalAlpha = g; } };
 
 let W = 0, H = 0, dpr = 1;
 const mede = () => {
@@ -247,7 +251,7 @@ const desenha = () => {
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.8;
-  nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(S(IM.nuvem), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
+  nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => dCor(IM.nuvem, faixa(0, 0.35), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
   cx.restore();
   // chão
   // balão: atrás das moitas e do chão
@@ -255,12 +259,12 @@ const desenha = () => {
     cx.save(); cx.globalAlpha = balao.a;
     const bx = espelho ? W - balao.x - balao.w : balao.x; // posição na tela vira posição do mundo espelhado
     if (espelho) { cx.translate(bx + balao.w / 2, 0); cx.scale(-1, 1); cx.translate(-(bx + balao.w / 2), 0); }
-    cx.drawImage(S(IM.balao), bx, balao.y, balao.w, balao.h);
+    dCor(IM.balao, faixa(0.15, 0.5), bx, balao.y, balao.w, balao.h);
     cx.restore();
   }
   // moitas ao fundo (andam mais devagar que o chão)
-  for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
-  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
+  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

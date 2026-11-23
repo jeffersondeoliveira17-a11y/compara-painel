@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), pedra: img('icones/pedra.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -24,15 +24,16 @@ const mede = () => {
 
 // ---------- estado ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 70, h: 56, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const chaoY = () => H - 44;
+const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
 const LINHA = [24, 23, 22, 23]; // última linha com desenho em cada pose do gato
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
-  vel = 430; dist = 0; obst = []; chaoX = 0; prox = 900;
+  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
   nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
@@ -54,7 +55,7 @@ const passo = (agora) => {
   const dt = Math.min(0.034, (agora - t0) / 1000 || 0); t0 = agora;
   if (estado === 'jogando') {
     vel = Math.min(920, vel + 9 * dt); dist += vel * dt / 14;
-    chaoX = (chaoX - vel * dt) % 40;
+    chaoX = (chaoX - vel * dt) % 40; matoX = (matoX - vel * dt * 0.3) % MATO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
@@ -90,6 +91,8 @@ const desenha = () => {
   cx.fillStyle = '#8fcf86'; cx.fillRect(0, cy, W, H - cy);
   cx.fillStyle = '#5faa57'; cx.fillRect(0, cy, W, 5);
   for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x + 6, cy + 5, 4, 4); cx.fillRect(x + 24, cy + 5, 4, 4); cx.fillStyle = '#74bb6b'; cx.fillRect(x, cy + 18, 12, 3); cx.fillRect(x + 22, cy + 30, 8, 3); cx.fillStyle = '#5faa57'; }
+  // moitas ao fundo (andam mais devagar que o chão)
+  for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(IM.mato, x, cy - MATO_H + 8, MATO_W, MATO_H);
   // pedras
   obst.forEach((o) => cx.drawImage(IM.pedra, o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

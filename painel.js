@@ -567,12 +567,12 @@ g('cl-f').textContent = typeof c.apparent_temperature === 'number' ? dec(c.appar
 g('cl-uv').textContent = typeof uv === 'number' ? dec(uv, 0) : '--';
 g('cl-p').textContent = typeof c.relative_humidity_2m === 'number' ? Math.round(c.relative_humidity_2m) + '%' : '--';
 };
-(async () => {
+const carregaClima = async () => {
 const CH = 'cp-clima-cache2';
 try { const k = JSON.parse(localStorage.getItem(CH) || 'null'); if (k && Date.now() - k.at < 9e5) { pinta(k.c, k.uv); return; } } catch (e) { }
 let mcp = null;
 try { mcp = window.claude && window.claude.use ? await window.claude.use('mcp') : null; } catch (e) { mcp = null; }
-if (!mcp) { g('cl-s').textContent = 'Clima indisponível aqui'; g('cl-s').classList.add('erro'); return; }
+if (!mcp) { g('cl-s').textContent = 'Clima indisponível aqui'; g('cl-s').classList.add('erro'); if (window.cp404) window.cp404('Clima não encontrado · toque para tentar de novo', 0, carregaClima); return; }
 try {
 const q = "select (content::json)->'current' as c, (content::json)->'hourly' as h from extensions.http_get('https://api.open-meteo.com/v1/forecast?latitude=-23.51&longitude=-46.88&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl,is_day&hourly=uv_index&forecast_days=1&timezone=America%2FSao_Paulo');";
 const res = await mcp.callTool('Supabase', 'execute_sql', { project_id: 'ckhaolaprrtvwoadnnty', query: q }, { cache: false });
@@ -584,8 +584,10 @@ if (typeof c.temperature_2m !== 'number') throw new Error('sem dados');
 let uv = null; try { const hh = r0.h, ix = Math.min(23, new Date().getHours()); if (hh && hh.uv_index) uv = hh.uv_index[ix]; } catch (e) { }
 pinta(c, uv);
 try { localStorage.setItem(CH, JSON.stringify({ at: Date.now(), c, uv })); } catch (e) { }
-} catch (e) { g('cl-s').textContent = 'Clima indisponível agora'; g('cl-s').classList.add('erro'); }
-})();
+} catch (e) { g('cl-s').textContent = 'Clima indisponível agora'; g('cl-s').classList.add('erro'); if (window.cp404) window.cp404('Clima não encontrado · toque para tentar de novo', 0, carregaClima); }
+};
+window.cpClimaCarrega = carregaClima;
+setTimeout(carregaClima, 0);
 })();
 (() => {
 const secs = () => Array.from(document.querySelectorAll('.cp-sec'));
@@ -1255,4 +1257,21 @@ const onB = livre && (forcaB || (!forcaA && hora && sexta)), onA = livre && !onB
 };
 [a, b].forEach((el) => el.addEventListener('click', () => { fechado = dia(); confere(); }));
 confere(); setInterval(confere, 30000);
+})();
+(() => {
+// ERROR 404 no widget do tempo: aparece quando o clima não carrega (toque para tentar de novo) e na brincadeira dos 5 toques na temperatura.
+const el = document.getElementById('cl-404'), tx = document.getElementById('cl-404-t'); if (!el) return;
+let aoToque = null, tm = 0;
+const fecha = () => { clearTimeout(tm); el.classList.remove('on'); el.setAttribute('aria-hidden', 'true'); el.tabIndex = -1; };
+window.cp404 = (texto, ms, depois) => {
+tx.textContent = texto || ''; aoToque = depois || null; clearTimeout(tm);
+el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); el.tabIndex = 0;
+if (ms) tm = setTimeout(fecha, ms);
+};
+el.addEventListener('click', () => { const f = aoToque; fecha(); aoToque = null; if (f) f(); });
+// brincadeira: 5 toques na temperatura em até 3 segundos
+const alvo = document.querySelector('#cp-clima .cl-n') || document.getElementById('cl-t'); if (!alvo) return;
+let n = 0, t0 = 0;
+alvo.addEventListener('click', () => { const agora = Date.now(); if (agora - t0 > 3000) n = 0; if (!n) t0 = agora; n++; if (n >= 5) { n = 0; window.cp404('Brincadeira! O clima está ok.', 5000, null); } });
+if (/[?&]erro404(=|&|$)/.test(location.search)) window.cp404('Clima não encontrado · toque para tentar de novo', 0, null);
 })();

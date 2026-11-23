@@ -38,13 +38,10 @@ const mono = (im, cen) => {
   const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, c.width, c.height);
   let d; try { d = g.getImageData(0, 0, c.width, c.height); } catch (e) { monoC.set(im, im); return im; } // sem permissão de leitura: usa o desenho normal
   const p = d.data;
-  const W2 = c.width, H2 = c.height;
   for (let n = 0; n < p.length; n += 4) {
     if (p[n + 3] < 8) continue;
     const lumi = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2];
-    const px = (n / 4) % W2, py = Math.floor(n / 4 / W2);
-    const emenda = cen === 1 && py > H2 * 0.72 && ((Math.floor(px / (W2 / 40)) * 7 + 3) % 5) < 2; // algumas manchas da base da moita ficam no tom da grama do piso
-    const t = (cen === 3 && lumi > 140) || emenda ? [180, 191, 206] : (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
+    const t = (cen === 3 && lumi > 140) ? [150, 162, 181] : (cen === 2 ? TOM_NUVEM : cen ? TOM_CENARIO : TOM_OBJETO)[Math.min(NIV - 1, Math.floor((0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]) / (256 / NIV)))];
     p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255;
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
@@ -55,7 +52,7 @@ const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
-box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou barra de espaço para pular · Esc para sair</div>';
+box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-vel"><button type="button" data-v="0.6" aria-label="Frear">◀</button><button type="button" data-v="1.45" aria-label="Acelerar">▶</button></div><div class="jg-dica" aria-hidden="true">Toque ou espaço para pular · ◀ ▶ frear e acelerar · Esc para sair</div>';
 area.append(box);
 const aplicaTema = () => { box.classList.toggle('noite', noite); };
 aplicaTema();
@@ -85,7 +82,7 @@ let decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let acel = 1, alvoAcel = 1, matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -102,7 +99,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 4 + Math.random() * 5;
+  acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 4 + Math.random() * 5;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -160,12 +157,14 @@ const passo = (agora) => {
   } else if (agora - fimEm > 3200) { fecha(); return; }
   if (estado === 'portal') passoPortal(dt);
   if (estado === 'jogando') {
-    vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt); dist += vel * dt / 14;
-    chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P;
+    vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt);
+    acel += (alvoAcel - acel) * Math.min(1, 4 * dt); const v = vel * acel; player.x = 90 + (acel - 1) * 90; // acelerar: o cachorro corre mais e avança na tela; frear: recua
+    dist += v * dt / 14;
+    chaoX = (chaoX - v * dt) % CHAO_W; matoX = (matoX - v * dt * 0.6) % MATO_P; decoX = (decoX - v * dt * 0.8) % DECO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
-    prox -= vel * dt;
+    prox -= v * dt;
     const alvo = PORTAL_PTS * (fase + 1);
     if (!portal && dist >= alvo) { // hora do portal: ele entra depois da última pedra, sem pedras novas na frente
       const ult = obst.reduce((m, o) => Math.max(m, o.x + o.w), 0);
@@ -174,10 +173,10 @@ const passo = (agora) => {
     }
     if (prox <= 0 && !portal) { prox = novoObst() + vel * Math.max(0.5, 0.85 - 0.08 * fase + Math.random() * 0.8) + 120; }
     if (portal) {
-      portal.x -= vel * dt;
+      portal.x -= v * dt;
       if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
     }
-    obst.forEach((o) => { o.x -= vel * dt; if (!o.cor && o.x + o.w / 2 < player.x + player.w / 2) o.cor = true; }); // pedra que o cachorro já pulou fica colorida
+    obst.forEach((o) => { o.x -= v * dt; if (!o.cor && o.x + o.w / 2 < player.x + player.w / 2) o.cor = true; }); // pedra que o cachorro já pulou fica colorida
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
@@ -342,15 +341,19 @@ const fecha = () => {
 window.cpJogo = { abre, fecha };
 fechar.addEventListener('click', (e) => { e.stopPropagation(); fecha(); });
 cv.addEventListener('pointerdown', (e) => { e.preventDefault(); pula(); });
+box.querySelectorAll('.jg-vel button').forEach((bt) => { const liga = (e) => { e.preventDefault(); e.stopPropagation(); alvoAcel = +bt.dataset.v; }, solta = () => { alvoAcel = 1; }; bt.addEventListener('pointerdown', liga); bt.addEventListener('pointerup', solta); bt.addEventListener('pointerleave', solta); bt.addEventListener('pointercancel', solta); });
 window.addEventListener('resize', () => { if (aberto) { mede(); } });
 
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
 document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; aplicaTema(); } });
+document.addEventListener('keyup', (e) => { if (aberto && ['ArrowRight', 'ArrowLeft', 'd', 'D', 'a', 'A'].includes(e.key)) alvoAcel = 1; });
 document.addEventListener('keydown', (e) => {
   if (aberto) {
     if (e.key === 'Escape') { e.preventDefault(); fecha(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { e.preventDefault(); alvoAcel = 1.45; return; }
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { e.preventDefault(); alvoAcel = 0.6; return; }
     if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { e.preventDefault(); if (!e.repeat) pula(); }
     return;
   }

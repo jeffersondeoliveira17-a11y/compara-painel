@@ -55,7 +55,7 @@ const GRAV = 2600, PULO = 880;
 // nuvens de tamanhos variados (pequenas, médias, grandes e bem grandes), bem espaçadas e aleatórias
 const novaNuvem = (x) => {
   const r = Math.random(); let w;
-  if (r < 0.34) w = 50 + Math.random() * 45; else if (r < 0.64) w = 115 + Math.random() * 90; else if (r < 0.9) w = 250 + Math.random() * 130; else w = 430 + Math.random() * 150;
+  if (r < 0.4) w = 45 + Math.random() * 40; else if (r < 0.8) w = 95 + Math.random() * 70; else w = 165 + Math.random() * 75; // nuvens de 45 a 240 px (sem as gigantes)
   const h = w * 107.2 / 171;
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
@@ -74,10 +74,15 @@ const novoObst = () => {
   const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
-  // a cada portal o jogo fica mais difícil: mais duplas e, a partir da 2ª fase, triplas
+  // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
+  const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = { x: o.x + o.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 }; obst.push(fim); }
-  if (fase >= 1 && fim !== o && Math.random() < Math.min(0.45, 0.2 * fase)) obst.push({ x: fim.x + fim.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
+  if (fase >= 1 && Math.random() < Math.min(0.5, 0.25 + 0.1 * fase)) {
+    // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
+    const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);
+    fim = P(b2.x + b2.w + vel * (0.5 + Math.random() * 0.06)); obst.push(fim);
+  } else if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
+  return fim.x + fim.w - o.x; // largura do conjunto, para o espaçamento da próxima
 };
 
 // altura do portal: cabe na área acima do chão
@@ -103,7 +108,7 @@ const passo = (agora) => {
   if (estado === 'portal') passoPortal(dt);
   if (estado === 'jogando') {
     vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt); dist += vel * dt / 14;
-    chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.3) % MATO_P;
+    chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
@@ -114,7 +119,7 @@ const passo = (agora) => {
       const ph = portalAlt();
       portal = { x: Math.max(W + 40, ult + 280), w: ph * PORT_W / PORT_H, h: ph };
     }
-    if (prox <= 0 && !portal) { novoObst(); prox = vel * Math.max(0.5, 0.85 - 0.08 * fase + Math.random() * 0.8) + 120; }
+    if (prox <= 0 && !portal) { prox = novoObst() + vel * Math.max(0.5, 0.85 - 0.08 * fase + Math.random() * 0.8) + 120; }
     if (portal) {
       portal.x -= vel * dt;
       if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
@@ -133,7 +138,7 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.3) % MATO_P; }
+  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado !== 'morto' && estado !== 'fim') {
     nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); });

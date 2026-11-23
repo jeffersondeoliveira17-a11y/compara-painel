@@ -337,3 +337,5 @@
 .cp-clima .cl-c{display:block;text-align:center}
 .cp-clima .cl-cn{position:relative;display:inline-block}
 .cp-clima .cl-cn::before{content:"";position:absolute;right:100%;top:50%;margin-right:12px;width:14px;height:21px;transform:translateY(-52%);background:url(icones/pin.svg) center/contain no-repeat;image-rendering:pixelated}
+.cp-clima .cl-c,.cp-clima .cl-cn{color:#fff}
+.cp-clima .cl-cn::before{margin-right:7px}

@@ -1306,3 +1306,19 @@ el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.t
 el.addEventListener('click', () => { fechado = dia(); confere(); });
 confere(); setInterval(confere, 60000);
 })();
+(() => {
+// Celular: os gráficos medem o espaço quando são desenhados. Se a seção estava escondida (largura 0), saem cortados; por isso redesenha
+// ao abrir uma seção e quando a largura da janela muda (girar o celular, abrir o teclado não conta: só a largura).
+const redesenha = () => { try { if (typeof window.painelDesenhaTudo === 'function') window.painelDesenhaTudo(); } catch (e) { /* segue */ } };
+const abre = window.cpAbrir;
+if (typeof abre === 'function') window.cpAbrir = (id, rolar) => { abre(id, rolar); requestAnimationFrame(() => requestAnimationFrame(redesenha)); };
+let larg = window.innerWidth, t = 0;
+window.addEventListener('resize', () => { if (window.innerWidth === larg) return; larg = window.innerWidth; clearTimeout(t); t = setTimeout(redesenha, 200); });
+})();
+(() => {
+const busca = document.querySelector('input[placeholder^="Procurar setor"]');
+const ajusta = () => { if (busca) busca.placeholder = window.innerWidth <= 560 ? 'Procurar…' : 'Procurar setor, editor ou assunto…'; };
+ajusta(); window.addEventListener('resize', ajusta);
+const centraAba = () => { const a = document.querySelector('.cp-side .cp-item.on, .cp-side .cp-item.ativo, .cp-side .cp-item[aria-current]'); if (a && window.innerWidth <= 760) { try { a.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) { /* segue */ } } };
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-go]')) setTimeout(centraAba, 50); });
+})();

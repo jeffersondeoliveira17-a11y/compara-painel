@@ -345,3 +345,10 @@
 /* Homenagem no widget do tempo: Dia das Mulheres (8/3) e Dia das Mães (2º domingo de maio); toque para voltar ao clima */
 .cp-clima .cl-cafe.cl-flor{padding:0;background:#fbdde3;justify-content:center}
 .cp-clima .cl-cafe.cl-flor img.cl-go{flex:none;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;margin:0;image-rendering:pixelated}
+
+/* Celular: tabela de produtos sem rolagem lateral e abas do menu com respiro */
+@media (max-width:560px){
+.cp-table[data-source="produtos"] th:nth-child(2),.cp-table[data-source="produtos"] td:nth-child(2),.cp-table[data-source="produtos"] th:nth-child(4),.cp-table[data-source="produtos"] td:nth-child(4){display:none}
+.cp-table[data-source="produtos"] th,.cp-table[data-source="produtos"] td{white-space:normal}
+.cp-side .cp-item{flex:none;scroll-snap-align:center}
+}

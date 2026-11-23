@@ -1,4 +1,4 @@
-// Joguinho de teste na área de trabalho: a nuvem do clima corre e pula os raios.
+// Joguinho de teste na área de trabalho: o gatinho corre e pula os raios.
 // Entrar: 5 toques em "Hi, Jeff" (em até 3 s) ou o código Konami (↑ ↑ ↓ ↓ ← → ← → B A). Sair: Esc ou o X.
 (() => {
 const area = document.getElementById('cp-oi'), nome = document.getElementById('cp-oi-nome');
@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -25,7 +25,7 @@ const mede = () => {
 // ---------- estado ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
 let vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
-const player = { x: 90, y: 0, vy: 0, w: 84, h: 52, noChao: true };
+const player = { x: 90, y: 0, vy: 0, w: 70, h: 56, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const chaoY = () => H - 44;
 const GRAV = 2600, PULO = 880;
@@ -61,7 +61,7 @@ const passo = (agora) => {
     obst.forEach((o) => { o.x -= vel * dt; });
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
-    const a = { x: player.x + 14, y: player.y + 10, w: player.w - 28, h: player.h - 14 };
+    const a = { x: player.x + 12, y: player.y + 8, w: player.w - 24, h: player.h - 12 };
     for (const o of obst) {
       const b = { x: o.x + 5, y: chaoY() - o.h + 5, w: o.w - 10, h: o.h - 8 };
       if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
@@ -89,11 +89,12 @@ const desenha = () => {
   for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x, cy + 14, 14, 3); cx.fillRect(x + 22, cy + 26, 8, 3); }
   // raios
   obst.forEach((o) => cx.drawImage(IM.raio, o.x, cy - o.h, o.w, o.h));
-  // nuvem (levemente inclinada no ar)
+  // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
-  cx.translate(sx, sy); cx.rotate(player.noChao ? 0 : Math.max(-0.18, Math.min(0.18, player.vy / 5000)));
-  cx.drawImage(IM.nuvem, -player.w / 2, -player.h / 2, player.w, player.h);
+  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
+  cx.translate(sx, sy + quica); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
+  cx.drawImage(IM.gato, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar
   cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';

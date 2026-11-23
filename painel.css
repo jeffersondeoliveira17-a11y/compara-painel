@@ -171,6 +171,6 @@
 #ag-exp{position:absolute;right:14px;bottom:8px;z-index:4;width:34px;height:34px;border-radius:50%;border:0;background:#4a525c;color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
 #ag-exp:hover{background:#1b2430}#ag-exp svg{transition:transform .25s}.cp-ag.aberto #ag-exp svg{transform:rotate(180deg)}
 .cp-ag.aberto{overflow:visible;z-index:30}
-.cp-ag.aberto .ag-rol{position:absolute;left:-1px;right:-1px;top:0;height:560px;flex:none;border:1px solid #e3e5e8;border-top:0;border-radius:0 0 18px 18px;box-shadow:0 16px 32px rgba(20,30,50,.18)}
-.cp-ag.aberto #ag-exp{bottom:auto;top:512px}
-@media (max-width:760px){.cp-ag .ag-wrap{min-height:260px}.cp-ag.aberto #ag-exp{top:512px}}
+.cp-ag.aberto .ag-rol{position:absolute;left:-1px;right:-1px;top:0;height:340px;flex:none;border:1px solid #e3e5e8;border-top:0;border-radius:0 0 18px 18px;box-shadow:0 16px 32px rgba(20,30,50,.18)}
+.cp-ag.aberto #ag-exp{bottom:auto;top:292px}
+@media (max-width:760px){.cp-ag .ag-wrap{min-height:260px}.cp-ag.aberto #ag-exp{top:292px}}

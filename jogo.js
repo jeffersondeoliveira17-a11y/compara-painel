@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg') };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -189,6 +189,7 @@ const passo = (agora) => {
       if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
     }
     obst.forEach((o) => { o.x -= v * dt; if (!o.cor && o.x + o.w / 2 < player.x + player.w / 2) o.cor = true; }); // pedra que o cachorro já pulou fica colorida
+    if (ave) { ave.x -= v * dt; if (ave.x < -140) { ave = null; aveEm = 20 + Math.random() * 20; } } // anda junto com o chão
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
@@ -202,11 +203,10 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
+  if (estado === 'portal') { if (ave) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
-    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 40, y0: H * (0.1 + Math.random() * 0.25), v: 90 + Math.random() * 40, t: 0 }; } // passarinho visita o céu de vez em quando
-    else { ave.x -= ave.v * dt; ave.t += dt; if (ave.x < -100) { ave = null; aveEm = 20 + Math.random() * 20; } }
+    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 60 }; } // passarinho com ponto de exclamação aparece no chão de vez em quando
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -265,10 +265,6 @@ const desenha = () => {
   cx.restore();
   // chão
   // balão: atrás das moitas e do chão
-  if (ave && IM.ave.complete && IM.ave.naturalWidth) { // passarinho colorido: bate a "asa" subindo e descendo de leve
-    const u = 3, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u, y = ave.y0 + Math.round(Math.sin(ave.t * 5) * 2) * u;
-    cx.save(); cx.translate(Math.round(ave.x) + w, Math.round(y)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); // olha para onde voa
-  }
   if (balao) {
     cx.save(); cx.globalAlpha = balao.a;
     const bx = espelho ? W - balao.x - balao.w : balao.x; // posição na tela vira posição do mundo espelhado
@@ -279,6 +275,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  if (ave && IM.ave.complete && IM.ave.naturalWidth) { const u = 3, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; cx.save(); cx.translate(Math.round(ave.x) + w, cy + 5 - h); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); } // de pé no chão, olhando para o cachorro
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)

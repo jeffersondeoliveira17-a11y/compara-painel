@@ -287,3 +287,11 @@
 .cp-clima .cl-cafe img:not(.cl-pause){width:auto;max-width:100%;max-height:calc(100% - 64px)}
 .cp-clima .cl-cafe .cl-top .cl-pause{max-width:112px}
 .cp-clima .cl-cafe img:not(.cl-pause){max-height:calc(100% - 84px)}
+/* Topo: o botão pixelado "menu" no lugar da foto, que continua dentro do menu da conta */
+.cp-bar-dir .cp-perfil{padding:0;border:0;border-radius:6px;background:none}
+.cp-bar-dir .cp-perfil::after{display:none}
+.cp-bar-dir .cp-perfil:hover{background:none}
+.cp-menu-btn{display:block;width:82px;height:auto;image-rendering:pixelated;transition:transform .12s}
+.cp-bar-dir .cp-perfil:hover .cp-menu-btn{transform:translateY(-1px)}
+.cp-bar-dir .cp-perfil:active .cp-menu-btn{transform:translateY(2px)}
+.cp-bar-dir .cp-perfil:focus-visible{outline:2px solid #1b2430;outline-offset:3px}

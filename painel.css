@@ -313,4 +313,5 @@
 .cp-clima .cl-cafe.cl-erro img.cl-go{width:84%;max-width:210px}
 .cp-clima .cl-cafe.cl-erro span{order:2;color:#fff;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-align:center;line-height:1.3;opacity:.92}
 .cp-clima .cl-cafe.cl-erro.on img.cl-go{animation:cl-pisca 1.4s steps(1,end) infinite}
-
+/* nuvem do clima 4 px mais para a direita */
+.cp-clima .cl-t svg#cl-i{position:relative;left:4px}

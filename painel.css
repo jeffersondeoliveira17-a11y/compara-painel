@@ -332,3 +332,8 @@
 .cp-jogo-aviso.on{opacity:1;transform:translate(-50%,0)}
 .cp-jogo-aviso[hidden]{display:none}
 
+
+/* Widget do tempo: pin de localização à esquerda de "Barueri", com o nome centralizado no cartão */
+.cp-clima .cl-c{display:block;text-align:center}
+.cp-clima .cl-cn{position:relative;display:inline-block}
+.cp-clima .cl-cn::before{content:"";position:absolute;right:100%;top:50%;margin-right:12px;width:14px;height:21px;transform:translateY(-52%);background:url(icones/pin.svg) center/contain no-repeat;image-rendering:pixelated}

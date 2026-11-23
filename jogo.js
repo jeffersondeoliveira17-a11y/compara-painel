@@ -140,6 +140,32 @@ document.addEventListener('keydown', (e) => {
   if (k === KON[pos]) { pos++; if (pos === KON.length) { pos = 0; abre(); } } else pos = (k === KON[0]) ? 1 : 0;
 });
 
+// ---------- código no toque: deslizar ↑ ↑ ↓ ↓ ← → ← → e tocar 2 vezes ----------
+const KT = ['U', 'U', 'D', 'D', 'L', 'R', 'L', 'R', 'T', 'T'];
+let tp = 0, tUlt = 0, t0x = 0, t0y = 0, t0t = 0;
+document.addEventListener('touchstart', (e) => { if (aberto || e.touches.length !== 1) return; t0x = e.touches[0].clientX; t0y = e.touches[0].clientY; t0t = Date.now(); }, { passive: true });
+document.addEventListener('touchend', (e) => {
+  if (aberto || !e.changedTouches.length) return;
+  const dx = e.changedTouches[0].clientX - t0x, dy = e.changedTouches[0].clientY - t0y, ax = Math.abs(dx), ay = Math.abs(dy), agora = Date.now();
+  let g = null;
+  if (ax < 12 && ay < 12 && agora - t0t < 350) g = 'T';
+  else if (Math.max(ax, ay) >= 45) g = ax > ay ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U');
+  if (!g) return;
+  if (agora - tUlt > 6000) tp = 0;
+  tUlt = agora;
+  if (g === KT[tp]) { tp++; if (tp === KT.length) { tp = 0; abre(); } } else tp = (g === KT[0]) ? 1 : 0;
+}, { passive: true });
+
+// ---------- palavra no teclado: digitar "gato" ----------
+let pal = '', palT = 0;
+document.addEventListener('keydown', (e) => {
+  if (aberto || e.key.length !== 1) return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+  const agora = Date.now(); if (agora - palT > 2500) pal = ''; palT = agora;
+  pal = (pal + e.key.toLowerCase()).slice(-4); if (pal === 'gato') { pal = ''; abre(); }
+});
+
 // ---------- 5 toques em "Hi, Jeff" ----------
 if (nome) {
   let n = 0, ini = 0;

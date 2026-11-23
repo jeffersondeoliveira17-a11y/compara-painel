@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -35,7 +35,13 @@ const mede = () => {
   cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.imageSmoothingEnabled = false;
 };
 
+// ---------- portal: a cada 10.000 pontos o jogo vira do outro lado ----------
+const PORTAL_PTS = 10000; // pontuação do primeiro portal e de cada portal seguinte
+const PORT_N = 10, PORT_W = 33, PORT_H = 62; // quadros do GIF do portal (10 quadros de 33 x 62)
+const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra, vira, sai e o portal some
+
 // ---------- estado ----------
+let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
 let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
@@ -54,7 +60,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
+  vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; espelho = false; portal = null; avisoFase = 0;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -68,9 +74,24 @@ const novoObst = () => {
   const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
-  if (Math.random() < 0.25) obst.push({ x: o.x + o.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 }); // dupla
+  // a cada portal o jogo fica mais difícil: mais duplas e, a partir da 2ª fase, triplas
+  let fim = o;
+  if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = { x: o.x + o.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 }; obst.push(fim); }
+  if (fase >= 1 && fim !== o && Math.random() < Math.min(0.45, 0.2 * fase)) obst.push({ x: fim.x + fim.w + 22 + Math.random() * 16, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
 };
 
+// altura do portal: cabe na área acima do chão
+const portalAlt = () => Math.max(110, Math.min(190, chaoY() - 14));
+// o cachorro entra no portal, o jogo vira (esquerda/direita) e ele sai do outro lado, mais rápido
+const passoPortal = (dt) => {
+  tPortal += dt;
+  if (tPortal < T_SUGA) { vel = fasePt * Math.max(0, 1 - tPortal / T_SUGA); }
+  else {
+    if (!viraFeito) { viraFeito = true; fase++; espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
+      portal = { x: player.x + player.w / 2 - portalAlt() * PORT_W / PORT_H / 2, w: portalAlt() * PORT_W / PORT_H, h: portalAlt() }; }
+    if (tPortal >= T_SUGA + T_VIRA + T_SOLTA) { portal = null; vel = 520 + 50 * fase; estado = 'jogando'; }
+  }
+};
 // ---------- laço ----------
 const passo = (agora) => {
   raf = requestAnimationFrame(passo);
@@ -79,14 +100,25 @@ const passo = (agora) => {
     if (estado === 'jogando') { usado += dt; if (++cont % 120 === 0) gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
   } else if (agora - fimEm > 3200) { fecha(); return; }
+  if (estado === 'portal') passoPortal(dt);
   if (estado === 'jogando') {
-    vel = Math.min(920, vel + 9 * dt); dist += vel * dt / 14;
+    vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt); dist += vel * dt / 14;
     chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.3) % MATO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
     prox -= vel * dt;
-    if (prox <= 0) { novoObst(); prox = vel * (0.85 + Math.random() * 0.8) + 120; }
+    const alvo = PORTAL_PTS * (fase + 1);
+    if (!portal && dist >= alvo) { // hora do portal: ele entra depois da última pedra, sem pedras novas na frente
+      const ult = obst.reduce((m, o) => Math.max(m, o.x + o.w), 0);
+      const ph = portalAlt();
+      portal = { x: Math.max(W + 40, ult + 280), w: ph * PORT_W / PORT_H, h: ph };
+    }
+    if (prox <= 0 && !portal) { novoObst(); prox = vel * Math.max(0.5, 0.85 - 0.08 * fase + Math.random() * 0.8) + 120; }
+    if (portal) {
+      portal.x -= vel * dt;
+      if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
+    }
     obst.forEach((o) => { o.x -= vel * dt; });
     obst = obst.filter((o) => o.x + o.w > -10);
     // colisão (caixa da nuvem um pouco menor que o desenho)
@@ -101,6 +133,8 @@ const passo = (agora) => {
       }
     }
   }
+  if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.3) % MATO_P; }
+  if (avisoFase > 0) avisoFase -= dt;
   if (estado !== 'morto' && estado !== 'fim') {
     nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); });
     nuvensF = nuvensF.filter((n) => n.x + n.w > -10);
@@ -114,6 +148,8 @@ const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
   const cy = chaoY();
+  cx.save();
+  if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.8;
   nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás
@@ -133,8 +169,32 @@ const desenha = () => {
   const pose = player.noChao ? IM['cao' + (q + 1)] : IM.cao5; // no pulo: quadro do voo esticado
   const queda = AFUNDA - 2; // pés um pouco dentro da grama
   cx.translate(sx, sy + queda); if (!player.noChao) cx.rotate(Math.max(-0.12, Math.min(0.12, player.vy / 6500)));
-  cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
+  let esc = 1, alfa = 1;
+  if (estado === 'portal') {
+    if (tPortal < T_SUGA) { const u = Math.min(1, tPortal / T_SUGA); esc = 1 - u; alfa = 1 - u * 0.4; if (portal) cx.translate((portal.x + portal.w / 2 - sx) * u * 0.9, 0); }
+    else if (tPortal < T_SUGA + T_VIRA) esc = 0;
+    else esc = Math.min(1, (tPortal - T_SUGA - T_VIRA) / T_SOLTA);
+  }
+  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); }
   cx.restore();
+  // portal (10 quadros do GIF, 10 por segundo)
+  if (portal) {
+    let a = 1;
+    if (estado === 'portal' && tPortal >= T_SUGA + T_VIRA + T_SOLTA * 0.4) a = Math.max(0, 1 - (tPortal - T_SUGA - T_VIRA - T_SOLTA * 0.4) / (T_SOLTA * 0.6));
+    cx.save(); cx.globalAlpha = a;
+    cx.drawImage(IM.portal, (Math.floor(performance.now() / 100) % PORT_N) * PORT_W, 0, PORT_W, PORT_H, portal.x, cy + AFUNDA - portal.h, portal.w, portal.h);
+    cx.restore();
+  }
+  cx.restore(); // fim da parte espelhada; placar e textos ficam sempre na posição normal
+  if (estado === 'portal') { // clarão azul na hora da virada
+    const d = Math.abs(tPortal - T_SUGA - T_VIRA / 2) / (T_VIRA / 2 + 0.15);
+    if (d < 1) { cx.fillStyle = 'rgba(35,62,246,' + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
+  }
+  if (avisoFase > 0 && estado !== 'portal') {
+    cx.globalAlpha = Math.min(1, avisoFase); cx.fillStyle = '#102532'; cx.textAlign = 'center'; cx.font = '700 18px system-ui, sans-serif';
+    cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
+    cx.globalAlpha = 1;
+  }
   // placar
   cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);

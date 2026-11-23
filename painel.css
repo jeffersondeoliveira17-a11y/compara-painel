@@ -333,7 +333,10 @@
 .cp-jogo-aviso[hidden]{display:none}
 
 
-/* Menu lateral: logo completo com o menu aberto; quadradinho amarelo em pixel com três riscos quando encolhido */
-.cp-logo .cp-pixel-menu{display:none}
-.cp-app.estreito .cp-logo .cp-porco{display:none}
-.cp-app.estreito .cp-logo .cp-pixel-menu{display:block;height:34px;width:auto;image-rendering:pixelated}
+/* Botão "menu" do canto direito: escrito "menu" com o menu aberto; quadradinho amarelo em pixel com três riscos quando o menu está encolhido */
+.cp-menu-sq{display:none;width:42px;height:auto;image-rendering:pixelated;transition:transform .12s}
+.cp-app.estreito .cp-menu-btn{display:none}
+.cp-app.estreito .cp-menu-sq{display:block}
+.cp-bar-dir .cp-perfil:hover .cp-menu-sq{transform:translateY(-1px)}
+.cp-bar-dir .cp-perfil:active .cp-menu-sq{transform:translateY(2px)}
+.cp-app.estreito .cp-bar-dir .cp-perfil{border-radius:0;overflow:visible}

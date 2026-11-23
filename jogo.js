@@ -29,8 +29,7 @@ const player = { x: 90, y: 0, vy: 0, w: 70, h: 56, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const chaoY = () => H - 44;
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
-const LINHA = [22, 23, 22, 22]; // linha onde as patas tocam o chão em cada pose do gato (esticada, passando, recolhida, impulso)
-const PASSO = 2.6; // distância por quadro da corrida
+const LINHA = [24, 23, 22, 23]; // última linha com desenho em cada pose do gato
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
   vel = 430; dist = 0; obst = []; chaoX = 0; prox = 900;
@@ -97,11 +96,11 @@ const desenha = () => {
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
   const CICLO = [IM.gato, IM.gato3, IM.gato2, IM.gato4]; // 4 poses de corrida
-  const idx = (player.noChao && estado === 'jogando') ? Math.floor(dist / PASSO) % 4 : 0;
+  const idx = (player.noChao && estado === 'jogando') ? Math.floor(dist / 1.8) % 4 : 0;
   const pose = CICLO[idx];
-  const queda = player.noChao ? (24 - LINHA[idx]) * (player.h / 25) + 3 : 0;
-  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * Math.PI / (PASSO * 2))) * 3 : 0;
-  cx.translate(sx, sy + quica + queda); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * Math.PI / (PASSO * 2)) * 0.04 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
+  const queda = player.noChao ? (24 - LINHA[idx]) * (player.h / 25) + AFUNDA : 0;
+  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
+  cx.translate(sx, sy + quica + queda); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
   cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
   cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();

@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho.svg') };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -113,7 +113,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 4 + Math.random() * 5;
+  acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -207,6 +207,8 @@ const passo = (agora) => {
   if (estado === 'portal') { chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
+    if (!ave) { aveEm -= dt; if (aveEm <= 0) ave = { x: W + 40, y0: H * (0.1 + Math.random() * 0.25), v: 90 + Math.random() * 40, t: 0 }; } // passarinho visita o céu de vez em quando
+    else { ave.x -= ave.v * dt; ave.t += dt; if (ave.x < -100) { ave = null; aveEm = 20 + Math.random() * 20; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -265,6 +267,10 @@ const desenha = () => {
   cx.restore();
   // chão
   // balão: atrás das moitas e do chão
+  if (ave && IM.ave.complete && IM.ave.naturalWidth) { // passarinho colorido: bate a "asa" subindo e descendo de leve
+    const u = 3, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u, y = ave.y0 + Math.round(Math.sin(ave.t * 5) * 2) * u;
+    cx.save(); cx.translate(Math.round(ave.x) + w, Math.round(y)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); // olha para onde voa
+  }
   if (balao) {
     cx.save(); cx.globalAlpha = balao.a;
     const bx = espelho ? W - balao.x - balao.w : balao.x; // posição na tela vira posição do mundo espelhado

@@ -548,7 +548,7 @@ const IM = (n, x, y, w, h) => '<image href="icones/' + n + '.svg?v=' + (window.P
 const icone = (c, dia) => {
 if (c <= 1) return IM(dia ? 'sol' : 'lua', 0, 0, 100, 100);
 if (c === 2) return IM(dia ? 'nuvem-sol' : 'lua-nuvem', 0, 0, 100, 100);
-if (c >= 95) return IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 30, 46, 26, 40);
+if (c >= 95) return IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 13, 41, 33, 51);
 if (c >= 80 && c <= 82) return IM(dia ? 'sol-nuvem-chuva' : 'lua-nuvem-chuva', 0, 0, 100, 100);
 if (c >= 51 && c <= 82) return IM('nuvem-chuva', 0, 0, 100, 100);
 return IM('nuvem', 0, 0, 100, 100);

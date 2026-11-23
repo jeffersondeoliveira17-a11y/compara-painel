@@ -1227,3 +1227,16 @@ app.classList.add('cp-entrada');
 app.addEventListener('animationend', (ev) => { if (ev.target === app) app.classList.remove('cp-entrada'); }, { once: true });
 setTimeout(() => app.classList.remove('cp-entrada'), 1600);
 })();
+(() => {
+// Pausa para o café: nas horas pares, durante 15 minutos (ou com ?cafe na URL), o widget do tempo mostra a ilustração.
+const el = document.getElementById('cl-cafe'); if (!el) return;
+const forca = /[?&]cafe(=|&|$)/.test(location.search);
+let fechado = '';
+const slot = () => { const d = new Date(); return d.toDateString() + '-' + d.getHours(); };
+const confere = () => {
+const d = new Date(), vez = forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15);
+el.hidden = !(vez && fechado !== slot());
+};
+el.addEventListener('click', () => { fechado = slot(); el.hidden = true; });
+confere(); setInterval(confere, 30000);
+})();

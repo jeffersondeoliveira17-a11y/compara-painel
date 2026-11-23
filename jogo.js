@@ -1,0 +1,148 @@
+// Joguinho de teste na área de trabalho: a nuvem do clima corre e pula os raios.
+// Entrar: 5 toques em "Hi, Jeff" (em até 3 s) ou o código Konami (↑ ↑ ↓ ↓ ← → ← → B A). Sair: Esc ou o X.
+(() => {
+const area = document.getElementById('cp-oi'), nome = document.getElementById('cp-oi-nome');
+if (!area) return;
+const V = window.PAINEL_VERSAO || '1';
+const CH = 'cp-jogo-recorde';
+const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
+const IM = { nuvem: img('icones/nuvem.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
+
+// ---------- camada do jogo ----------
+const box = document.createElement('div');
+box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
+box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou barra de espaço para pular · Esc para sair</div>';
+area.append(box);
+const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
+
+let W = 0, H = 0, dpr = 1;
+const mede = () => {
+  const r = box.getBoundingClientRect(); if (!r.width) return;
+  dpr = Math.min(2, window.devicePixelRatio || 1); W = Math.round(r.width); H = Math.round(r.height);
+  cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.imageSmoothingEnabled = false;
+};
+
+// ---------- estado ----------
+let aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
+let vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+const player = { x: 90, y: 0, vy: 0, w: 84, h: 52, noChao: true };
+try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
+const chaoY = () => H - 44;
+const GRAV = 2600, PULO = 880;
+const reinicia = () => {
+  vel = 430; dist = 0; obst = []; chaoX = 0; prox = 900;
+  nuvensF = Array.from({ length: 7 }, (_, i) => ({ x: (W / 7) * i + Math.random() * 120, y: 20 + Math.random() * (H * 0.4), w: 60 + Math.random() * 70, v: 14 + Math.random() * 16 }));
+  player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
+};
+const pula = () => {
+  if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); }
+  if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; }
+  else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; }
+};
+const novoObst = () => {
+  const k = 3 + Math.floor(Math.random() * 2); // tamanho do pixel do raio: 3 ou 4
+  const o = { x: W + 20, w: 11 * k, h: 17 * k, k };
+  obst.push(o);
+  if (Math.random() < 0.28) obst.push({ x: o.x + o.w + 26 + Math.random() * 14, w: 11 * 3, h: 17 * 3, k: 3 }); // dupla
+};
+
+// ---------- laço ----------
+const passo = (agora) => {
+  raf = requestAnimationFrame(passo);
+  const dt = Math.min(0.034, (agora - t0) / 1000 || 0); t0 = agora;
+  if (estado === 'jogando') {
+    vel = Math.min(920, vel + 9 * dt); dist += vel * dt / 14;
+    chaoX = (chaoX - vel * dt) % 40;
+    player.vy += GRAV * dt; player.y += player.vy * dt;
+    const solo = chaoY() - player.h;
+    if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
+    prox -= vel * dt;
+    if (prox <= 0) { novoObst(); prox = vel * (0.85 + Math.random() * 0.8) + 120; }
+    obst.forEach((o) => { o.x -= vel * dt; });
+    obst = obst.filter((o) => o.x + o.w > -10);
+    // colisão (caixa da nuvem um pouco menor que o desenho)
+    const a = { x: player.x + 14, y: player.y + 10, w: player.w - 28, h: player.h - 14 };
+    for (const o of obst) {
+      const b = { x: o.x + 5, y: chaoY() - o.h + 5, w: o.w - 10, h: o.h - 8 };
+      if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
+        estado = 'morto'; morreuEm = performance.now();
+        const pts = Math.floor(dist);
+        if (pts > recorde) { recorde = pts; try { localStorage.setItem(CH, String(recorde)); } catch (e) { /* segue */ } }
+        break;
+      }
+    }
+  }
+  if (estado !== 'morto') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
+  desenha();
+};
+const pts5 = (n) => String(Math.floor(n)).padStart(5, '0');
+const desenha = () => {
+  if (!W) return;
+  cx.clearRect(0, 0, W, H);
+  const cy = chaoY();
+  // nuvenzinhas ao fundo
+  cx.save(); cx.globalAlpha = 0.35;
+  nuvensF.forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171));
+  cx.restore();
+  // chão
+  cx.fillStyle = '#102532'; cx.fillRect(0, cy, W, 4);
+  for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x, cy + 14, 14, 3); cx.fillRect(x + 22, cy + 26, 8, 3); }
+  // raios
+  obst.forEach((o) => cx.drawImage(IM.raio, o.x, cy - o.h, o.w, o.h));
+  // nuvem (levemente inclinada no ar)
+  cx.save();
+  const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
+  cx.translate(sx, sy); cx.rotate(player.noChao ? 0 : Math.max(-0.18, Math.min(0.18, player.vy / 5000)));
+  cx.drawImage(IM.nuvem, -player.w / 2, -player.h / 2, player.w, player.h);
+  cx.restore();
+  // placar
+  cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
+  cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
+  if (estado === 'morto') {
+    const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
+    cx.drawImage(IM.fim, (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
+    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = '#fff';
+    cx.fillText('Toque ou espaço para jogar de novo', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 24);
+  }
+};
+
+// ---------- abrir e fechar ----------
+const abre = () => {
+  if (aberto) return;
+  aberto = true; box.hidden = false; mede(); reinicia(); estado = 'pronto'; dica.classList.remove('off');
+  requestAnimationFrame(() => box.classList.add('on'));
+  t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
+  box.focus({ preventScroll: true });
+};
+const fecha = () => {
+  if (!aberto) return;
+  aberto = false; box.classList.remove('on'); cancelAnimationFrame(raf);
+  setTimeout(() => { if (!aberto) box.hidden = true; }, 260);
+};
+window.cpJogo = { abre, fecha };
+fechar.addEventListener('click', (e) => { e.stopPropagation(); fecha(); });
+cv.addEventListener('pointerdown', (e) => { e.preventDefault(); pula(); });
+window.addEventListener('resize', () => { if (aberto) { mede(); } });
+
+// ---------- teclado: pular, sair e código Konami ----------
+const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let pos = 0;
+document.addEventListener('keydown', (e) => {
+  if (aberto) {
+    if (e.key === 'Escape') { e.preventDefault(); fecha(); return; }
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { e.preventDefault(); if (!e.repeat) pula(); }
+    return;
+  }
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) { pos = 0; return; }
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (k === KON[pos]) { pos++; if (pos === KON.length) { pos = 0; abre(); } } else pos = (k === KON[0]) ? 1 : 0;
+});
+
+// ---------- 5 toques em "Hi, Jeff" ----------
+if (nome) {
+  let n = 0, ini = 0;
+  nome.addEventListener('click', () => { const agora = Date.now(); if (agora - ini > 3000) n = 0; if (!n) ini = agora; n++; if (n >= 5) { n = 0; abre(); } });
+}
+if (/[?&]jogo(=|&|$)/.test(location.search)) setTimeout(abre, 400);
+})();

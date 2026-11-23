@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), gato3: img('icones/gato3.svg'), gato4: img('icones/gato4.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -96,7 +96,8 @@ const desenha = () => {
   const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
   cx.translate(sx, sy + quica); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
   cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
-  const pose = (player.noChao && estado === 'jogando' && Math.floor(dist / 2.2) % 2 === 1) ? IM.gato2 : IM.gato; // pernas alternam correndo
+  const CICLO = [IM.gato, IM.gato3, IM.gato2, IM.gato4]; // 4 poses de corrida
+  const pose = (player.noChao && estado === 'jogando') ? CICLO[Math.floor(dist / 1.8) % 4] : IM.gato;
   cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar

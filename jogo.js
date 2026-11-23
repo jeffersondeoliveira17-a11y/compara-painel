@@ -31,7 +31,17 @@ const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
 const chaoY = () => H - CHAO_H;
 const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
-const LINHA = [24, 23, 22, 23]; // última linha com desenho em cada pose do gato
+const LINHA = { gato: 24, gato3: 23, gato2: 22, gato4: 23 }; // última linha com desenho em cada pose do gato
+const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
+// 6 quadros medidos no GIF do cachorro: pose do gato, pés no ar (fração da altura; no GIF só o quadro 4 sai do chão), esticada, inclinação da cabeça
+const CORRIDA = [
+  { p: 'gato2', lift: 0.00, sx: 0.94, rot: 0.03 },   // 0 agachado, junta tudo
+  { p: 'gato4', lift: 0.00, sx: 0.96, rot: -0.04 },  // 1 impulso
+  { p: 'gato3', lift: 0.00, sx: 1.05, rot: -0.08 },  // 2 sobe esticando
+  { p: 'gato',  lift: 0.00, sx: 1.07, rot: -0.08 },  // 3 pico
+  { p: 'gato',  lift: 0.07, sx: 1.10, rot: -0.04 },  // 4 voo esticado
+  { p: 'gato3', lift: 0.00, sx: 0.93, rot: 0.03 },   // 5 aterrissa
+];
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
   vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900;
@@ -97,13 +107,15 @@ const desenha = () => {
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
-  const CICLO = [IM.gato, IM.gato3, IM.gato2, IM.gato4]; // 4 poses de corrida
-  const idx = (player.noChao && estado === 'jogando') ? Math.floor(dist / 1.8) % 4 : 0;
-  const pose = CICLO[idx];
-  const queda = player.noChao ? (24 - LINHA[idx]) * (player.h / 25) + AFUNDA : 0;
-  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
-  cx.translate(sx, sy + quica + queda); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
-  cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
+  // corrida copiada do GIF do cachorro: 6 quadros (agacha, impulso, sobe esticando, pico, voo, aterrissa)
+  const sobe = (player.noChao && estado === 'jogando');
+  const q = sobe ? Math.floor(dist / PASSO) % 6 : 0;
+  const F = sobe ? CORRIDA[q] : CORRIDA[3];
+  const pose = IM[F.p];
+  const queda = player.noChao ? (24 - LINHA[F.p]) * (player.h / 25) + AFUNDA : 0;
+  const lift = sobe ? -F.lift * player.h : 0;
+  cx.translate(sx, sy + lift + queda); cx.rotate(player.noChao ? (sobe ? F.rot : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
+  cx.scale(player.noChao && sobe ? -F.sx : -1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
   cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar

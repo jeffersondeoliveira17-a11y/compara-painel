@@ -358,3 +358,6 @@
 .cp-perfil[aria-expanded="true"] .cp-menu-sq .mb0{transform:translateY(-1.667px)}
 .cp-perfil[aria-expanded="true"] .cp-menu-sq .mb1{transform:translateY(-.667px)}
 .cp-perfil[aria-expanded="true"] .cp-menu-sq .mb2{transform:translateY(.333px)}
+
+/* ícone do tempo 4px mais baixo */
+.cp-clima .cl-t svg#cl-i{transform:translateY(4px)}

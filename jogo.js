@@ -28,6 +28,8 @@ let vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 70, h: 56, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const chaoY = () => H - 44;
+const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
+const LINHA = [24, 23, 22, 23]; // última linha com desenho em cada pose do gato
 const GRAV = 2600, PULO = 880;
 const reinicia = () => {
   vel = 430; dist = 0; obst = []; chaoX = 0; prox = 900;
@@ -63,7 +65,7 @@ const passo = (agora) => {
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 12, y: player.y + 8, w: player.w - 24, h: player.h - 12 };
     for (const o of obst) {
-      const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
+      const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
         estado = 'morto'; morreuEm = performance.now();
         const pts = Math.floor(dist);
@@ -89,15 +91,17 @@ const desenha = () => {
   cx.fillStyle = '#5faa57'; cx.fillRect(0, cy, W, 5);
   for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x + 6, cy + 5, 4, 4); cx.fillRect(x + 24, cy + 5, 4, 4); cx.fillStyle = '#74bb6b'; cx.fillRect(x, cy + 18, 12, 3); cx.fillRect(x + 22, cy + 30, 8, 3); cx.fillStyle = '#5faa57'; }
   // pedras
-  obst.forEach((o) => cx.drawImage(IM.pedra, o.x, cy - o.h, o.w, o.h));
+  obst.forEach((o) => cx.drawImage(IM.pedra, o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
-  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
-  cx.translate(sx, sy + quica); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
-  cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
   const CICLO = [IM.gato, IM.gato3, IM.gato2, IM.gato4]; // 4 poses de corrida
-  const pose = (player.noChao && estado === 'jogando') ? CICLO[Math.floor(dist / 1.8) % 4] : IM.gato;
+  const idx = (player.noChao && estado === 'jogando') ? Math.floor(dist / 1.8) % 4 : 0;
+  const pose = CICLO[idx];
+  const queda = player.noChao ? (24 - LINHA[idx]) * (player.h / 25) + AFUNDA : 0;
+  const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
+  cx.translate(sx, sy + quica + queda); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
+  cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
   cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar

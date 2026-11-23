@@ -4,7 +4,16 @@
 const area = document.getElementById('cp-oi'), nome = document.getElementById('cp-oi-nome');
 if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
-const CH = 'cp-jogo-recorde';
+const CH = 'cp-jogo-recorde', CT = 'cp-jogo-tempo';
+const LIMITE = 8 * 60; // segundos de jogo por dia
+const forca = /[?&]cafe(=|&|$)/.test(location.search); // o mesmo teste do pause pro café
+// o jogo só existe no pause pro café: nas horas pares, nos primeiros 15 minutos
+const janela = () => { const d = new Date(); return forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15); };
+const hoje = () => new Date().toDateString();
+const leUso = () => { try { const o = JSON.parse(localStorage.getItem(CT) || '{}'); return o.dia === hoje() ? (+o.s || 0) : 0; } catch (e) { return 0; } };
+let usado = leUso(), cont = 0;
+const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
+const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
 const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg') };
 
@@ -13,6 +22,10 @@ const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
 box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou barra de espaço para pular · Esc para sair</div>';
 area.append(box);
+const aviso = document.createElement('div');
+aviso.className = 'cp-jogo-aviso'; aviso.setAttribute('role', 'status'); aviso.hidden = true; area.append(aviso);
+let avT = 0;
+const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 4500); };
 const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
 
 let W = 0, H = 0, dpr = 1;
@@ -23,7 +36,7 @@ const mede = () => {
 };
 
 // ---------- estado ----------
-let aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
+let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
 let matoX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
@@ -54,6 +67,10 @@ const novoObst = () => {
 const passo = (agora) => {
   raf = requestAnimationFrame(passo);
   const dt = Math.min(0.034, (agora - t0) / 1000 || 0); t0 = agora;
+  if (estado !== 'fim') {
+    if (estado === 'jogando') { usado += dt; if (++cont % 120 === 0) gravaUso(); }
+    if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
+  } else if (agora - fimEm > 3200) { fecha(); return; }
   if (estado === 'jogando') {
     vel = Math.min(920, vel + 9 * dt); dist += vel * dt / 14;
     chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.3) % MATO_P;
@@ -76,7 +93,7 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado !== 'morto') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
+  if (estado !== 'morto' && estado !== 'fim') nuvensF.forEach((n) => { n.x -= n.v * dt * (estado === 'jogando' ? 1 + vel / 600 : 1); if (n.x + n.w < -10) { n.x = W + 20; n.y = 20 + Math.random() * (H * 0.4); } });
   desenha();
 };
 const pts5 = (n) => String(Math.floor(n)).padStart(5, '0');
@@ -108,6 +125,12 @@ const desenha = () => {
   // placar
   cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
+  if (estado !== 'fim') { cx.fillStyle = '#2c4a5c'; cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
+  if (estado === 'fim') {
+    cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);
+    cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);
+    cx.font = '600 15px system-ui, sans-serif'; cx.fillText('Volta ao trabalho!', W / 2, H / 2 + 22);
+  }
   if (estado === 'morto') {
     const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
     cx.drawImage(IM.fim, (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
@@ -119,6 +142,9 @@ const desenha = () => {
 // ---------- abrir e fechar ----------
 const abre = () => {
   if (aberto) return;
+  if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
+  usado = leUso();
+  if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
   aberto = true; box.hidden = false; mede(); reinicia(); estado = 'pronto'; dica.classList.remove('off');
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
@@ -126,7 +152,7 @@ const abre = () => {
 };
 const fecha = () => {
   if (!aberto) return;
-  aberto = false; box.classList.remove('on'); cancelAnimationFrame(raf);
+  aberto = false; box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
   setTimeout(() => { if (!aberto) box.hidden = true; }, 260);
 };
 window.cpJogo = { abre, fecha };
@@ -180,5 +206,4 @@ if (nome) {
   let n = 0, ini = 0;
   nome.addEventListener('click', () => { const agora = Date.now(); if (agora - ini > 3000) n = 0; if (!n) ini = agora; n++; if (n >= 5) { n = 0; abre(); } });
 }
-if (/[?&]jogo(=|&|$)/.test(location.search)) setTimeout(abre, 400);
 })();

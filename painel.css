@@ -328,4 +328,7 @@
 #cp-jogo .jg-dica.off{opacity:0}
 @media (max-width:760px){#cp-jogo{min-height:220px}}
 @media (prefers-reduced-motion:reduce){#cp-jogo{transition:opacity .15s}}
+.cp-jogo-aviso{position:absolute;left:50%;bottom:14px;z-index:31;transform:translate(-50%,8px);max-width:min(92%,420px);padding:10px 16px;border-radius:12px;background:#102532;color:#fff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.cp-jogo-aviso.on{opacity:1;transform:translate(-50%,0)}
+.cp-jogo-aviso[hidden]{display:none}
 

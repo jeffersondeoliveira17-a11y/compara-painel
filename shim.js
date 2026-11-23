@@ -63,12 +63,9 @@
     iniciou = true;
     raiz.classList.remove('bloqueado'); el('login').hidden = true;
     const menu = document.getElementById('cp-menu-perfil');
-    if (menu && !el('cp-sair')) {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'it'; b.id = 'cp-sair';
-      b.innerHTML = 'Sair<small>Encerrar a sessão neste navegador</small>';
-      b.addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
-      menu.append(b);
-      const h = menu.querySelector('h4'); if (h && sessao && sessao.user && sessao.user.email) h.textContent = sessao.user.email + ' · Administrador';
+    if (menu) {
+      const b = el('cp-sair'); if (b && !b.dataset.ok) { b.dataset.ok = '1'; b.addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); }); }
+      const m = el('mp-mail'); if (m && sessao && sessao.user && sessao.user.email) m.textContent = sessao.user.email;
     }
     window.painelIniciar();
   }

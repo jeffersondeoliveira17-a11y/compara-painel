@@ -221,3 +221,19 @@
 .cp-app.estreito .cp-pilula{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:999px;padding:4px 6px;gap:2px}
 .cp-bar-dir .cp-ava{width:44px;height:44px;font-size:17px}
 .cp-bar-dir .cp-perfil::after{width:11px;height:11px;right:2px;bottom:2px}
+/* Menu da conta: cabeçalho com foto, grupos com ícones e "Sair" separado */
+.cp-menu.mp{width:min(320px,calc(100vw - 40px));border-radius:20px}
+.mp-hd{display:flex;gap:12px;align-items:center;padding:18px 18px 12px}
+.cp-bar-dir .cp-menu .mp-ava,.mp-ava{width:52px;height:52px;font-size:20px;flex:none}
+.mp-id{min-width:0}.mp-id b{display:block;font-size:15px;font-weight:600}
+.mp-id span{display:block;font-size:12px;color:#6b7380;margin-top:2px;overflow-wrap:anywhere}
+.mp-tag{display:inline-block;margin-top:6px;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.04em;background:#dff2ea;color:#1f7a53;border-radius:999px;padding:2px 9px}
+.mp-g{padding:2px 8px 6px}
+.mp-sec{font-size:10px;letter-spacing:.09em;color:#9aa1ab;font-weight:600;padding:10px 12px 4px}
+.cp-menu.mp .it{display:flex;align-items:center;gap:12px;border:0;border-radius:12px;padding:8px 12px;font-size:13.5px;width:100%}
+.mp-ic{width:32px;height:32px;border-radius:10px;background:#eef0f3;display:grid;place-items:center;color:#3b4552;flex:none}
+.mp-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mp-em{margin-left:auto;font-style:normal;font-size:10px;font-weight:600;background:#f3e6c8;color:#7a5a10;border-radius:999px;padding:2px 8px}
+.cp-menu.mp .it[aria-disabled="true"]{opacity:.6}
+.mp-ft{border-top:1px solid var(--color-border-line);padding:8px}
+.cp-menu.mp .mp-out{color:#c0392b}.mp-out .mp-ic{background:#fbe0dc;color:#c0392b}

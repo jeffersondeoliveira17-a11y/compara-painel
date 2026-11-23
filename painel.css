@@ -279,3 +279,11 @@
 .cl-cafe.on img{animation:none}
 .cp-clima .cl-cafe .cl-pause{order:-1;flex:none;width:62%;max-width:150px;height:auto;margin:0 0 8px;image-rendering:pixelated}
 .cp-clima .cl-cafe img:not(.cl-pause){flex:1 1 0;min-height:0}
+/* PAUSE centralizado entre o topo do cartão e a cabeça do personagem */
+.cp-clima .cl-cafe{padding:0 12px 0;gap:0}
+.cp-clima .cl-cafe .cl-top{order:-1;flex:1 1 auto;display:flex;align-items:center;justify-content:center;width:100%;min-height:34px;color:inherit}
+.cp-clima .cl-cafe .cl-top .cl-pause{margin:0;width:62%;max-width:150px}
+.cp-clima .cl-cafe img:not(.cl-pause){flex:0 0 auto;width:100%;height:auto;min-height:0;margin:0;object-position:center bottom}
+.cp-clima .cl-cafe img:not(.cl-pause){width:auto;max-width:100%;max-height:calc(100% - 64px)}
+.cp-clima .cl-cafe .cl-top .cl-pause{max-width:112px}
+.cp-clima .cl-cafe img:not(.cl-pause){max-height:calc(100% - 84px)}

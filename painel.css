@@ -194,3 +194,6 @@
 #ag-exp:hover{background:rgba(27,36,48,.07);color:#1b2430}
 #ag-exp svg{width:20px;height:20px;transform:none!important;transition:transform .25s}
 .cp-ag.aberto #ag-exp svg{transform:rotate(180deg)!important}
+/* Login: mesma tipografia do painel e cadeado pixelado antes do título */
+.lg-form h1{font:600 30px/1.15 var(--font-anthropic-sans);letter-spacing:-.01em}
+.lg-lock{display:block;width:34px;height:47px;margin:0 0 14px;image-rendering:pixelated}

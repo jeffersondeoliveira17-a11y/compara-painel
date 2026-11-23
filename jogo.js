@@ -90,7 +90,7 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
-let decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
+let aveModo = null, decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
@@ -124,9 +124,11 @@ const pula = () => {
 const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)
 const novoObst = () => {
   const n0 = obst.length;
+  let poleiro = false;
   const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
+  if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
@@ -135,7 +137,7 @@ const novoObst = () => {
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);
     fim = P(b2.x + b2.w + vel * (0.5 + Math.random() * 0.06)); obst.push(fim);
   } else if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
-  if (ave && fim.x + fim.w > ave.x - 70 && o.x < ave.x + AVE_W + 70) { const dx = ave.x + AVE_W + 70 - o.x; for (let q = n0; q < obst.length; q++) obst[q].x += dx; fim = obst[obst.length - 1]; } // pedra nunca nasce em cima do passarinho
+  if (ave && !ave.rock && fim.x + fim.w > ave.x - 70 && o.x < ave.x + AVE_W + 70) { const dx = ave.x + AVE_W + 70 - o.x; for (let q = n0; q < obst.length; q++) obst[q].x += dx; fim = obst[obst.length - 1]; } // pedra nunca nasce em cima do passarinho
   return fim.x + fim.w - o.x; // largura do conjunto, para o espaçamento da próxima
 };
 
@@ -192,8 +194,9 @@ const passo = (agora) => {
       if (portal.x + portal.w / 2 <= player.x + player.w * 0.85) { estado = 'portal'; tPortal = 0; viraFeito = false; fasePt = vel; }
     }
     obst.forEach((o) => { o.x -= v * dt; if (!o.cor && o.x + o.w / 2 < player.x + player.w / 2) o.cor = true; }); // pedra que o cachorro já pulou fica colorida
-    if (ave) { ave.x -= v * dt; if (ave.x < -140) { ave = null; aveEm = 20 + Math.random() * 20; } } // anda junto com o chão
+    if (ave && !ave.rock) { ave.x -= v * dt; if (ave.x < -140) { ave = null; aveEm = 20 + Math.random() * 20; } } // anda junto com o chão
     obst = obst.filter((o) => o.x + o.w > -10);
+    if (ave && ave.rock && !obst.includes(ave.rock)) { ave = null; aveEm = 20 + Math.random() * 20; } // a pedra saiu da tela: o passarinho vai embora com ela
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     for (const o of obst) {
@@ -206,10 +209,10 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado === 'portal') { if (ave) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
+  if (estado === 'portal') { if (ave && !ave.rock) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
-    if (!ave) { aveEm -= dt; if (aveEm <= 0 && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) ave = { x: W + 60 }; } // passarinho com ponto de exclamação aparece no chão de vez em quando
+    if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60 }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -278,9 +281,11 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  if (ave && IM.ave.complete && IM.ave.naturalWidth) { const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; cx.save(); cx.translate(Math.round(ave.x) + w, cy + 5 - h); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); } // de pé no chão, olhando para o cachorro
+  const piaAve = () => { if (!(ave && IM.ave.complete && IM.ave.naturalWidth)) return; const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
+  if (ave && !ave.rock) piaAve();
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
+  if (ave && ave.rock) piaAve();
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;

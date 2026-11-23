@@ -45,6 +45,25 @@ const mono = (im, cen) => {
   }
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
 };
+// chão da noite: faixa clara no topo, borda em dentes e terra escura por baixo (inspirado na referência)
+let chaoN = null;
+const chaoNoite = () => {
+  if (chaoN) return chaoN;
+  const U = 4, C = 64, R = 15;
+  chaoN = document.createElement('canvas'); chaoN.width = C * U; chaoN.height = R * U;
+  const g = chaoN.getContext('2d'), px = (c, r, col) => { g.fillStyle = col; g.fillRect(c * U, r * U, U, U); };
+  const TERRA = '#10151c', PONTO = '#1d2530', FAIXA = '#e3e9f2', DENTE = '#b4bfce', TUFO = '#c3ccd9';
+  g.fillStyle = TERRA; g.fillRect(0, 0, C * U, R * U);
+  const dente = [0, 1, 2, 1];
+  for (let c = 0; c < C; c++) {
+    px(c, 2, FAIXA); px(c, 3, FAIXA); // faixa clara onde o cachorro pisa
+    for (let d = 0; d <= dente[c % 4]; d++) px(c, 4 + d, DENTE); // bordinha em zigue-zague
+    if ((c * 7) % 11 === 3) { px(c, 1, TUFO); px(c, 0, TUFO); } // tufinhos de grama
+    if ((c * 5) % 13 === 4) px(c, 1, TUFO);
+    for (let r = 8; r < R; r++) if (((c * 3 + r * 5) % 9) === 0) px(c, r, PONTO); // pontinhos na terra
+  }
+  return chaoN;
+};
 const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao || im === IM.mato ? 1 : 0)) : im);
 const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? NOITE_TOM[1] : '#2c4a5c');
 
@@ -225,7 +244,7 @@ const desenha = () => {
   }
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) cx.drawImage(S(IM.mato), x, cy - MATO_H + 4, MATO_W, MATO_H);
-  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(S(IM.chao), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) cx.drawImage(noite ? chaoNoite() : IM.chao, Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // pedras
   obst.forEach((o) => cx.drawImage(S(IM.pedra), o.x, cy - o.h + AFUNDA, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
@@ -263,6 +282,13 @@ const desenha = () => {
     cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
     cx.globalAlpha = 1;
   }
+  // bolinhas: quanto falta para o próximo portal (cada bolinha = 10% do caminho)
+  { const prog = Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)), cheias = Math.floor(prog * 10 + 1e-6);
+    for (let i = 0; i < 10; i++) {
+      const bx = W - 24 - (9 - i) * 16, by = H - 14;
+      cx.beginPath(); cx.arc(bx, by, 4, 0, Math.PI * 2);
+      cx.fillStyle = i < cheias ? (noite ? '#e3e9f2' : '#fff') : (noite ? '#3a4658' : 'rgba(255,255,255,.35)'); cx.fill();
+    } }
   // placar
   cx.fillStyle = TINTA(); cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);

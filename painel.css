@@ -173,5 +173,10 @@
 .cp-ag.aberto{overflow:visible;z-index:30}
 .cp-ag.aberto .ag-rol{position:absolute;left:-1px;right:-1px;top:0;height:440px;flex:none;border:1px solid #e3e5e8;border-top:0;border-radius:0 0 18px 18px;box-shadow:0 16px 32px rgba(20,30,50,.18)}
 .cp-ag.aberto #ag-exp{bottom:auto;top:408px}
-@media (max-width:760px){.cp-ag .ag-wrap{min-height:260px}.cp-ag.aberto #ag-exp{top:408px}}
+@media (max-width:760px){.cp-ag .ag-wrap{min-height:260px}}
 #ag-exp svg{width:14px;height:14px}
+/* Agenda: botão de expandir no topo, ao lado do caderninho, em quadrado arredondado */
+#ag-exp{position:static;flex:none;width:28px;height:28px;border-radius:9px;background:#e6efe9;color:#2f6b4f;margin:-4px 0}
+#ag-exp:hover{background:#d4e5db}
+.cp-ag.aberto #ag-exp{top:auto;bottom:auto}
+.cp-ag h4 .cp-st{margin-left:auto}

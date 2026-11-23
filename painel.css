@@ -275,3 +275,7 @@
 .cl-cafe.on img{animation:cl-bal 3.2s ease-in-out .8s infinite}
 @keyframes cl-bal{0%,100%{transform:rotate(0)}50%{transform:rotate(-1.6deg) translateY(-2px)}}
 @media (prefers-reduced-motion:reduce){.cl-cafe,.cl-cafe.on{transition:opacity .2s}.cl-cafe.on img{animation:none}}
+/* café: boneco parado (só a fumaça mexe, dentro do SVG) e botão PAUSE no lugar do texto */
+.cl-cafe.on img{animation:none}
+.cp-clima .cl-cafe .cl-pause{order:-1;flex:none;width:62%;max-width:150px;height:auto;margin:0 0 8px;image-rendering:pixelated}
+.cp-clima .cl-cafe img:not(.cl-pause){flex:1 1 0;min-height:0}

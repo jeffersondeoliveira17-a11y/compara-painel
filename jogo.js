@@ -6,7 +6,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CH = 'cp-jogo-recorde';
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
+const IM = { nuvem: img('icones/nuvem.svg'), gato: img('icones/gato.svg'), gato2: img('icones/gato2.svg'), raio: img('icones/raio.svg'), fim: img('icones/game-over.svg') };
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -85,8 +85,9 @@ const desenha = () => {
   nuvensF.forEach((n) => cx.drawImage(IM.nuvem, n.x, n.y, n.w, n.w * 107.2 / 171));
   cx.restore();
   // chão
-  cx.fillStyle = '#102532'; cx.fillRect(0, cy, W, 4);
-  for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x, cy + 14, 14, 3); cx.fillRect(x + 22, cy + 26, 8, 3); }
+  cx.fillStyle = '#8fcf86'; cx.fillRect(0, cy, W, H - cy);
+  cx.fillStyle = '#5faa57'; cx.fillRect(0, cy, W, 5);
+  for (let x = chaoX - 40; x < W + 40; x += 40) { cx.fillRect(x + 6, cy + 5, 4, 4); cx.fillRect(x + 24, cy + 5, 4, 4); cx.fillStyle = '#74bb6b'; cx.fillRect(x, cy + 18, 12, 3); cx.fillRect(x + 22, cy + 30, 8, 3); cx.fillStyle = '#5faa57'; }
   // raios
   obst.forEach((o) => cx.drawImage(IM.raio, o.x, cy - o.h, o.w, o.h));
   // gatinho (inclina no ar e quica correndo)
@@ -95,7 +96,8 @@ const desenha = () => {
   const quica = (player.noChao && estado === 'jogando') ? -Math.abs(Math.sin(dist * 0.9)) * 5 : 0;
   cx.translate(sx, sy + quica); cx.rotate(player.noChao ? (estado === 'jogando' ? Math.sin(dist * 0.9) * 0.05 : 0) : Math.max(-0.2, Math.min(0.2, player.vy / 4500)));
   cx.scale(-1, 1); // o desenho olha para a esquerda; o jogo corre para a direita
-  cx.drawImage(IM.gato, -player.w / 2, -player.h / 2, player.w, player.h);
+  const pose = (player.noChao && estado === 'jogando' && Math.floor(dist / 2.2) % 2 === 1) ? IM.gato2 : IM.gato; // pernas alternam correndo
+  cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
   cx.restore();
   // placar
   cx.fillStyle = '#102532'; cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
@@ -103,7 +105,7 @@ const desenha = () => {
   if (estado === 'morto') {
     const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
     cx.drawImage(IM.fim, (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
-    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = '#fff';
+    cx.textAlign = 'center'; cx.font = '600 13px system-ui, sans-serif'; cx.fillStyle = '#102532';
     cx.fillText('Toque ou espaço para jogar de novo', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 24);
   }
 };

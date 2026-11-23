@@ -211,3 +211,7 @@
 .cp-chave-h{display:block;width:28px;height:14px;margin:0 0 10px 12px}
 .cp-app.estreito .cp-chave-v{display:block;margin:0 0 10px}
 .cp-app.estreito .cp-chave-h{display:none}
+/* Chave acima da linha do rodapé do menu, um pouco maior */
+.cp-side-bot{margin-top:auto}.cp-side-bot .cp-side-foot{margin-top:0}
+.cp-chave-v{width:20px;height:40px}.cp-chave-h{width:40px;height:20px;margin:0 0 12px 12px}
+.cp-app.estreito .cp-chave-v{margin:0 auto 12px}

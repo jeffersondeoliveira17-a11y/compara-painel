@@ -52,7 +52,7 @@ const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
-box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-vel"><button type="button" data-v="0.6" aria-label="Frear">◀</button><button type="button" data-v="1.45" aria-label="Acelerar">▶</button></div><div class="jg-dica" aria-hidden="true">Toque ou espaço para pular · ◀ ▶ frear e acelerar · Esc para sair</div>';
+box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true">Toque ou espaço para pular · Esc para sair</div>';
 area.append(box);
 const aplicaTema = () => { box.classList.toggle('noite', noite); };
 aplicaTema();
@@ -341,7 +341,6 @@ const fecha = () => {
 window.cpJogo = { abre, fecha };
 fechar.addEventListener('click', (e) => { e.stopPropagation(); fecha(); });
 cv.addEventListener('pointerdown', (e) => { e.preventDefault(); pula(); });
-box.querySelectorAll('.jg-vel button').forEach((bt) => { const liga = (e) => { e.preventDefault(); e.stopPropagation(); alvoAcel = +bt.dataset.v; }, solta = () => { alvoAcel = 1; }; bt.addEventListener('pointerdown', liga); bt.addEventListener('pointerup', solta); bt.addEventListener('pointerleave', solta); bt.addEventListener('pointercancel', solta); });
 window.addEventListener('resize', () => { if (aberto) { mede(); } });
 
 // ---------- teclado: pular, sair e código Konami ----------

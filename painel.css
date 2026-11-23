@@ -184,3 +184,8 @@
 #ag-exp{width:24px;height:24px;border-radius:50%;background:transparent;border:1.5px solid currentColor;color:#3b4552;margin:-2px 0}
 #ag-exp:hover{background:rgba(27,36,48,.08);color:#1b2430}
 #ag-exp svg{width:12px;height:12px}
+/* Agenda: botão de expandir como "desdobrar" em quadrado suave */
+#ag-exp{width:28px;height:28px;border-radius:9px;border:0;background:#f3e6c8;color:#6b4e16;margin:-4px 0}
+#ag-exp:hover{background:#ecd9ac;color:#4a3410}
+#ag-exp svg{width:16px;height:16px;transform:none!important}
+#ag-exp .ex-b{display:none}.cp-ag.aberto #ag-exp .ex-a{display:none}.cp-ag.aberto #ag-exp .ex-b{display:inline}

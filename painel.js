@@ -1240,3 +1240,16 @@ const on = vez && fechado !== slot(); el.classList.toggle('on', on); el.setAttri
 el.addEventListener('click', () => { fechado = slot(); confere(); });
 confere(); setInterval(confere, 30000);
 })();
+(() => {
+// Fim do expediente: às 19h, durante 15 minutos (ou com ?fim na URL), o widget do tempo mostra GAME OVER. Toque para dispensar.
+const el = document.getElementById('cl-fim'); if (!el) return;
+const forca = /[?&]fim(=|&|$)/.test(location.search);
+let fechado = '';
+const dia = () => new Date().toDateString();
+const confere = () => {
+const d = new Date(), vez = forca || (d.getHours() === 19 && d.getMinutes() < 15);
+const on = vez && fechado !== dia(); el.classList.toggle('on', on); el.setAttribute('aria-hidden', String(!on)); el.tabIndex = on ? 0 : -1;
+};
+el.addEventListener('click', () => { fechado = dia(); confere(); });
+confere(); setInterval(confere, 30000);
+})();

@@ -297,3 +297,10 @@
 .cp-bar-dir .cp-perfil:focus-visible{outline:2px solid #1b2430;outline-offset:3px}
 .cp-menu-btn{width:64px}
 .cp-menu-btn{width:78px}
+
+/* fim do expediente: às 19h o widget mostra GAME OVER (pixel) por 15 minutos */
+.cp-clima .cl-cafe.cl-fim{background:#102532;justify-content:center;align-items:center;padding:12px}
+.cp-clima .cl-cafe.cl-fim img.cl-go{flex:none;width:76%;max-width:190px;height:auto;max-height:none;margin:0;image-rendering:pixelated}
+.cp-clima .cl-cafe.cl-fim.on img.cl-go{animation:cl-pisca 1.2s steps(1,end) infinite}
+@keyframes cl-pisca{0%,70%{opacity:1}71%,100%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.cp-clima .cl-cafe.cl-fim.on img.cl-go{animation:none}}

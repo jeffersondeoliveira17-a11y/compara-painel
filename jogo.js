@@ -133,18 +133,21 @@ const reinicia = () => {
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
-// buraco no chão (obra): corte de lado na terra, com paredes irregulares, fundo que escurece e um pouquinho de grama na borda
+// buraco no chão (obra): bacia em degraus de 4 px aberta na grama (cantinhos verdes arredondados), terra marrom clara na borda e mais escura no fundo
+const mistCor = (h, alvo, t) => { const a = [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)), b = [1, 3, 5].map((k) => parseInt(alvo.slice(k, k + 2), 16)); return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',') + ')'; };
 const desenhaBuraco = (o, cy) => {
-  const esc = noite && !o.cor;
-  const C = esc ? { l: '#5a6880', r: '#3a4658', a: '#222c3a', m: '#161d28', f: '#0a0e14', g: '#7f8da3' } : { l: '#a56b3b', r: '#6b4226', a: '#3d2415', m: '#24150c', f: '#120a05', g: '#55b83f' };
-  const cell = 4, x0 = Math.round(o.x), w = Math.round(o.w / cell) * cell, rows = Math.ceil((H - cy + 2) / cell);
-  for (let r = 0; r < rows; r++) {
-    const y = Math.round(cy) - 1 + r * cell, j = o.jag[r % o.jag.length], xl = x0 + j[0], xr = x0 + w - j[1];
-    cx.fillStyle = r < 2 ? C.a : (r < 6 ? C.m : C.f); cx.fillRect(xl, y, xr - xl, cell); // fundo: parede de trás, depois escuro, depois quase preto
-    cx.fillStyle = C.l; cx.fillRect(xl - cell, y, cell, cell); // parede da esquerda, iluminada
-    cx.fillStyle = C.r; cx.fillRect(xr, y, cell, cell); // parede da direita, na sombra
-    if (r === 0) { cx.fillStyle = C.g; cx.fillRect(xl - cell, y - cell / 2, cell, cell / 2); cx.fillRect(xr, y - cell / 2, cell, cell / 2); }
-  }
+  const esc = noite && !o.cor, P = (h) => (esc ? mistCor(h, '#26303f', 0.28) : h);
+  const cell = 4, x0 = Math.round(o.x), w = Math.round(o.w / cell) * cell, y0 = Math.round(cy) - 2;
+  const INS = [0, 0, 4, 8, 12, 20, 28]; // quanto a bacia entra de cada lado, linha a linha (fundo arredondado)
+  INS.forEach((ins, r) => {
+    const y = y0 + r * cell, xl = x0 + ins, xr = x0 + w - ins;
+    cx.fillStyle = P(r === INS.length - 1 ? '#3a2214' : '#8a5a35'); cx.fillRect(xl, y, xr - xl, cell); // parede (marrom médio; fundo mais escuro)
+    cx.fillStyle = P(r < 2 ? '#5e3a20' : (r < 5 ? '#46291a' : '#2e1a10')); if (r < INS.length - 1) cx.fillRect(xl + cell, y, xr - xl - cell * 2, cell); // miolo: terra escura que escurece com a profundidade
+    if (r < INS.length - 1) { cx.fillStyle = P('#b8844a'); cx.fillRect(xl, y, cell, cell); } // lado esquerdo iluminado (marrom mais claro)
+    if (r < 2) { cx.fillStyle = P('#6b4226'); cx.fillRect(xr - cell, y, cell, cell); } // lado direito na sombra
+  });
+  cx.fillStyle = P('#55b83f'); cx.fillRect(x0, y0 - 2, cell, 2); cx.fillRect(x0 + w - cell, y0 - 2, cell, 2); // pontinha de grama arredondando a borda
+  cx.fillStyle = P('#6fcf55'); cx.fillRect(x0 - 2, y0, 2, cell); cx.fillRect(x0 + w, y0, 2, cell);
 };
 // fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;

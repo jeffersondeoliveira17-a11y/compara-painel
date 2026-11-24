@@ -114,7 +114,7 @@ const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
 const chaoY = () => H - CHAO_H;
 const ARV_U = 2.4, ARVG_U = 2.9; // uma árvore por vez na tela: 'fundo' (atrás da moita, anda com ela) ou 'chao' (em pé na linha da grama, maior)
 const arvTam = (t) => { const im = IM.arv[0]; return im && im.naturalWidth ? [im.naturalWidth * (t === 'chao' ? ARVG_U : ARV_U), im.naturalHeight * (t === 'chao' ? ARVG_U : ARV_U)] : [0, 0]; };
-const arvAnda = (v, dt) => { if (!arvO) return; arvO.x -= v * dt * (arvO.tipo === 'fundo' ? 0.6 : 1); if (arvO.x < -400) { arvO = null; arvEm = 2 + Math.random() * 5; } };
+const arvAnda = (v, dt) => { if (!arvO) return; arvO.x -= v * dt * (arvO.tipo === 'fundo' ? 0.6 : 1); if (arvO.tipo === 'chao' && !arvO.cor && arvO.x + arvTam('chao')[0] / 2 < player.x + player.w / 2) arvO.cor = true; /* árvore que o cachorro já passou fica colorida, como as pedras */ if (arvO.x < -400) { arvO = null; arvEm = 2 + Math.random() * 5; } };
 const arvNasce = (dt) => { if (arvO) return; arvEm -= dt; if (arvEm > 0) return; const t = arvTipo; arvTipo = t === 'chao' ? 'fundo' : 'chao'; const [aw] = arvTam(t); if (!aw) return; if (t === 'chao') arvO = { tipo: t, x: W + 40, v: fase % 3 }; else { const xm = matoX + Math.ceil((W + aw / 2 - 300 - matoX) / MATO_P) * MATO_P; arvO = { tipo: t, x: xm + 300 - aw / 2, v: fase % 3 }; } }; // árvore: aparece junto de uma moita a cada 2 moitas; ARV_U = tamanho de cada quadradinho
 const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
@@ -347,7 +347,7 @@ const desenha = () => {
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // árvore em pé na grama, na frente das moitas
-  if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); }
+  if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) { if (arvO.cor) cx.drawImage(ai, Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); else dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); } }
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras

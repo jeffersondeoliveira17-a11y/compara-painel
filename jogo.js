@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -122,6 +122,7 @@ const pula = () => {
   if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; }
   else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; }
 };
+const sorteiaAve = () => (Math.random() < 0.5 ? IM.ave : IM.ave2); // alterna entre o passarinho do balão e o do café
 const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)
 const novoObst = () => {
   const n0 = obst.length;
@@ -130,7 +131,7 @@ const novoObst = () => {
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 10 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
-  if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o }; aveModo = null; poleiro = true; }
+  if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
@@ -214,7 +215,7 @@ const passo = (agora) => {
   if (estado === 'portal') { if (ave && !ave.rock) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
-    if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60 }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
+    if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60, sp: sorteiaAve() }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
     if (!mor) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
     else { mor.x -= mor.v * dt; mor.t += dt; if (mor.x < -110) { mor = null; morEm = 8 + Math.random() * 10; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
@@ -286,7 +287,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  const piaAve = () => { if (!(ave && IM.ave.complete && IM.ave.naturalWidth)) return; const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
+  const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));

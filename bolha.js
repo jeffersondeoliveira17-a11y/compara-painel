@@ -237,14 +237,14 @@ const desenha = (agora) => {
   // dedo: sobe até o ponto do toque e some
   dedos.forEach((d) => { const k = Math.min(1, d.t / 0.12), sai = Math.max(0, (d.t - 0.16) / 0.12); g.globalAlpha = 1 - sai; g.drawImage(dedoSpr, Math.round(d.x - 6 * 3 + 0), Math.round(d.y - 2 + (1 - k) * 26 + sai * 10)); }); g.globalAlpha = 1;
   // placar: canto esquerdo = bolhas vivas; direito = cronômetro regressivo da rodada e pontos
-  g.drawImage(bolhaSpr, ZONA + 8, ZONA + 2, 22, 22);
-  const xe = pixTexto(g, 'x', ZONA + 34, ZONA + 8, 3, '#eaf2f2'); pixTexto(g, String(bs.length), xe + 2, ZONA + 8, 3, '#52e4f2');
-  g.fillStyle = '#c3ccd9'; g.font = '600 11px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
-  if (estado !== 'fim') g.fillText('restam ' + mmss(LIMITE - usado), ZONA + 8, ZONA + 40);
-  g.textAlign = 'right'; g.font = '700 13px ui-monospace, Menlo, Consolas, monospace';
-  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 40);
+  g.fillStyle = '#c3ccd9'; g.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
+  if (estado !== 'fim') g.fillText('restam ' + mmss(LIMITE - usado), ZONA + 8, ZONA + 18);
+  g.drawImage(bolhaSpr, ZONA + 8, ZONA + 26, 22, 22);
+  const xe = pixTexto(g, 'x', ZONA + 34, ZONA + 32, 3, '#eaf2f2'); pixTexto(g, String(bs.length), xe + 2, ZONA + 32, 3, '#52e4f2');
+  g.textAlign = 'right'; g.font = '700 14px ui-monospace, Menlo, Consolas, monospace'; g.fillStyle = '#c3ccd9';
+  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 18);
   { const seg = Math.max(0, Math.ceil(cron)), t = Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'), k = 3, w = t.length * 4 * k - k;
-    pixTexto(g, t, Math.round(W - ZONA - 44 - w), ZONA + 8, k, seg <= 5 ? '#f77ae9' : '#eaf2f2'); }
+    pixTexto(g, t, Math.round(W - ZONA - 44 - w), ZONA + 32, k, seg <= 5 ? '#f77ae9' : '#eaf2f2'); }
   if (aviso2 > 0 && estado === 'jogando') { g.textAlign = 'center'; g.font = '700 16px ui-monospace, Menlo, Consolas, monospace'; g.fillStyle = '#52e4f2'; g.globalAlpha = Math.min(1, aviso2); g.fillText('+' + ganho + (ganho === 1 ? ' bolha' : ' bolhas'), W / 2, ZONA + 34); g.globalAlpha = 1; }
   g.textAlign = 'center';
   const ps = window.cpPS;

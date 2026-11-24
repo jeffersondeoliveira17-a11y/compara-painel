@@ -515,3 +515,6 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
   #cp-oi .cp-clima{flex:0 0 168px!important;width:168px!important;min-width:168px!important;max-width:168px!important}
   #cp-oi .cp-oi-t{margin-left:1.4px}
 }
+
+/* área de trabalho (etiqueta, título, frase e tarefas) 16px mais baixa, até o guia verde horizontal */
+@media (min-width:901px){ #cp-oi .cp-oi-t{padding-top:16.4px;box-sizing:border-box} }

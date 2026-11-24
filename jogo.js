@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -104,7 +104,7 @@ let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // 
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let acel = 1, alvoAcel = 1, matoX = 0, arvO = null, arvEm = 0, arvTipo = 'chao', vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let burst = null, poeira = [], poeiraEm = 0, acel = 1, alvoAcel = 1, matoX = 0, arvO = null, arvEm = 0, arvTipo = 'chao', vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -125,15 +125,20 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; arvO = { tipo: 'chao', x: 600 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; burst = null; poeira = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; arvO = { tipo: 'chao', x: 600 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
+// fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
+const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.8, BURST_DT = 0.045;
+// poeirinha nas patinhas: bolinhas brancas com sombra cinza, nascem nos pés, andam com o chão e somem
+const sopra = (x, y, n, forca) => { for (let i = 0; i < n; i++) poeira.push({ x: x + (Math.random() - 0.5) * 10, y: y - Math.random() * 3, vx: -(30 + Math.random() * 50) * forca, vy: -(18 + Math.random() * 34), r: 2 + Math.random() * 2, t: 0, vida: 0.35 + Math.random() * 0.25 }); };
+const atualizaPoeira = (dt, v) => { poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
 const pula = () => {
-  if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); }
-  if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; }
-  else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; }
+  if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); burst = { t: 0, x: player.x + player.w / 2, y: chaoY() - 78 }; }
+  if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; sopra(player.x + 25, chaoY() + 2, 4, 1.2); }
+  else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; burst = { t: 0, x: player.x + player.w / 2, y: chaoY() - 78 }; }
 };
 const sorteiaAve = () => (Math.random() < 0.5 ? IM.ave : IM.ave2); // alterna entre o passarinho do balão e o do café
 const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)
@@ -196,7 +201,9 @@ const passo = (agora) => {
     chaoX = (chaoX - v * dt) % CHAO_W; matoX = (matoX - v * dt * 0.6) % MATO_P; arvAnda(v, dt); arvNasce(dt); decoX = (decoX - v * dt * 0.8) % DECO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
-    if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
+    if (player.y >= solo) { if (!player.noChao && player.vy > 250) { sopra(player.x + 25, chaoY() + 2, 4, 1.2); sopra(player.x + 85, chaoY() + 2, 3, 0.8); } player.y = solo; player.vy = 0; player.noChao = true; }
+    if (player.noChao) { poeiraEm -= dt; if (poeiraEm <= 0) { poeiraEm = 0.1; sopra(player.x + 24, chaoY() + 2, 1, 1); } }
+    atualizaPoeira(dt, v);
     prox -= v * dt;
     const alvo = PORTAL_PTS * (fase + 1);
     if (!portal && dist >= alvo) { // hora do portal: ele entra depois da última pedra, sem pedras novas na frente
@@ -343,6 +350,9 @@ const desenha = () => {
   // pedras
   obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (ave && ave.rock) piaAve();
+  // fumaça da largada (atrás do cachorro) e poeirinha nas patas
+  if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }
+  poeira.forEach((p) => { const u = p.t / p.vida, r = p.r * (1 + u * 0.9), a = 1 - u * u; cx.globalAlpha = a; cx.fillStyle = noite ? '#7f8da3' : '#d7d7d7'; cx.beginPath(); cx.arc(Math.round(p.x) + 1, Math.round(p.y) + 1, r, 0, 6.2832); cx.fill(); cx.fillStyle = noite ? '#dfe5ee' : '#ffffff'; cx.beginPath(); cx.arc(Math.round(p.x), Math.round(p.y), r, 0, 6.2832); cx.fill(); cx.globalAlpha = 1; });
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;

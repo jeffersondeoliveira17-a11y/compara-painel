@@ -142,10 +142,14 @@ const pixTexto = (g, txt, x, y, k, cor) => { g.fillStyle = cor; for (const ch of
 const barraDir = document.querySelector('.cp-bar-dir');
 const cronEl = document.createElement('div');
 cronEl.id = 'cp-cron'; cronEl.hidden = true; cronEl.setAttribute('role', 'timer'); cronEl.setAttribute('aria-label', 'Tempo de jogo que resta hoje');
-cronEl.innerHTML = '<span>restam</span><b>8:00</b>';
+const XIC = 'M4 0h1v1h-1zM7 0h1v1h-1zM3 1h1v1h-1zM6 1h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM10 4h1v1h-1zM0 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM10 7h1v1h-1zM13 7h1v1h-1zM0 8h1v1h-1zM10 8h1v1h-1zM13 8h1v1h-1zM0 9h1v1h-1zM10 9h1v1h-1zM13 9h1v1h-1zM0 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM1 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1zM2 12h1v1h-1zM8 12h1v1h-1zM3 13h1v1h-1zM4 13h1v1h-1zM5 13h1v1h-1zM6 13h1v1h-1zM7 13h1v1h-1z', CAFE = ["M1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1z", "M1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1z", "M1 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1z", "M1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1z", "M1 10h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1z", "M2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM8 11h1v1h-1z", "M3 12h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z"]; // xícara vetorizada 14x14: contorno e as 7 linhas de café (de cima para baixo)
+cronEl.innerHTML = '<svg viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><path fill="#000" d="' + XIC + '"/>' + CAFE.map((d) => '<path fill="#ae864b" d="' + d + '"/>').join('') + '</svg><span>restam</span><b>8:00</b>';
 if (barraDir) barraDir.insertBefore(cronEl, barraDir.firstChild);
-const cronB = cronEl.querySelector('b'); let cronTxt = '';
-const mostraCron = (seg) => { const t = mmss(seg); if (t !== cronTxt) { cronTxt = t; cronB.textContent = t; } cronEl.classList.toggle('fim', seg <= 30); };
+const cronB = cronEl.querySelector('b'), cafes = cronEl.querySelectorAll('svg path:not(:first-child)'); let cronTxt = '', tAbre = 0, nCafe = -1;
+const restaPausa = () => { const d = new Date(), manual = forca || window.cpLiberado, naPausa = d.getHours() % 2 === 0 && d.getMinutes() < 15; return manual && !naPausa ? Math.max(0, 900 - (Date.now() - tAbre) / 1000) : Math.max(0, (new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 15, 0).getTime() - Date.now()) / 1000); }; // segundos até o fim da pausa de 15 minutos
+const mostraCron = (seg) => { const t = mmss(seg); if (t !== cronTxt) { cronTxt = t; cronB.textContent = t; } cronEl.classList.toggle('fim', seg <= 30);
+  const n = Math.ceil(restaPausa() / 900 * 7); if (n !== nCafe) { nCafe = n; cafes.forEach((p, k) => { p.style.display = k >= 7 - n ? '' : 'none'; }); } // o café na xícara vai baixando: acaba junto com os 15 minutos
+};
 const nova = (x, y, vx, vy, e = 1) => ({ x, y, vx, vy, e, sq: 0, ph: Math.random() * 6.28 });
 const reinicia = () => {
   bs = [nova(W / 2, H / 2, (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 14), -6)];
@@ -271,7 +275,7 @@ const abre = () => {
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
-  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); cronEl.hidden = false; mostraCron(LIMITE - usado); estado = 'pronto';
+  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); tAbre = Date.now(); cronEl.hidden = false; mostraCron(LIMITE - usado); estado = 'pronto';
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
   box.focus({ preventScroll: true });

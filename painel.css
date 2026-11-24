@@ -462,11 +462,12 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-oi .cp-clima:has(.cl-cafe.on){background-color:transparent;transition:background-color 0s linear .75s}
 .cp-clima .cl-cafe.on{background:linear-gradient(#4f9de8,#4f9de8) 0 0/100% calc(100% - 1px) no-repeat}
 
-/* cronômetro da pausa pro café: o próprio relógio, na barra de ferramentas, fora do jogo (os números são do visor dele) */
-#cp-pausa{display:flex;align-items:center;margin-right:12px;flex:none}
-#cp-pausa[hidden]{display:none}
-#cp-pausa svg{width:62px;height:46.5px;display:block;image-rendering:pixelated}
-#cp-pausa.fim .pa-d{animation:pa-pisca 1s steps(2,jump-none) infinite}
-@keyframes pa-pisca{50%{opacity:.3}}
-@media (max-width:560px){#cp-pausa{margin-right:6px}#cp-pausa svg{width:48px;height:36px}}
-@media (prefers-reduced-motion:reduce){#cp-pausa.fim .pa-d{animation:none}}
+/* cronômetro da rodada do jogo da bolha: na barra de ferramentas, fora da área do jogo */
+#cp-cron{display:flex;align-items:center;margin-right:14px;flex:none}
+#cp-cron[hidden]{display:none}
+#cp-cron svg{width:72px;height:24px;display:block}
+#cp-cron path{fill:#241a4a}
+#cp-cron.fim path{fill:#e0245e;animation:cr-pisca 1s steps(2,jump-none) infinite}
+@keyframes cr-pisca{50%{opacity:.35}}
+@media (max-width:560px){#cp-cron svg{width:54px;height:18px}#cp-cron{margin-right:8px}}
+@media (prefers-reduced-motion:reduce){#cp-cron.fim path{animation:none}}

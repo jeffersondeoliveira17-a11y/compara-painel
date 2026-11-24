@@ -502,3 +502,7 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-clima .cl-n{transform:translateY(7px)}
 .cp-clima .cl-t svg#cl-i{transform:translate(2px,10px)}
 .cp-clima .cl-box>*:last-child:not(.cl-g){padding:14px 0 0}
+
+/* curvas concentricas: raio do cartao de dentro = raio do de fora (20) menos o recuo (~10); painel escuro = cartao claro menos o recuo (5) */
+.cp-clima .cl-box{border-radius:10px}
+.cp-clima .cl-g{border-radius:5px}

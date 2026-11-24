@@ -3,7 +3,7 @@
   if (window.cpGuias) return;
   const KEY = 'cp-guias-linhas', KEYC = 'cp-guias-conf';
   const CORES = [['#ff1e1e', 'Vermelho'], ['#39ff14', 'Verde'], ['#ff8a00', 'Laranja'], ['#00e5ff', 'Ciano'], ['#ff00e5', 'Magenta']];
-  let ultimo = { i: -1, t: 0 }, on = false, gs = [], root, rh, rv, mn, conf = { cor: 0, trava: [], x: null, y: null, min: false, cores: [] };
+  let pkAte = 0, ultimo = { i: -1, t: 0 }, on = false, gs = [], root, rh, rv, mn, conf = { cor: 0, trava: [], x: null, y: null, min: false, cores: [] };
   const ler = () => { try { gs = JSON.parse(localStorage.getItem(KEY) || '[]') || []; } catch (e) { gs = []; } try { conf = Object.assign(conf, JSON.parse(localStorage.getItem(KEYC) || '{}')); } catch (e) {} };
   const grava = () => { try { localStorage.setItem(KEY, JSON.stringify(gs)); localStorage.setItem(KEYC, JSON.stringify(conf)); } catch (e) {} };
   const trav = (c) => conf.trava.includes(c);
@@ -77,6 +77,7 @@
     rh = root.querySelector('.rh'); rv = root.querySelector('.rv'); mn = root.querySelector('.mn');
     root.addEventListener('pointerdown', (e) => {
       const t = e.target;
+      if ((t === rh || t === rv) && Date.now() < pkAte) { pkAte = 0; e.preventDefault(); return; } // clique que so fecha o seletor de cor nao cria linha
       if (t === rh) { const g = { t: 'h', p: Math.round(e.clientY), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
       else if (t === rv) { const g = { t: 'v', p: Math.round(e.clientX), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
       else if (t.closest && t.closest('.ln')) { const g = gs[+t.closest('.ln').dataset.i]; if (g && !trav(g.c || 0)) { arrasta(g, e); e.preventDefault(); } }
@@ -93,8 +94,9 @@
     });
     function abreCor(b) { // dois cliques na bolinha: abre o seletor de cor
       const i = +b.dataset.c, pk = mn.querySelector('.pk'); conf.cor = i; pk.value = hexDe(i);
-      pk.oninput = () => { conf.cores[i] = pk.value; menu(); desenha(); }; pk.onchange = () => { grava(); };
-      const r = b.getBoundingClientRect(); Object.assign(pk.style, { left: (r.left - mn.getBoundingClientRect().left) + 'px', top: (r.bottom - mn.getBoundingClientRect().top) + 'px', pointerEvents: 'auto' });
+      pk.oninput = () => { conf.cores[i] = pk.value; pkAte = Date.now() + 1500; menu(); desenha(); }; pk.onchange = () => { pkAte = Date.now() + 700; grava(); }; // muda a cor de todas as linhas desse grupo (nenhuma linha nova)
+      const mr = mn.getBoundingClientRect(), r = b.getBoundingClientRect(); Object.assign(pk.style, { left: Math.round(r.left - mr.left) + 'px', top: Math.round(mr.height) + 'px', width: '1px', height: '1px', pointerEvents: 'auto' }); // o seletor abre embaixo do menu (topo dele na base do menu)
+      pkAte = Date.now() + 15000;
       if (pk.showPicker) { try { pk.showPicker(); } catch (er) { pk.click(); } } else pk.click(); pk.style.pointerEvents = 'none';
     }
     mn.querySelector('.hd').addEventListener('pointerdown', (e) => {

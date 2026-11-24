@@ -52,7 +52,7 @@ const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
 box.id = 'cp-jogo'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Jogo da nuvem'); box.hidden = true; box.tabIndex = -1;
-box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)">×</button><div class="jg-dica" aria-hidden="true" style="display:none"></div>';
+box.innerHTML = '<canvas></canvas><button type="button" class="jg-x" aria-label="Fechar o jogo" title="Fechar (Esc)"><img src="icones/fechar.svg" alt="" width="40" height="40"></button><div class="jg-dica" aria-hidden="true" style="display:none"></div>';
 area.append(box);
 const aplicaTema = () => { box.classList.toggle('noite', noite); };
 aplicaTema();

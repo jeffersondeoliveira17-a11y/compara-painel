@@ -133,11 +133,14 @@ const mexeCaule = (dt) => {
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, tJogo = 0, morreuEm = 0, fimEm = 0, motivo = '';
 let bs = [], parts = [], dedos = [], rajada = 0, fase0 = 0, salva = 0, mult = 14, MAX = 8;
 const TAMB = [1.25, 1, 0.78, 0.55]; // tamanhos das bolhas: um pouco maior, o normal, menor e menorzinha
-let ciclo = 0, pontos = 0;
+let ciclo = 0, pontos = 0, cron = 40, aviso2 = 0, ganho = 0; // cron: contagem regressiva da rodada; aguentou até zero, soma as bolhas na pontuação
+const RODADA = 40;
+const GL = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001010010', 8: '111101111101111', 9: '111101111001111', x: '000101010101000', ':': '000010000010000' };
+const pixTexto = (g, txt, x, y, k, cor) => { g.fillStyle = cor; for (const ch of String(txt)) { const m = GL[ch]; if (m) for (let i = 0; i < 15; i++) if (m[i] === '1') g.fillRect(x + (i % 3) * k, y + Math.floor(i / 3) * k, k, k); x += 4 * k; } return x; };
 const nova = (x, y, vx, vy, e = 1) => ({ x, y, vx, vy, e, sq: 0, ph: Math.random() * 6.28 });
 const reinicia = () => {
   bs = [nova(W / 2, H / 2, (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 14), -6)];
-  parts = []; dedos = []; tJogo = 0; pontos = 0; ciclo = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
+  parts = []; dedos = []; tJogo = 0; pontos = 0; ciclo = 0; cron = RODADA; aviso2 = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
 };
 const empurra = (px, py) => {
   dedos.push({ x: px, y: py, t: 0 });
@@ -171,7 +174,8 @@ const passo = (agora) => {
   const dt = Math.min(0.05, (agora - t0) / 1000); t0 = agora;
   mexeCaule(dt);
   if (estado === 'jogando') {
-    tJogo += dt; pontos += bs.length * 10 * dt; usado += dt; salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
+    tJogo += dt; usado += dt; cron -= dt; if (aviso2 > 0) aviso2 -= dt;
+    if (cron <= 0) { ganho = bs.length; pontos += ganho; aviso2 = 1.6; cron = RODADA; } // aguentou a rodada: as bolhas vivas viram pontos salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
     const dif = Math.min(1, tJogo / 120);
     // a cada tanto tempo uma bolha se divide em duas: cada vez mais bolhas para cuidar
@@ -232,12 +236,16 @@ const desenha = (agora) => {
   parts.forEach((p) => { g.globalAlpha = Math.max(0, 1 - p.t / 0.9); g.fillStyle = p.c; g.fillRect(Math.round(p.x), Math.round(p.y), 5, 5); }); g.globalAlpha = 1;
   // dedo: sobe até o ponto do toque e some
   dedos.forEach((d) => { const k = Math.min(1, d.t / 0.12), sai = Math.max(0, (d.t - 0.16) / 0.12); g.globalAlpha = 1 - sai; g.drawImage(dedoSpr, Math.round(d.x - 6 * 3 + 0), Math.round(d.y - 2 + (1 - k) * 26 + sai * 10)); }); g.globalAlpha = 1;
-  // placar
-  g.fillStyle = '#c3ccd9'; g.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
-  if (estado !== 'fim') g.fillText('restam ' + mmss(LIMITE - usado), ZONA + 8, ZONA + 18);
-  g.textAlign = 'right'; g.font = '700 14px ui-monospace, Menlo, Consolas, monospace';
-  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 18);
-  if (estado === 'jogando') { g.font = '600 12px ui-monospace, Menlo, Consolas, monospace'; g.fillText(bs.length + (bs.length === 1 ? ' bolha' : ' bolhas'), W - ZONA - 44, ZONA + 34); }
+  // placar: canto esquerdo = bolhas vivas; direito = cronômetro regressivo da rodada e pontos
+  g.drawImage(bolhaSpr, ZONA + 8, ZONA + 2, 22, 22);
+  const xe = pixTexto(g, 'x', ZONA + 34, ZONA + 8, 3, '#eaf2f2'); pixTexto(g, String(bs.length), xe + 2, ZONA + 8, 3, '#52e4f2');
+  g.fillStyle = '#c3ccd9'; g.font = '600 11px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
+  if (estado !== 'fim') g.fillText('restam ' + mmss(LIMITE - usado), ZONA + 8, ZONA + 40);
+  g.textAlign = 'right'; g.font = '700 13px ui-monospace, Menlo, Consolas, monospace';
+  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 40);
+  { const seg = Math.max(0, Math.ceil(cron)), t = Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'), k = 3, w = t.length * 4 * k - k;
+    pixTexto(g, t, Math.round(W - ZONA - 44 - w), ZONA + 8, k, seg <= 5 ? '#f77ae9' : '#eaf2f2'); }
+  if (aviso2 > 0 && estado === 'jogando') { g.textAlign = 'center'; g.font = '700 16px ui-monospace, Menlo, Consolas, monospace'; g.fillStyle = '#52e4f2'; g.globalAlpha = Math.min(1, aviso2); g.fillText('+' + ganho + (ganho === 1 ? ' bolha' : ' bolhas'), W / 2, ZONA + 34); g.globalAlpha = 1; }
   g.textAlign = 'center';
   const ps = window.cpPS;
   const pixPS = (mx, my, s) => { if (!ps) return; g.save(); g.translate(Math.round(mx - 39 * s), Math.round(my - 15 * s)); g.scale(s, s); g.save(); g.translate(1, 1.4); g.fillStyle = '#0d1218'; g.fill(ps); g.restore(); g.fillStyle = '#ffffff'; g.fill(ps); g.restore(); };

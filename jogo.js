@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -150,11 +150,13 @@ const novoObst = () => {
   let poleiro = false;
   const grande = Math.random() < Math.min(0.3, 0.14 + 0.05 * fase); // pedra gigante: ~2,7x a pedra básica, ainda dá para pular (pulo máximo ~149 px)
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
-  const o = { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
+  // cone de trânsito (22x24 quadradinhos) no lugar de algumas pedras: ~28% dos obstáculos comuns
+  const cone = !grande && Math.random() < 0.28, kc = 2.1 + Math.random() * 0.4;
+  const o = cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
-  if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
+  if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
-  const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
+  const P = (x) => (Math.random() < 0.28 ? { x, w: 22 * 2.1, h: 24 * 2.1, k: 2.1, cone: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
   if (grande) { /* gigante vem sozinha */ } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
@@ -351,7 +353,7 @@ const desenha = () => {
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
-  obst.forEach((o) => cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  obst.forEach((o) => cx.drawImage(o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }

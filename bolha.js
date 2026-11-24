@@ -138,16 +138,16 @@ const RODADA = 40;
 const GL = { 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111', 4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001010010', 8: '111101111101111', 9: '111101111001111', x: '000101010101000', ':': '000010000010000' };
 const pixTexto = (g, txt, x, y, k, cor) => { g.fillStyle = cor; for (const ch of String(txt)) { const m = GL[ch]; if (m) for (let i = 0; i < 15; i++) if (m[i] === '1') g.fillRect(x + (i % 3) * k, y + Math.floor(i / 3) * k, k, k); x += 4 * k; } return x; };
 
-// tempo de jogo que resta (os 8 minutos do dia): fica na barra de ferramentas lá em cima, fora da área do jogo, e só aparece com o jogo aberto
+// xícara de café na barra de ferramentas lá em cima, fora da área do jogo: o café baixa e zera junto com a pausa de 15 minutos
 const barraDir = document.querySelector('.cp-bar-dir');
 const cronEl = document.createElement('div');
-cronEl.id = 'cp-cron'; cronEl.hidden = true; cronEl.setAttribute('role', 'timer'); cronEl.setAttribute('aria-label', 'Tempo de jogo que resta hoje');
+cronEl.id = 'cp-cron'; cronEl.hidden = true; cronEl.setAttribute('role', 'timer'); cronEl.setAttribute('aria-label', 'Café: o tempo que resta da pausa'); cronEl.title = 'O café acaba junto com a pausa';
 const XIC = 'M4 0h1v1h-1zM7 0h1v1h-1zM3 1h1v1h-1zM6 1h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM10 4h1v1h-1zM0 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM10 7h1v1h-1zM13 7h1v1h-1zM0 8h1v1h-1zM10 8h1v1h-1zM13 8h1v1h-1zM0 9h1v1h-1zM10 9h1v1h-1zM13 9h1v1h-1zM0 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM1 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1zM2 12h1v1h-1zM8 12h1v1h-1zM3 13h1v1h-1zM4 13h1v1h-1zM5 13h1v1h-1zM6 13h1v1h-1zM7 13h1v1h-1z', CAFE = ["M1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM9 6h1v1h-1z", "M1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1z", "M1 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1z", "M1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1z", "M1 10h1v1h-1zM2 10h1v1h-1zM3 10h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1z", "M2 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM6 11h1v1h-1zM7 11h1v1h-1zM8 11h1v1h-1z", "M3 12h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1z"]; // xícara vetorizada 14x14: contorno e as 7 linhas de café (de cima para baixo)
-cronEl.innerHTML = '<svg viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><path fill="#000" d="' + XIC + '"/>' + CAFE.map((d) => '<path fill="#ae864b" d="' + d + '"/>').join('') + '</svg><span>restam</span><b>8:00</b>';
+cronEl.innerHTML = '<svg viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><path fill="#000" d="' + XIC + '"/>' + CAFE.map((d) => '<path fill="#ae864b" d="' + d + '"/>').join('') + '</svg>';
 if (barraDir) barraDir.insertBefore(cronEl, barraDir.firstChild);
-const cronB = cronEl.querySelector('b'), cafes = cronEl.querySelectorAll('svg path:not(:first-child)'); let cronTxt = '', tAbre = 0, nCafe = -1;
+const cafes = cronEl.querySelectorAll('svg path:not(:first-child)'); let tAbre = 0, nCafe = -1;
 const restaPausa = () => { const d = new Date(), manual = forca || window.cpLiberado, naPausa = d.getHours() % 2 === 0 && d.getMinutes() < 15; return manual && !naPausa ? Math.max(0, 900 - (Date.now() - tAbre) / 1000) : Math.max(0, (new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 15, 0).getTime() - Date.now()) / 1000); }; // segundos até o fim da pausa de 15 minutos
-const mostraCron = (seg) => { const t = mmss(seg); if (t !== cronTxt) { cronTxt = t; cronB.textContent = t; } cronEl.classList.toggle('fim', seg <= 30);
+const mostraCron = () => {
   const n = Math.ceil(restaPausa() / 900 * 7); if (n !== nCafe) { nCafe = n; cafes.forEach((p, k) => { p.style.display = k >= 7 - n ? '' : 'none'; }); } // o café na xícara vai baixando: acaba junto com os 15 minutos
 };
 const nova = (x, y, vx, vy, e = 1) => ({ x, y, vx, vy, e, sq: 0, ph: Math.random() * 6.28 });
@@ -185,7 +185,7 @@ const toque = (e) => {
 const passo = (agora) => {
   if (!aberto) return;
   const dt = Math.min(0.05, (agora - t0) / 1000); t0 = agora;
-  mexeCaule(dt); mostraCron(LIMITE - usado);
+  mexeCaule(dt); mostraCron();
   if (estado === 'jogando') {
     tJogo += dt; usado += dt; cron -= dt; if (aviso2 > 0) aviso2 -= dt;
     if (cron <= 0) { ganho = bs.length; pontos += ganho; aviso2 = 1.6; cron = RODADA; } // aguentou a rodada: as bolhas vivas viram pontos salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
@@ -250,12 +250,12 @@ const desenha = (agora) => {
   // dedo: sobe até o ponto do toque e some
   dedos.forEach((d) => { const k = Math.min(1, d.t / 0.12), sai = Math.max(0, (d.t - 0.16) / 0.12); g.globalAlpha = 1 - sai; g.drawImage(dedoSpr, Math.round(d.x - 6 * 3 + 0), Math.round(d.y - 2 + (1 - k) * 26 + sai * 10)); }); g.globalAlpha = 1;
   // placar: canto esquerdo = bolhas vivas; direito = cronômetro regressivo da rodada e pontos
-  g.drawImage(bolhaSpr, ZONA + 8, ZONA + 4, 22, 22);
-  const xe = pixTexto(g, 'x', ZONA + 34, ZONA + 10, 3, '#eaf2f2'); pixTexto(g, String(bs.length), xe + 2, ZONA + 10, 3, '#52e4f2');
+  { const seg = Math.max(0, Math.ceil(cron)), t = Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'); // cronômetro da rodada, em cima da quantidade de bolhas
+    pixTexto(g, t, ZONA + 8, ZONA + 4, 3, seg <= 5 ? '#f77ae9' : '#eaf2f2'); }
+  g.drawImage(bolhaSpr, ZONA + 8, ZONA + 28, 22, 22);
+  const xe = pixTexto(g, 'x', ZONA + 34, ZONA + 34, 3, '#eaf2f2'); pixTexto(g, String(bs.length), xe + 2, ZONA + 34, 3, '#52e4f2');
   g.fillStyle = '#c3ccd9'; g.textAlign = 'right'; g.font = '700 14px ui-monospace, Menlo, Consolas, monospace';
   g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 18);
-  { const seg = Math.max(0, Math.ceil(cron)), t = Math.floor(seg / 60) + ':' + String(seg % 60).padStart(2, '0'), k = 3, w = t.length * 4 * k - k;
-    pixTexto(g, t, Math.round(W - ZONA - 44 - w), ZONA + 32, k, seg <= 5 ? '#f77ae9' : '#eaf2f2'); }
   if (aviso2 > 0 && estado === 'jogando') { g.textAlign = 'center'; g.font = '700 16px ui-monospace, Menlo, Consolas, monospace'; g.fillStyle = '#52e4f2'; g.globalAlpha = Math.min(1, aviso2); g.fillText('+' + ganho + (ganho === 1 ? ' bolha' : ' bolhas'), W / 2, ZONA + 34); g.globalAlpha = 1; }
   g.textAlign = 'center';
   const ps = window.cpPS;
@@ -275,7 +275,7 @@ const abre = () => {
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
-  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); tAbre = Date.now(); cronEl.hidden = false; mostraCron(LIMITE - usado); estado = 'pronto';
+  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); tAbre = Date.now(); cronEl.hidden = false; mostraCron(); estado = 'pronto';
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
   box.focus({ preventScroll: true });

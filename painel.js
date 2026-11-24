@@ -550,7 +550,7 @@ const IMF = (n) => '<image href="icones/' + n + '.svg?v=' + (window.PAINEL_VERSA
 const icone = (c, dia) => {
 if (c <= 1) return IMF(dia ? 'sol' : 'lua');
 if (c === 2) return IMF(dia ? 'nuvem-sol' : 'lua-nuvem');
-if (c >= 95) return '<g transform="translate(14 13) scale(.72)">' + IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 13, 52, 33, 51) + '</g>';
+if (c >= 95) return '<g transform="translate(8 1) scale(.84)">' + IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 13, 52, 33, 51) + '</g>';
 if (c >= 80 && c <= 82) return IMF(dia ? 'sol-nuvem-chuva' : 'lua-nuvem-chuva');
 if (c >= 51 && c <= 82) return IMF('nuvem-chuva');
 return IMF('nuvem');

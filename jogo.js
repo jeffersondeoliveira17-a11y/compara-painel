@@ -102,6 +102,7 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
+let curaT = 0; // brilho do coração que acabou de voltar
 let vidas = 3, invul = 0; // 3 vidas: cada batida tira uma e o cachorro vai perdendo a cor
 let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
@@ -270,9 +271,11 @@ const passo = (agora) => {
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     if (invul > 0) invul -= dt;
+    if (curaT > 0) curaT -= dt;
     for (const o of obst) {
       if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
         const dentro = a.x + a.w > o.x + 8 && a.x < o.x + o.w - 8 && a.y + a.h > chaoY() - o.h + 8;
+        if (dentro && !o.roca && !o.vidaDada && vidas < 3 && estado === 'jogando') { o.vidaDada = true; vidas++; curaT = 1.2; for (let q = 0; q < 10; q++) folhas.push({ x: a.x + a.w * Math.random(), y: a.y + a.h * (0.2 + Math.random() * 0.5), vx: -20 - Math.random() * 60, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } // moita vazia: recupera uma vida
         if (dentro) { o.folhaT = (o.folhaT || 0) - dt; if (o.folhaT <= 0) { o.folhaT = 0.045; for (let q = 0; q < 2; q++) folhas.push({ x: a.x + a.w * (0.2 + Math.random() * 0.6), y: a.y + a.h * (0.3 + Math.random() * 0.6), vx: -30 - Math.random() * 90, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } }
       }
       if (o.batida || (o.moita && !o.roca)) continue; // moita sem pedra: o cachorro atravessa
@@ -470,7 +473,7 @@ const desenha = () => {
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
   if (estado !== 'fim') { cx.fillStyle = TINTA2(); cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
   if (estado !== 'fim') { // vidas: 3 corações
-    for (let i = 0; i < 3; i++) desenhaCoracao(16 + i * 26, 40, 3, i < vidas);
+    for (let i = 0; i < 3; i++) { const pulsa = curaT > 0 && i === vidas - 1 && Math.floor(curaT * 8) % 2 === 0; desenhaCoracao(16 + i * 26 - (pulsa ? 2 : 0), 40 - (pulsa ? 2 : 0), pulsa ? 4 : 3, i < vidas); }
   }
   if (estado === 'fim') {
     cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);

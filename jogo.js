@@ -133,17 +133,18 @@ const reinicia = () => {
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
-// buraco no chão: oval aberta na grama (vista de cima), com anel de terra e fundo escuro, em degraus de 4 px
+// buraco no chão (obra): corte de lado na terra, com paredes irregulares, fundo que escurece e um pouquinho de grama na borda
 const desenhaBuraco = (o, cy) => {
   const esc = noite && !o.cor;
-  const C = esc ? { l: '#6b7a90', m: '#4b586b', d: '#2f3a4a', p: '#1b222d', f: '#0d1218' } : { l: '#b8844a', m: '#8a5a35', d: '#5a3720', p: '#3b2314', f: '#1d1008' };
-  const cell = 4, FR = [0.56, 0.88, 1, 0.88, 0.56], cor = [C.l, C.m, C.m, C.m, C.d], cxm = o.x + o.w / 2, y0 = Math.round(cy + 3);
-  FR.forEach((fr, r) => {
-    const wr = Math.max(2, Math.round(o.w * fr / (cell * 2))) * cell * 2, x = Math.round(cxm - wr / 2), y = y0 + r * cell;
-    cx.fillStyle = cor[r]; cx.fillRect(x, y, wr, cell);
-    if (r > 0 && r < 4) { cx.fillStyle = r === 1 ? C.p : C.f; cx.fillRect(x + cell, y, wr - cell * 2, cell); }
-  });
-  cx.fillStyle = C.l; cx.fillRect(Math.round(cxm - o.w * 0.32), y0 + cell, cell, cell); // brilho da borda
+  const C = esc ? { l: '#5a6880', r: '#3a4658', a: '#222c3a', m: '#161d28', f: '#0a0e14', g: '#7f8da3' } : { l: '#a56b3b', r: '#6b4226', a: '#3d2415', m: '#24150c', f: '#120a05', g: '#55b83f' };
+  const cell = 4, x0 = Math.round(o.x), w = Math.round(o.w / cell) * cell, rows = Math.ceil((H - cy + 2) / cell);
+  for (let r = 0; r < rows; r++) {
+    const y = Math.round(cy) - 1 + r * cell, j = o.jag[r % o.jag.length], xl = x0 + j[0], xr = x0 + w - j[1];
+    cx.fillStyle = r < 2 ? C.a : (r < 6 ? C.m : C.f); cx.fillRect(xl, y, xr - xl, cell); // fundo: parede de trás, depois escuro, depois quase preto
+    cx.fillStyle = C.l; cx.fillRect(xl - cell, y, cell, cell); // parede da esquerda, iluminada
+    cx.fillStyle = C.r; cx.fillRect(xr, y, cell, cell); // parede da direita, na sombra
+    if (r === 0) { cx.fillStyle = C.g; cx.fillRect(xl - cell, y - cell / 2, cell, cell / 2); cx.fillRect(xr, y - cell / 2, cell, cell / 2); }
+  }
 };
 // fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;
@@ -163,7 +164,9 @@ const novoObst = () => {
   const grande = Math.random() < Math.min(0.3, 0.14 + 0.05 * fase); // pedra gigante: ~2,7x a pedra básica, ainda dá para pular (pulo máximo ~149 px)
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   // cone de trânsito (22x24 quadradinhos) no lugar de algumas pedras: ~28% dos obstáculos comuns
-  const cone = !grande && Math.random() < 0.18, kc = 2.1 + Math.random() * 0.4;
+  // cena de obra (cone + buraco + montinho): ~9%; cone sozinho: ~5%
+  const cena = !grande && Math.random() < 0.09;
+  const cone = cena || (!grande && Math.random() < 0.05), kc = 2.1 + Math.random() * 0.4;
   // montinho de terra (20x13 quadradinhos): ~15% dos obstáculos que não são cone nem pedra gigante
   const terra = !grande && !cone && Math.random() < 0.15, kt = 3 + Math.random() * 0.8;
   const o = terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
@@ -172,7 +175,12 @@ const novoObst = () => {
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => (Math.random() < 0.2 ? { x, w: 20 * 3.2, h: 13 * 3.2, k: 3.2, terra: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (grande) { /* gigante vem sozinha */ } else if (o.cone) { /* cone vem sozinho: nunca dois cones juntos, nem buraco */
+  if (grande) { /* gigante vem sozinha */ } else if (o.cone) {
+    if (cena) { // cone, depois (buraco e montinho) em qualquer ordem: um pulo no cone, aterrissa e outro pulo passa o par
+      const bu = { x: 0, w: 76, h: 20, buraco: true, jag: Array.from({ length: 16 }, () => [Math.random() < 0.4 ? 4 : 0, Math.random() < 0.4 ? 4 : 0]) }, mt = { x: 0, w: 20 * 3.1, h: 13 * 3.1, k: 3.1, terra: true };
+      const ini = o.x + o.w + 110 + Math.random() * 30;
+      if (Math.random() < 0.5) { bu.x = ini; mt.x = bu.x + bu.w + 6; obst.push(bu, mt); fim = mt; } else { mt.x = ini; bu.x = mt.x + mt.w + 6; obst.push(mt, bu); fim = bu; }
+    } /* senão: cone sozinho, nunca dois cones juntos */
   } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);

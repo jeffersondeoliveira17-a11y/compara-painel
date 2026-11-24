@@ -68,11 +68,22 @@ const hash = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + c * 2147483
 const trechoS = (lado, s) => md(Math.floor(s / SEG) + OFF[lado], 2) === 0; // coordenada s = posição ao longo do caule (não da tela)
 const grade = (lado) => (lado === 1 || lado === 2) ? md(((lado === 1 ? W : H) - 4) % 4, 4) : 0;
 const ajusta = (lado, t) => { const off = grade(lado); return Math.round((t - off) / 4) * 4 + off; };
-const espDe = (lado, idx) => { // espinhos do trecho idx (1 ou 2, nunca colados)
-  if (!trechoS(lado, idx * SEG)) return [];
-  const s0 = idx * SEG, a = s0 + 22 + hash(lado, idx, 1) * (SEG - 44), lista = [a];
-  if (hash(lado, idx, 2) > 0.55) { let b = s0 + 22 + hash(lado, idx, 3) * (SEG - 44); if (Math.abs(b - a) < 44) b = a + (a - s0 < SEG / 2 ? 48 : -48); lista.push(b); }
-  return lista.map((t) => ajusta(lado, t));
+let espL = [], proxEsp = 10, ESPMAX = 40; // espinhos: começam 4 e nasce mais um a cada 10 s de jogo; cada um é {lado, t (posição no caule), idade}
+const espDe = (lado, idx) => espL.filter((e) => e.lado === lado && e.idade >= 0.75 && Math.floor(e.t / SEG) === idx).map((e) => e.t); // só os já crescidos machucam
+const espEstagio = (e) => e.idade >= 0.75 ? 3 : e.idade >= 0.4 ? 2 : 1; // espinho nascendo: cresce em 3 etapas
+const compDe = (lado) => (lado === 0 || lado === 1) ? W : H;
+const nasceEsp = () => { // sorteia um lugar livre (trecho com espinhos, longe de outros espinhos e de bolhas)
+  for (let tent = 0; tent < 60; tent++) {
+    const lado = Math.floor(Math.random() * 4), L = compDe(lado), canon = 110 + Math.random() * (L - 220), sc = canon - DIR[lado] * deslR;
+    if (!trechoS(lado, sc)) continue;
+    const r = md(sc, SEG); if (r < 24 || r > SEG - 24) continue;
+    const t = ajusta(lado, sc);
+    if (espL.some((e) => e.lado === lado && Math.abs(e.t - t) < 56)) continue;
+    const px = lado === 0 ? canon : lado === 1 ? W - canon : lado === 2 ? 0 : W, py = lado === 2 ? H - canon : lado === 3 ? canon : lado === 0 ? 0 : H;
+    if (bs.some((b) => Math.hypot(b.x - px, b.y - py) < 90)) continue;
+    espL.push({ lado, t, idade: 0 }); return true;
+  }
+  return false;
 };
 const espinhoS = (lado, s) => { const i = Math.floor(s / SEG); for (let d = -1; d <= 1; d++) if (espDe(lado, i + d).some((t) => Math.abs(s - (t + 2)) <= 17)) return true; return false; };
 const espinho = (lado, pos) => espinhoS(lado, pos - DIR[lado] * deslR); // a bolha estoura perto de um espinho (posição na tela -> posição no caule)
@@ -102,8 +113,10 @@ const moldura = () => {
       if (trechoS(lado, sc)) {
         const y = yEsp(sc); // o caule serpenteia 1 quadradinho
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
-        if (espDe(lado, Math.floor(sc / SEG)).some((t) => Math.abs(sc - t) < u / 2 + 0.01)) { // espinho: triângulo de 3 quadradinhos de altura
-          g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
+        const ee = espL.find((e) => e.lado === lado && Math.abs(sc - e.t) < u / 2 + 0.01);
+        if (ee) { // espinho: triângulo de 3 quadradinhos de altura (nasce em etapas)
+          const et = espEstagio(ee);
+          g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); if (et > 1) { g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); } if (et > 2) { g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u); }
         }
         if (md(n, 19) === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
       } else { // trecho liso: um caule só, solto, ondulando devagar, com folhas e uma gavinha de vez em quando
@@ -132,7 +145,7 @@ const mexeCaule = (dt) => {
   if (esperaD > 0) esperaD -= dt;
   else if (desl < alvoD) { desl = Math.min(alvoD, desl + dt * 26); if (desl >= alvoD) esperaD = 6 + Math.random() * 4; }
   else alvoD += 24 + Math.random() * 40; // começa um novo deslizamento
-  const n = Math.floor(desl / 4) * 4; if (n !== deslR) { deslR = n; moldura(); }
+  const n = Math.floor(desl / 4) * 4; if (n !== deslR) { deslR = n; const antes = espL.length; espL = espL.filter((e) => { const c = e.t + DIR[e.lado] * deslR; return c > 40 && c < compDe(e.lado) - 40; }); for (let i = antes - espL.length; i > 0; i--) nasceEsp(); moldura(); }
 };
 
 // ---------- estado do jogo ----------
@@ -148,6 +161,7 @@ const nova = (x, y, vx, vy, e = 1) => ({ x, y, vx, vy, e, sq: 0, ph: Math.random
 const reinicia = () => {
   bs = [nova(W / 2, H / 2, (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 14), -6)];
   parts = []; dedos = []; tJogo = 0; pontos = 0; ciclo = 0; cron = RODADA; aviso2 = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
+  espL = []; proxEsp = 10; for (let i = 0; i < 4; i++) { nasceEsp(); } espL.forEach((e) => { e.idade = 1; }); moldura(); // começa com 4 espinhos espalhados
 };
 const empurra = (px, py) => {
   dedos.push({ x: px, y: py, t: 0 });
@@ -180,8 +194,9 @@ const passo = (agora) => {
   if (!aberto) return;
   const dt = Math.min(0.05, (agora - t0) / 1000); t0 = agora;
   mexeCaule(dt);
+  { let mudou = false; espL.forEach((e) => { if (e.idade < 0.75) { const a = espEstagio(e); e.idade += dt; if (espEstagio(e) !== a || e.idade >= 0.75) mudou = true; } }); if (mudou) moldura(); }
   if (estado === 'jogando') {
-    tJogo += dt; usado += dt; cron -= dt; if (aviso2 > 0) aviso2 -= dt;
+    tJogo += dt; usado += dt; cron -= dt; proxEsp -= dt; if (proxEsp <= 0) { proxEsp += 10; if (espL.length < ESPMAX && nasceEsp()) moldura(); } if (aviso2 > 0) aviso2 -= dt;
     if (cron <= 0) { ganho = bs.length; pontos += ganho; aviso2 = 1.6; cron = RODADA; } // aguentou a rodada: as bolhas vivas viram pontos salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
     const dif = Math.min(1, tJogo / 120);

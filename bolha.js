@@ -121,7 +121,13 @@ const moldura = () => {
   const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l, comp); g.restore(); };
   lado(0, 0, 0, W, 0); lado(W, H, Math.PI, W, 1); lado(0, H, -Math.PI / 2, H, 2); lado(W, 0, Math.PI / 2, H, 3);
 };
-const mexeCaule = (dt) => { desl += dt * VEL; const n = Math.floor(desl / 4) * 4; if (n !== deslR) { deslR = n; moldura(); } };
+let alvoD = 0, esperaD = 5; // o caule anda aos pouquinhos: fica parado uns 6 a 10 segundos, desliza um trecho e para de novo
+const mexeCaule = (dt) => {
+  if (esperaD > 0) esperaD -= dt;
+  else if (desl < alvoD) { desl = Math.min(alvoD, desl + dt * 26); if (desl >= alvoD) esperaD = 6 + Math.random() * 4; }
+  else alvoD += 24 + Math.random() * 40; // começa um novo deslizamento
+  const n = Math.floor(desl / 4) * 4; if (n !== deslR) { deslR = n; moldura(); }
+};
 
 // ---------- estado do jogo ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, tJogo = 0, morreuEm = 0, fimEm = 0, motivo = '';

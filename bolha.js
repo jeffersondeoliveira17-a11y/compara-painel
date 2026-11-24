@@ -57,63 +57,71 @@ const dedoSpr = (() => {
   DEDO.forEach((l, j) => [...l].forEach((ch, i) => { if (cor[ch]) { g.fillStyle = cor[ch]; g.fillRect(i * u, j * u, u, u); } }));
   return c;
 })();
-// moldura de roseira em trechos: um trecho com espinhos (estoura), outro só com o caule solto (a bolha quica)
-const SEG = 120, ZLISO = 20; // comprimento de cada trecho; distância da borda onde a bolha quica no trecho liso
-const OFF = [0, 1, 1, 0]; // desencontro entre cima, baixo, esquerda e direita: onde um lado tem espinho, o oposto costuma ser liso
-const trecho = (lado, pos) => (Math.floor(pos / SEG) + OFF[lado]) % 2 === 0; // este trecho da borda é o do caule com espinhos (senão é o trançado)
-// espinhos: poucos, em lugares sorteados (1 ou 2 por trecho, nunca colados); a bolha só estoura perto de um deles
-const esp = [[], [], [], []], rosas = [[], [], [], []];
-const sorteio = (sem) => { let a = sem; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; };
-const sorteiaEspinhos = () => {
-  [W, W, H, H].forEach((L, lado) => {
-    const r = sorteio(91 + lado * 37 + Math.round(L)); esp[lado] = []; rosas[lado] = [];
-    const off = (lado === 1 || lado === 2) ? (((L - 4) % 4) + 4) % 4 : 0, ajusta = (t) => Math.round((t - off) / 4) * 4 + off; // casa com a grade de 4 px de cada lado
-    for (let s0 = 0; s0 < L; s0 += SEG) {
-      if (!trecho(lado, s0)) continue;
-      const n = r() < 0.55 ? 1 : 2, a = s0 + 22 + r() * (SEG - 44); const lista = [a];
-      if (n === 2) { let b = s0 + 22 + r() * (SEG - 44); if (Math.abs(b - a) < 44) b = a + (a - s0 < SEG / 2 ? 48 : -48); lista.push(b); }
-      lista.forEach((t) => { if (t > 26 && t < L - 26) esp[lado].push(ajusta(t)); });
-    }
-    const q = Math.max(1, Math.round(L / 400)), ini = lado === 0 ? 150 : 90, fim = L - (lado === 0 ? 260 : 90); // rosinhas: poucas por lado, longe dos cantos, do texto e dos espinhos
-    for (let k = 0, tent = 0; k < q && tent < 60 && fim > ini; tent++) { const t = ini + r() * (fim - ini); if (esp[lado].some((e) => Math.abs(e - t) < 46) || rosas[lado].some((e) => Math.abs(e - t) < 160)) continue; rosas[lado].push(ajusta(t)); k++; }
-  });
+// moldura de roseira que vai se mexendo: o caule desliza devagar em volta da arena (sentido horário) e leva junto espinhos, folhas e rosas.
+// Um trecho tem espinhos (a bolha estoura), o seguinte é só o caule solto (a bolha quica). Tudo é sorteado pela posição ao longo do caule, então nunca acaba.
+const SEG = 120, ZLISO = 20, VEL = 9; // comprimento de cada trecho; distância da borda onde a bolha quica no trecho liso; velocidade do caule (px por segundo)
+const OFF = [0, 1, 1, 0]; // desencontro entre cima, baixo, esquerda e direita
+const DIR = [1, -1, -1, 1]; // sentido horário em coordenadas absolutas de cada lado
+let desl = 0, deslR = 0; // deslocamento do caule (suave) e o usado no desenho (de 4 em 4 px)
+const md = (a, n) => ((a % n) + n) % n;
+const hash = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const trechoS = (lado, s) => md(Math.floor(s / SEG) + OFF[lado], 2) === 0; // coordenada s = posição ao longo do caule (não da tela)
+const grade = (lado) => (lado === 1 || lado === 2) ? md(((lado === 1 ? W : H) - 4) % 4, 4) : 0;
+const ajusta = (lado, t) => { const off = grade(lado); return Math.round((t - off) / 4) * 4 + off; };
+const espDe = (lado, idx) => { // espinhos do trecho idx (1 ou 2, nunca colados)
+  if (!trechoS(lado, idx * SEG)) return [];
+  const s0 = idx * SEG, a = s0 + 22 + hash(lado, idx, 1) * (SEG - 44), lista = [a];
+  if (hash(lado, idx, 2) > 0.55) { let b = s0 + 22 + hash(lado, idx, 3) * (SEG - 44); if (Math.abs(b - a) < 44) b = a + (a - s0 < SEG / 2 ? 48 : -48); lista.push(b); }
+  return lista.map((t) => ajusta(lado, t));
 };
-const espinho = (lado, pos) => esp[lado].some((t) => Math.abs(pos - (t + 2)) <= 17);
+const espinhoS = (lado, s) => { const i = Math.floor(s / SEG); for (let d = -1; d <= 1; d++) if (espDe(lado, i + d).some((t) => Math.abs(s - (t + 2)) <= 17)) return true; return false; };
+const espinho = (lado, pos) => espinhoS(lado, pos - DIR[lado] * deslR); // a bolha estoura perto de um espinho (posição na tela -> posição no caule)
+const TAMS = [3.2, 1.3, 2.2, 1.6, 2.8, 1.2, 2.0]; // tamanhos bem variados (px por quadradinho)
+const rosasDe = (lado, idx) => { // quase todo trecho liso tem uma rosa, de tamanho sorteado
+  if (trechoS(lado, idx * SEG) || hash(lado, idx, 5) < 0.1) return null;
+  const k = TAMS[Math.floor(hash(lado, idx, 9) * TAMS.length)], w = 15 * k;
+  return { t: ajusta(lado, idx * SEG + 6 + hash(lado, idx, 7) * Math.max(0, SEG - 12 - w)), k };
+};
 const ROSA = ["......RRRR.....", ".Ggg.RRRRBRR...", ".gLGDRRRRRDBDR.", "..gGDDRRBBRRBD.", "g.DDRDRDDBBRRRD", "ggDRRDRDRDRRRRD", "gGDDRDRDDDDRRDD", ".gGDDDDRRRRRDD.", ".gGGDRDDDDDDRD.", "..ggDDRRRRDRRDg", "...gGDDRRRDDDLG", "..gLGgGDDDGGGg.", "...gg.gGg.ggg..", ".......gg......"]; // rosa vetorizada (15 x 14 quadradinhos): D, R, B, H = tons de vermelho; g, G, L = tons de verde (caule e folhas)
 const COR_ROSA = { D: '#5a0f1c', R: '#b3182f', B: '#e0213f', H: '#ff6b86', g: '#0f4a26', G: '#1e7a3c', L: '#3aa65a' };
 let molduraC = null;
 const moldura = () => {
-  sorteiaEspinhos();
-  const c = document.createElement('canvas'); c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+  if (!molduraC) molduraC = document.createElement('canvas');
+  const c = molduraC; c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
   const u = 4;
   const cima = (comp, lado) => {
     for (let p = 0; p < comp; p += u) {
-      const canon = lado === 1 ? W - p - u : lado === 2 ? H - p - u : p; // posição "de verdade" ao longo da borda
-      const n = p / u;
-      if (trecho(lado, canon)) {
-        const y = 8 + (Math.sin(p / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
+      const canon = lado === 1 ? W - p - u : lado === 2 ? H - p - u : p; // posição absoluta ao longo da borda
+      const sc = canon - DIR[lado] * deslR, n = Math.round(sc / u); // posição no caule: é ela que ondula, não a da tela
+      if (trechoS(lado, sc)) {
+        const y = 8 + (Math.sin(sc / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
-        if (esp[lado].some((t) => Math.abs(canon - t) < u / 2 + 0.01)) { // espinho: triângulo de 3 quadradinhos de altura
+        if (espDe(lado, Math.floor(sc / SEG)).some((t) => Math.abs(sc - t) < u / 2 + 0.01)) { // espinho: triângulo de 3 quadradinhos de altura
           g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
         }
-        if (n % 19 === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
+        if (md(n, 19) === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
       } else { // trecho liso: um caule só, solto, ondulando devagar, com folhas e uma gavinha de vez em quando
-        const y = 8 + u * Math.round(1 + Math.sin(p / 40 + lado));
+        const y = 8 + u * Math.round(1 + Math.sin(sc / 40 + lado));
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
-        if (n % 13 === 5) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y, u, u / 2); } // folhinha para cima
-        if (n % 13 === 11) { g.fillStyle = '#2f8a46'; g.fillRect(p, y + 2 * u, u, u); g.fillRect(p + u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 2 * u, u, u); } // gavinha enrolada
+        if (md(n, 13) === 5) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y, u, u / 2); }
+        if (md(n, 13) === 11) { g.fillStyle = '#2f8a46'; g.fillRect(p, y + 2 * u, u, u); g.fillRect(p + u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 2 * u, u, u); }
       }
     }
   };
-  const TAM = [2.2, 1.6, 2, 1.6, 2.2]; // tamanhos alternados (em px por quadradinho)
-  const flor = (lado) => rosas[lado].forEach((t, n) => { // rosa crescendo do caule para dentro da arena
-    const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = Math.max(1, Math.round(TAM[(n + lado * 2) % TAM.length] * dpr)) / dpr;
-    ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (ROSA.length - 1 - j) * k, k, k); } });
-  });
-  const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l); g.restore(); };
+  const flor = (lado, L) => { // rosas crescendo do caule para dentro da arena
+    const ini = lado === 0 ? 120 : 36, fim = L - (lado === 0 ? 200 : 36); // longe dos cantos e do texto
+    const s0 = DIR[lado] * deslR; // posição na tela = posição no caule + s0
+    for (let blk = Math.floor((-s0 - 100) / SEG); blk <= Math.ceil((L - s0 + 100) / SEG); blk++) {
+      const r = rosasDe(lado, blk); if (!r) continue;
+      const t = r.t + s0; if (t < ini || t > fim) continue;
+      const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = Math.max(1, Math.round((lado === 0 ? Math.min(r.k, 1.6) : r.k) * dpr)) / dpr; // em cima a rosa fica menor, para não cobrir o placar
+      ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (ROSA.length - 1 - j) * k, k, k); } });
+    }
+  };
+  const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l, comp); g.restore(); };
   lado(0, 0, 0, W, 0); lado(W, H, Math.PI, W, 1); lado(0, H, -Math.PI / 2, H, 2); lado(W, 0, Math.PI / 2, H, 3);
-  molduraC = c;
 };
+const mexeCaule = (dt) => { desl += dt * VEL; const n = Math.floor(desl / 4) * 4; if (n !== deslR) { deslR = n; moldura(); } };
 
 // ---------- estado do jogo ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, tJogo = 0, morreuEm = 0, fimEm = 0, motivo = '';
@@ -154,6 +162,7 @@ const toque = (e) => {
 const passo = (agora) => {
   if (!aberto) return;
   const dt = Math.min(0.05, (agora - t0) / 1000); t0 = agora;
+  mexeCaule(dt);
   if (estado === 'jogando') {
     tJogo += dt; usado += dt; salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }

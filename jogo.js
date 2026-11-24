@@ -97,12 +97,15 @@ let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // 
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let acel = 1, alvoAcel = 1, matoX = 0, arvX = 0, vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let acel = 1, alvoAcel = 1, matoX = 0, arvO = null, arvEm = 0, arvTipo = 'chao', vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
 const chaoY = () => H - CHAO_H;
-const ARV_P = 1120, ARV_U = 2; // árvore: aparece junto de uma moita a cada 2 moitas; ARV_U = tamanho de cada quadradinho
+const ARV_U = 2.4, ARVG_U = 2.9; // uma árvore por vez na tela: 'fundo' (atrás da moita, anda com ela) ou 'chao' (em pé na linha da grama, maior)
+const arvTam = (t) => { const im = IM.arv[0]; return im && im.naturalWidth ? [im.naturalWidth * (t === 'chao' ? ARVG_U : ARV_U), im.naturalHeight * (t === 'chao' ? ARVG_U : ARV_U)] : [0, 0]; };
+const arvAnda = (v, dt) => { if (!arvO) return; arvO.x -= v * dt * (arvO.tipo === 'fundo' ? 0.6 : 1); if (arvO.x < -400) { arvO = null; arvEm = 2 + Math.random() * 5; } };
+const arvNasce = (dt) => { if (arvO) return; arvEm -= dt; if (arvEm > 0) return; const t = arvTipo; arvTipo = t === 'chao' ? 'fundo' : 'chao'; const [aw] = arvTam(t); if (!aw) return; if (t === 'chao') arvO = { tipo: t, x: W + 40 }; else { const xm = matoX + Math.ceil((W + aw / 2 - 300 - matoX) / MATO_P) * MATO_P; arvO = { tipo: t, x: xm + 300 - aw / 2 }; } }; // árvore: aparece junto de uma moita a cada 2 moitas; ARV_U = tamanho de cada quadradinho
 const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
 const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
@@ -115,7 +118,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; arvX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; arvO = { tipo: 'chao', x: 600 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -183,7 +186,7 @@ const passo = (agora) => {
     vel = Math.min(1040 + 80 * fase, vel + (14 + 3 * fase) * dt);
     acel += (alvoAcel - acel) * Math.min(1, 4 * dt); const v = vel * acel; player.x = 90 + (acel - 1) * 90; // acelerar: o cachorro corre mais e avança na tela; frear: recua
     dist += v * dt / 14;
-    chaoX = (chaoX - v * dt) % CHAO_W; matoX = (matoX - v * dt * 0.6) % MATO_P; arvX = (arvX - v * dt * 0.6) % ARV_P; decoX = (decoX - v * dt * 0.8) % DECO_P;
+    chaoX = (chaoX - v * dt) % CHAO_W; matoX = (matoX - v * dt * 0.6) % MATO_P; arvAnda(v, dt); arvNasce(dt); decoX = (decoX - v * dt * 0.8) % DECO_P;
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { player.y = solo; player.vy = 0; player.noChao = true; }
@@ -220,7 +223,7 @@ const passo = (agora) => {
       }
     }
   }
-  if (estado === 'portal') { if (ave && !ave.rock) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; arvX = (arvX - vel * dt * 0.6) % ARV_P; decoX = (decoX - vel * dt * 0.8) % DECO_P; }
+  if (estado === 'portal') { if (ave && !ave.rock) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; arvAnda(vel, dt); decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
     if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60, sp: sorteiaAve() }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
@@ -320,10 +323,12 @@ const desenha = () => {
     cx.restore();
   }
   // árvore ao fundo, metade escondida atrás da moita (cor muda a cada fase: rosa, azul claro, verde)
-  { const ai = IM.arv[fase % 3]; if (ai && ai.complete && ai.naturalWidth) { const aw = ai.naturalWidth * ARV_U, ah = ai.naturalHeight * ARV_U; for (let x = arvX - ARV_P; x < W + MATO_W; x += ARV_P) dCor(ai, faixa(0.35, 0.7), Math.round(x + 300 - aw / 2), Math.round(cy + 4 - ah), aw, ah); } }
+  if (arvO && arvO.tipo === 'fundo') { const ai = IM.arv[fase % 3], [aw, ah] = arvTam('fundo'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.35, 0.7), Math.round(arvO.x), Math.round(cy + 4 - ah), aw, ah); }
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  // árvore em pé na grama, na frente das moitas
+  if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[fase % 3], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); }
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras

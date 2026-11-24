@@ -141,10 +141,10 @@ const desenhaBuraco = (o, cy) => {
   const INS = [0, 0, 4, 8, 12, 20, 28]; // quanto a bacia entra de cada lado, linha a linha (fundo arredondado)
   INS.forEach((ins, r) => {
     const y = y0 + r * cell, xl = x0 + ins, xr = x0 + w - ins;
-    cx.fillStyle = P(r === INS.length - 1 ? '#3a2214' : '#8a5a35'); cx.fillRect(xl, y, xr - xl, cell); // parede (marrom médio; fundo mais escuro)
-    cx.fillStyle = P(r < 1 ? '#b07a45' : (r < 2 ? '#9a6838' : (r < 3 ? '#85552f' : (r < 4 ? '#6b4226' : (r < 5 ? '#54331d' : '#3f2515'))))); if (r < INS.length - 1) cx.fillRect(xl + cell, y, xr - xl - cell * 2, cell); // miolo: terra escura que escurece com a profundidade
-    if (r < INS.length - 1) { cx.fillStyle = P('#c99158'); cx.fillRect(xl, y, cell, cell); } // lado esquerdo iluminado (marrom mais claro)
-    if (r < 3) { cx.fillStyle = P('#7a4c2a'); cx.fillRect(xr - cell, y, cell, cell); } // lado direito, um pouco mais escuro
+    cx.fillStyle = P(r === INS.length - 1 ? '#4a2c1a' : (r < 4 ? '#8f5d33' : '#6b4226')); cx.fillRect(xl, y, xr - xl, cell); // parede (marrom médio; fundo mais escuro)
+    cx.fillStyle = P(r < 2 ? '#b57e47' : (r < 4 ? '#8f5d33' : (r < 5 ? '#6b4226' : '#4a2c1a'))); if (r < INS.length - 1) cx.fillRect(xl + cell, y, xr - xl - cell * 2, cell); // miolo: terra escura que escurece com a profundidade
+    if (r < INS.length - 1) { cx.fillStyle = P('#b57e47'); cx.fillRect(xl, y, cell, cell); } // lado esquerdo iluminado (marrom mais claro)
+    if (r < 3) { cx.fillStyle = P('#6b4226'); cx.fillRect(xr - cell, y, cell, cell); } // lado direito, um pouco mais escuro
   });
   // grama de cada lado avançando para dentro do buraco, irregular (cada buraco tem o seu jeito)
   const jg = o.jag, gl = [8 + jg[0][0] * 2, 4 + jg[1][0], 4 + jg[2][0] / 2], gr = [8 + jg[0][1] * 2, 4 + jg[1][1], 4 + jg[2][1] / 2];

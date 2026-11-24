@@ -39,22 +39,16 @@ const mede = () => {
 };
 
 // ---------- desenhos em pixel ----------
-// bolha: anel cinza/branco com dois reflexos em azul-água e rosa (17 x 17 quadradinhos)
-const BU = 4, BN = 17;
+// bolha vetorizada da referência (24 x 24 quadradinhos): anel cinza e branco com reflexos em azul-água e rosa
+const BU = 3, BN = 24;
+const BOLHA = ['.........gWWWWg.........', '.......gg......WW.......', '.....gg..........WW.....', '....g.....CCCCW....W....', '...g...P...PPCCWWW..W...', '..g..........CCCCCW..W..', '..g..........PPCCCWW.g..', '.g.............PCCCW..W.', '.g..............PCCW..g.', 'g................PCWW..W', 'g................PCCW..W', 'W.................CCC..g', 'W.................PCC..g', 'W.................PC...g', 'W...P..............P...g', '.W..P..............P..g.', '.W..CP................g.', '..W.WCP...........C..g..', '..W..CWP.........CC..g..', '...g..WCPPg.....CP..g...', '....W..............g....', '.....Wg..........gg.....', '.......WgPg....gg.......', '.........WWWWgg.........'];
+const BCOR = { g: '#6a6a6a', W: '#eaf2f2', C: '#52e4f2', P: '#f77ae9' };
 const bolhaSpr = (() => {
   const c = document.createElement('canvas'); c.width = c.height = BN * BU; const g = c.getContext('2d');
-  const R = 7.6;
-  for (let j = 0; j < BN; j++) for (let i = 0; i < BN; i++) {
-    const dx = i - 8, dy = j - 8, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx) * 180 / Math.PI; // a: 0 = direita, -90 = cima
-    let cor = null;
-    if (Math.abs(d - R) < 0.75) cor = ((a > -75 && a < -15) || (a > 105 && a < 165)) ? '#f2f4f8' : (Math.abs(a) < 40 || Math.abs(a) > 140 ? '#6b717d' : '#9aa0ab');
-    else if (d > 4.7 && d < 6.7 && a > -80 && a < -12) cor = d < 5.5 ? '#ff7ee0' : (d > 6.1 && a < -50 ? '#e9fcff' : '#59dff0');
-    else if (d > 4.9 && d < 6.4 && a > 98 && a < 168) cor = d < 5.6 ? '#ff7ee0' : '#59dff0';
-    if (cor) { g.fillStyle = cor; g.fillRect(i * BU, j * BU, BU, BU); }
-  }
+  BOLHA.forEach((l, j) => [...l].forEach((ch, i) => { if (BCOR[ch]) { g.fillStyle = BCOR[ch]; g.fillRect(i * BU, j * BU, BU, BU); } }));
   return c;
 })();
-const BR = BN * BU / 2; // raio da bolha em pixels
+const BR = BN * BU / 2; // raio da bolha em pixels (36)
 // dedinho que empurra (12 x 14 quadradinhos)
 const DEDO = ['....KKKK....', '...KWWWWK...', '...KWWWWK...', '...KWWWWK...', '...KWWWWKKK.', '...KWWWWKWWK', '..KKWWWWKWWK', '.KSKWWWWWWWK', '.KSWWWWWWWWK', '.KSWWWWWWWWK', '..KSWWWWWWK.', '..KSWWWWWWK.', '...KSWWWWK..', '...KKKKKKK..'];
 const dedoSpr = (() => {

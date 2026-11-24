@@ -465,5 +465,5 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 /* Barra de cima mais compacta: busca/icones/menu mantem o tamanho, so o espaco em volta diminui; a area de trabalho cresce para cima (base fixa) */
 @media (min-width:901px){
 .cp-main{padding-top:14px!important}
-#cp-oi{margin-top:0!important;min-height:298px!important;box-sizing:border-box}
+#cp-oi{margin-top:0!important;height:298px!important;min-height:298px!important;max-height:298px!important;box-sizing:border-box}
 }

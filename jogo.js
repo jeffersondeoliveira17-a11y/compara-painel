@@ -133,6 +133,18 @@ const reinicia = () => {
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
+// buraco no chão: bacia em degraus de 4 px, aberta na superfície; dentro é escuro e as bordas mostram a terra
+const desenhaBuraco = (o, cy) => {
+  const esc = noite && !o.cor, rim = esc ? '#4b586b' : '#7a4b2b', fundo = esc ? '#10161e' : '#24140c', luz = esc ? '#2a3442' : '#4a2c1a';
+  const x0 = Math.round(o.x), w = Math.round(o.w);
+  for (let r = 0; r < 5; r++) {
+    const xi = x0 + r * 4, wi = w - r * 8, y = cy + r * 4 - 2;
+    cx.fillStyle = rim; cx.fillRect(xi, y, wi, 4);
+    cx.fillStyle = fundo; cx.fillRect(xi + 4, y, wi - 8, 4);
+    if (r === 4) { cx.fillStyle = rim; cx.fillRect(xi, y + 4, wi, 3); }
+  }
+  cx.fillStyle = luz; cx.fillRect(x0 + 12, cy + 2, 8, 4); // um brilhinho de profundidade
+};
 // fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;
 // poeirinha nas patinhas: bolinhas brancas com sombra cinza, nascem nos pés, andam com o chão e somem
@@ -156,15 +168,20 @@ const novoObst = () => {
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
-  const P = (x) => (Math.random() < 0.18 ? { x, w: 22 * 2.1, h: 24 * 2.1, k: 2.1, cone: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
+  const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (grande) { /* gigante vem sozinha */ } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
+  if (grande) { /* gigante vem sozinha */ } else if (o.cone) {
+    // cone nunca vem em dupla de cones: vem com um buraco no chão, antes ou depois dele (um pulo só passa nos dois)
+    const bu = { x: o.x, w: 76, h: 20, buraco: true }, gap = 28 + Math.random() * 14;
+    if (Math.random() < 0.5) { bu.x = o.x; o.x = bu.x + bu.w + gap; } else bu.x = o.x + o.w + gap;
+    obst.push(bu); fim = bu.x > o.x ? bu : o;
+  } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);
     fim = P(b2.x + b2.w + vel * (0.5 + Math.random() * 0.06)); obst.push(fim);
   } else if (Math.random() < Math.min(0.6, 0.3 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
   if (ave && !ave.rock && fim.x + fim.w > ave.x - 70 && o.x < ave.x + AVE_W + 70) { const dx = ave.x + AVE_W + 70 - o.x; for (let q = n0; q < obst.length; q++) obst[q].x += dx; fim = obst[obst.length - 1]; } // pedra nunca nasce em cima do passarinho
-  return fim.x + fim.w - o.x; // largura do conjunto, para o espaçamento da próxima
+  return fim.x + fim.w - Math.min(...obst.slice(n0).map((q) => q.x)); // largura do conjunto, para o espaçamento da próxima
 };
 
 // o balão anda em coordenadas de tela (sempre da direita para a esquerda, mesmo com o jogo espelhado)
@@ -230,8 +247,10 @@ const passo = (agora) => {
     if (invul > 0) invul -= dt;
     for (const o of obst) {
       if (o.batida) continue;
-      const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
-      if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
+      // buraco: só pega quem está com as patas no chão em cima dele (pulando alto, passa)
+      const b = o.buraco ? { x: o.x + 12, y: chaoY() - 14, w: o.w - 24, h: 24 } : { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
+      const ax = o.buraco ? a.x + 14 : a.x, aw = o.buraco ? a.w - 28 : a.w;
+      if (ax < b.x + b.w && ax + aw > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
         if (invul > 0) continue;
         vidas--; o.batida = true;
         if (vidas > 0) { invul = 1.6; continue; } // perdeu uma vida, mas segue: pisca um pouco e fica mais cinza
@@ -353,7 +372,7 @@ const desenha = () => {
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
-  obst.forEach((o) => cx.drawImage(o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  obst.forEach((o) => o.buraco ? desenhaBuraco(o, cy) : cx.drawImage(o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }

@@ -137,11 +137,11 @@ const reinicia = () => {
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;
 // poeirinha nas patinhas: bolinhas brancas com sombra cinza, nascem nos pés, andam com o chão e somem
 const sopra = (x, y, n, forca) => { for (let i = 0; i < n; i++) poeira.push({ x: x + (Math.random() - 0.5) * 10, y: y - Math.random() * 3, vx: -(30 + Math.random() * 50) * forca, vy: -(18 + Math.random() * 34), r: 2 + Math.random() * 2, t: 0, vida: 0.35 + Math.random() * 0.25 }); };
-const atualizaPoeira = (dt, v) => { poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
+const atualizaPoeira = (dt, v) => { poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; burst.x -= v * dt * 0.35; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
 const pula = () => {
-  if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); burst = { t: 0, x: player.x + player.w / 2, y: chaoY() - 78 }; }
+  if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); burst = { t: 0, x: player.x + 15, y: chaoY() - 42 }; }
   if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; sopra(player.x + 25, chaoY() + 2, 4, 1.2); }
-  else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; burst = { t: 0, x: player.x + player.w / 2, y: chaoY() - 78 }; }
+  else if (estado === 'morto' && performance.now() - morreuEm > 450) { reinicia(); estado = 'jogando'; burst = { t: 0, x: player.x + 15, y: chaoY() - 42 }; }
 };
 const sorteiaAve = () => (Math.random() < 0.5 ? IM.ave : IM.ave2); // alterna entre o passarinho do balão e o do café
 const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)

@@ -172,20 +172,20 @@ const novoObst = () => {
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   // cone de trânsito (22x24 quadradinhos) no lugar de algumas pedras: ~28% dos obstáculos comuns
   // cena de obra (cone + buraco + montinho): ~9%; cone sozinho: ~5%
-  const cena = !grande && Math.random() < 0.09;
-  const cone = cena || (!grande && Math.random() < 0.05), kc = 2.1 + Math.random() * 0.4;
+  const cena = !grande && Math.random() < 0.14; // monte de terra nunca vem sozinho (sempre com buraco), e o cone sinaliza o buraco
+  const cone = cena, kc = 2.1 + Math.random() * 0.4;
   // montinho de terra (20x13 quadradinhos): ~15% dos obstáculos que não são cone nem pedra gigante
-  const terra = !grande && !cone && Math.random() < 0.15, kt = 3 + Math.random() * 0.8;
+  const terra = false, kt = 3;
   const o = terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
-  const P = (x) => (Math.random() < 0.2 ? { x, w: 20 * 3.2, h: 13 * 3.2, k: 3.2, terra: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
+  const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
   if (grande) { /* gigante vem sozinha */ } else if (o.cone) {
     if (cena) { // cone, depois (buraco e montinho) em qualquer ordem: um pulo no cone, aterrissa e outro pulo passa o par
       const bu = { x: 0, w: 76, h: 20, buraco: true, jag: Array.from({ length: 16 }, () => [Math.random() < 0.4 ? 4 : 0, Math.random() < 0.4 ? 4 : 0]) }, mt = { x: 0, w: 20 * 3.1, h: 13 * 3.1, k: 3.1, terra: true };
-      const ini = o.x + o.w + 110 + Math.random() * 30;
+      const ini = o.x + o.w + 80 + Math.random() * 20;
       if (Math.random() < 0.5) { bu.x = ini; mt.x = bu.x + bu.w + 6; obst.push(bu, mt); fim = mt; } else { mt.x = ini; bu.x = mt.x + mt.w + 6; obst.push(mt, bu); fim = bu; }
     } /* senão: cone sozinho, nunca dois cones juntos */
   } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {

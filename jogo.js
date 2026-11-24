@@ -133,17 +133,17 @@ const reinicia = () => {
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
-// buraco no chão: bacia em degraus de 4 px, aberta na superfície; dentro é escuro e as bordas mostram a terra
+// buraco no chão: oval aberta na grama (vista de cima), com anel de terra e fundo escuro, em degraus de 4 px
 const desenhaBuraco = (o, cy) => {
-  const esc = noite && !o.cor, rim = esc ? '#4b586b' : '#7a4b2b', fundo = esc ? '#10161e' : '#24140c', luz = esc ? '#2a3442' : '#4a2c1a';
-  const x0 = Math.round(o.x), w = Math.round(o.w);
-  for (let r = 0; r < 5; r++) {
-    const xi = x0 + r * 4, wi = w - r * 8, y = cy + r * 4 - 2;
-    cx.fillStyle = rim; cx.fillRect(xi, y, wi, 4);
-    cx.fillStyle = fundo; cx.fillRect(xi + 4, y, wi - 8, 4);
-    if (r === 4) { cx.fillStyle = rim; cx.fillRect(xi, y + 4, wi, 3); }
-  }
-  cx.fillStyle = luz; cx.fillRect(x0 + 12, cy + 2, 8, 4); // um brilhinho de profundidade
+  const esc = noite && !o.cor;
+  const C = esc ? { l: '#6b7a90', m: '#4b586b', d: '#2f3a4a', p: '#1b222d', f: '#0d1218' } : { l: '#b8844a', m: '#8a5a35', d: '#5a3720', p: '#3b2314', f: '#1d1008' };
+  const cell = 4, FR = [0.56, 0.88, 1, 0.88, 0.56], cor = [C.l, C.m, C.m, C.m, C.d], cxm = o.x + o.w / 2, y0 = Math.round(cy + 3);
+  FR.forEach((fr, r) => {
+    const wr = Math.max(2, Math.round(o.w * fr / (cell * 2))) * cell * 2, x = Math.round(cxm - wr / 2), y = y0 + r * cell;
+    cx.fillStyle = cor[r]; cx.fillRect(x, y, wr, cell);
+    if (r > 0 && r < 4) { cx.fillStyle = r === 1 ? C.p : C.f; cx.fillRect(x + cell, y, wr - cell * 2, cell); }
+  });
+  cx.fillStyle = C.l; cx.fillRect(Math.round(cxm - o.w * 0.32), y0 + cell, cell, cell); // brilho da borda
 };
 // fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;

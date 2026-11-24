@@ -470,4 +470,4 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 
 /* icone do tempo: 2px para a esquerda e um respiro em cima do painel para a nuvem nao ser cortada embaixo */
 .cp-clima .cl-t{position:relative;z-index:3}
-.cp-clima .cl-t svg#cl-i{transform:translate(-2px,1px)}
+.cp-clima .cl-t svg#cl-i{transform:translate(-5px,0);width:64px;height:64px}

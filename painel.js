@@ -545,13 +545,15 @@ const sol = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (17 * k) 
 const lua = (x, y, k) => '<circle cx="' + x + '" cy="' + y + '" r="' + (18 * k) + '" fill="#FFE9A8" opacity=".25"/><path transform="translate(' + (x - 32 * k) + ' ' + (y - 32 * k) + ') scale(' + k + ')" d="M44 38A14 14 0 1 1 28 18a11 11 0 0 0 16 20z" fill="#FFE9A8"/>';
 const GOTA = '<path d="M24 51l-2 5M33 51l-2 5M42 51l-2 5" stroke="#CFE8FF" stroke-width="3" stroke-linecap="round"/>';
 const IM = (n, x, y, w, h) => '<image href="icones/' + n + '.svg?v=' + (window.PAINEL_VERSAO || 1) + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"/>';
+// todos os icones cabem no mesmo retangulo (100 de largura x 74,4 de altura) com a base na mesma linha: os mais altos (chuva, tempestade) ficam menores
+const IMF = (n) => '<image href="icones/' + n + '.svg?v=' + (window.PAINEL_VERSAO || 1) + '" x="0" y="12.8" width="100" height="74.4" preserveAspectRatio="xMidYMax meet"/>';
 const icone = (c, dia) => {
-if (c <= 1) return IM(dia ? 'sol' : 'lua', 0, 0, 100, 100);
-if (c === 2) return IM(dia ? 'nuvem-sol' : 'lua-nuvem', 0, 0, 100, 100);
-if (c >= 95) return IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 13, 52, 33, 51);
-if (c >= 80 && c <= 82) return IM(dia ? 'sol-nuvem-chuva' : 'lua-nuvem-chuva', 0, 0, 100, 100);
-if (c >= 51 && c <= 82) return IM('nuvem-chuva', 0, 0, 100, 100);
-return IM('nuvem', 0, 0, 100, 100);
+if (c <= 1) return IMF(dia ? 'sol' : 'lua');
+if (c === 2) return IMF(dia ? 'nuvem-sol' : 'lua-nuvem');
+if (c >= 95) return '<g transform="translate(14 13) scale(.72)">' + IM('nuvem-chuva', 0, 0, 100, 100) + IM('raio', 13, 52, 33, 51) + '</g>';
+if (c >= 80 && c <= 82) return IMF(dia ? 'sol-nuvem-chuva' : 'lua-nuvem-chuva');
+if (c >= 51 && c <= 82) return IMF('nuvem-chuva');
+return IMF('nuvem');
 };
 const TXT = (c) => c === 0 ? 'Céu limpo' : c === 1 ? 'Quase limpo' : c === 2 ? 'Parcialmente nublado' : c === 3 ? 'Nublado' : c < 50 ? 'Neblina' : c < 60 ? 'Garoa' : c < 70 ? 'Chuva' : c < 80 ? 'Neve' : c < 90 ? 'Pancadas de chuva' : 'Tempestade';
 const DIR = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];

@@ -483,3 +483,8 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-clima .cl-n #cl-t{font-size:38px;line-height:1}
 .cp-clima .cl-n sup{font-size:17px}
 .cp-clima .cp-oi-d{top:9px!important;margin-bottom:12px}
+
+/* ajuste pelas linhas guia do Jefferson (24/11): icone dentro do retangulo, 30 alinhado ao painel claro, painel Sensacao/Umidade mais alto e Barueri mais baixo */
+.cp-clima .cl-t svg#cl-i{width:67px;height:67px;transform:translate(-2px,3px)}
+.cp-clima .cl-n{margin-left:-1px}
+.cp-clima .cl-box>*:last-child:not(.cl-g){flex:none;height:29px;box-sizing:border-box}

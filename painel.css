@@ -495,3 +495,10 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 
 /* acoes rapidas: o vao no meio entre os cartoes fica igual a distancia da borda do cartao branco ate o cartao rosa (14px de padding + 1px de borda) */
 .cp-qas{column-gap:13px}
+
+/* guias do Jefferson (24/11, 3o print): texto da data e de Sensacao/Umidade 2px para a direita; 30 e icone apoiados na linha roxa; Barueri centralizado entre as linhas verdes */
+.cp-clima .cp-oi-d{padding-left:10px}
+.cp-clima .cl-g>div{padding-left:8px}
+.cp-clima .cl-n{transform:translateY(7px)}
+.cp-clima .cl-t svg#cl-i{transform:translate(-2px,10px)}
+.cp-clima .cl-box>*:last-child:not(.cl-g){padding:9px 0 0}

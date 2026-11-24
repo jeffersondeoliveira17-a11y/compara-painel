@@ -68,18 +68,21 @@ window.cpPS = PS_P; // o jogo da bolha usa o mesmo texto
 const pixTexto = (_txt, mx, my, k) => {
   const s = k, w = 78 * s, h = 30 * s, x0 = Math.round(mx - w / 2), y0 = Math.round(my - h / 2);
   cx.save(); cx.translate(x0, y0); cx.scale(s, s);
-  cx.save(); cx.translate(1, 1.4); cx.fillStyle = noite ? '#0d1218' : '#102532'; cx.fill(PS_P); cx.restore(); // sombra escura para ler em qualquer fundo
+  cx.save(); cx.translate(1, 1.4); cx.fillStyle = escuro() ? '#0d1218' : '#102532'; cx.fill(PS_P); cx.restore(); // sombra escura para ler em qualquer fundo
   cx.fillStyle = '#ffffff'; cx.fill(PS_P); cx.restore();
 };
 // modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
 const FORCA_P = (/[?&]amanhecer=([\d.]+)/.exec(location.search) || [])[1]; // teste: ?amanhecer=0.7 trava o progresso da fase (0 a 1)
-const progFase = () => (FORCA_P !== undefined ? Math.min(1, +FORCA_P) : Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)));
+const FASE0 = +((/[?&]fase=(\d+)/.exec(location.search) || [])[1] || 0); // teste: ?fase=1 começa na fase 1 (volta, entardecendo)
+// fase par: anoitecido -> amanhece (0 a 1). fase ímpar (cenário espelhado, na volta): o contrário, vai do dia ao anoitecer
+const progFase = () => { const r = FORCA_P !== undefined ? Math.min(1, +FORCA_P) : Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)); return fase % 2 === 1 ? 1 - r : r; };
 // amanhecer: perto do fim da fase noturna o céu sai do cinza, passa por roxo escuro, roxo claro, rosa e laranja, até o azul do dia
 const CEU = [[0.45, '#26303f', '#26303f'], [0.62, '#2b2150', '#43306a'], [0.78, '#4d3b80', '#b8638f'], [0.9, '#8a7bc4', '#f6a35f'], [1, '#cfe6f5', '#cfe6f5']];
 const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mistura = (a, b, t) => { const A = hex2(a), B = hex2(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',') + ')'; };
 const ceuCores = (p) => { if (p <= CEU[0][0]) return null; for (let i = 1; i < CEU.length; i++) if (p <= CEU[i][0]) { const a = CEU[i - 1], b = CEU[i], t = (p - a[0]) / (b[0] - a[0]); return [mistura(a[1], b[1], t), mistura(a[2], b[2], t)]; } return [CEU[4][1], CEU[4][2]]; };
 const ceuClaro = () => noite && progFase() > 0.82; // céu claro: textos escuros
+const escuro = () => noite && !ceuClaro(); // tema escuro dos textos e da barra (some quando o céu clareia)
 const faixa = (a, b) => Math.max(0, Math.min(1, (progFase() - a) / (b - a)));
 const dCor = (im, k, ...a) => { cx.drawImage(S(im), ...a); if (noite && k > 0.01) { const g = cx.globalAlpha; cx.globalAlpha = g * k; cx.drawImage(im, ...a); cx.globalAlpha = g; } };
 
@@ -112,7 +115,7 @@ const chaoY = () => H - CHAO_H;
 const ARV_U = 2.4, ARVG_U = 2.9; // uma árvore por vez na tela: 'fundo' (atrás da moita, anda com ela) ou 'chao' (em pé na linha da grama, maior)
 const arvTam = (t) => { const im = IM.arv[0]; return im && im.naturalWidth ? [im.naturalWidth * (t === 'chao' ? ARVG_U : ARV_U), im.naturalHeight * (t === 'chao' ? ARVG_U : ARV_U)] : [0, 0]; };
 const arvAnda = (v, dt) => { if (!arvO) return; arvO.x -= v * dt * (arvO.tipo === 'fundo' ? 0.6 : 1); if (arvO.x < -400) { arvO = null; arvEm = 2 + Math.random() * 5; } };
-const arvNasce = (dt) => { if (arvO) return; arvEm -= dt; if (arvEm > 0) return; const t = arvTipo; arvTipo = t === 'chao' ? 'fundo' : 'chao'; const [aw] = arvTam(t); if (!aw) return; if (t === 'chao') arvO = { tipo: t, x: W + 40 }; else { const xm = matoX + Math.ceil((W + aw / 2 - 300 - matoX) / MATO_P) * MATO_P; arvO = { tipo: t, x: xm + 300 - aw / 2 }; } }; // árvore: aparece junto de uma moita a cada 2 moitas; ARV_U = tamanho de cada quadradinho
+const arvNasce = (dt) => { if (arvO) return; arvEm -= dt; if (arvEm > 0) return; const t = arvTipo; arvTipo = t === 'chao' ? 'fundo' : 'chao'; const [aw] = arvTam(t); if (!aw) return; if (t === 'chao') arvO = { tipo: t, x: W + 40, v: fase % 3 }; else { const xm = matoX + Math.ceil((W + aw / 2 - 300 - matoX) / MATO_P) * MATO_P; arvO = { tipo: t, x: xm + 300 - aw / 2, v: fase % 3 }; } }; // árvore: aparece junto de uma moita a cada 2 moitas; ARV_U = tamanho de cada quadradinho
 const MATO_W = 330, MATO_H = 330 * 13 / 91, MATO_P = 560; // moita ao fundo: largura, altura e distância entre uma e outra
 const AFUNDA = 7; // quanto os desenhos entram na grama (para não flutuar)
 const PASSO = 3; // distância por quadro (a 430 de velocidade = 10 quadros/s, como no GIF)
@@ -125,13 +128,13 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; burst = null; poeira = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; arvO = { tipo: 'chao', x: 600 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; burst = null; poeira = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
 };
 // fumaça da largada: 23 quadros do GIF (puff que abre em anel e some). Ordem: 15..22 (nasce) e 0..13 (anel se desfaz); o quadro 14 é vazio
-const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.8, BURST_DT = 0.045;
+const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;
 // poeirinha nas patinhas: bolinhas brancas com sombra cinza, nascem nos pés, andam com o chão e somem
 const sopra = (x, y, n, forca) => { for (let i = 0; i < n; i++) poeira.push({ x: x + (Math.random() - 0.5) * 10, y: y - Math.random() * 3, vx: -(30 + Math.random() * 50) * forca, vy: -(18 + Math.random() * 34), r: 2 + Math.random() * 2, t: 0, vida: 0.35 + Math.random() * 0.25 }); };
 const atualizaPoeira = (dt, v) => { poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
@@ -180,7 +183,7 @@ const passoPortal = (dt) => {
   tPortal += dt;
   if (tPortal < T_SUGA) { vel = fasePt * Math.max(0, 1 - tPortal / T_SUGA); }
   else {
-    if (!viraFeito) { viraFeito = true; fase++; noite = fase % 2 === 0; mor = null; morEm = 5 + Math.random() * 5; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
+    if (!viraFeito) { viraFeito = true; fase++; if (vidas < 3) vidas++; mor = null; morEm = 5 + Math.random() * 5; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
       portal = { x: player.x + player.w / 2 - portalAlt() * PORT_W / PORT_H / 2, w: portalAlt() * PORT_W / PORT_H, h: portalAlt() }; }
     if (tPortal >= T_SUGA + T_VIRA + T_SOLTA) { portal = null; vel = 520 + 50 * fase; estado = 'jogando'; }
   }
@@ -339,12 +342,12 @@ const desenha = () => {
     cx.restore();
   }
   // árvore ao fundo, metade escondida atrás da moita (cor muda a cada fase: rosa, azul claro, verde)
-  if (arvO && arvO.tipo === 'fundo') { const ai = IM.arv[fase % 3], [aw, ah] = arvTam('fundo'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.35, 0.7), Math.round(arvO.x), Math.round(cy + 4 - ah), aw, ah); }
+  if (arvO && arvO.tipo === 'fundo') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('fundo'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.35, 0.7), Math.round(arvO.x), Math.round(cy + 4 - ah), aw, ah); }
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
   // árvore em pé na grama, na frente das moitas
-  if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[fase % 3], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); }
+  if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); }
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
@@ -352,7 +355,7 @@ const desenha = () => {
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }
-  poeira.forEach((p) => { const u = p.t / p.vida, r = p.r * (1 + u * 0.9), a = 1 - u * u; cx.globalAlpha = a; cx.fillStyle = noite ? '#7f8da3' : '#d7d7d7'; cx.beginPath(); cx.arc(Math.round(p.x) + 1, Math.round(p.y) + 1, r, 0, 6.2832); cx.fill(); cx.fillStyle = noite ? '#dfe5ee' : '#ffffff'; cx.beginPath(); cx.arc(Math.round(p.x), Math.round(p.y), r, 0, 6.2832); cx.fill(); cx.globalAlpha = 1; });
+  poeira.forEach((p) => { const u = p.t / p.vida, r = p.r * (1 + u * 0.9), a = 1 - u * u; cx.globalAlpha = a; cx.fillStyle = escuro() ? '#7f8da3' : '#d7d7d7'; cx.beginPath(); cx.arc(Math.round(p.x) + 1, Math.round(p.y) + 1, r, 0, 6.2832); cx.fill(); cx.fillStyle = noite ? '#dfe5ee' : '#ffffff'; cx.beginPath(); cx.arc(Math.round(p.x), Math.round(p.y), r, 0, 6.2832); cx.fill(); cx.globalAlpha = 1; });
   // gatinho (inclina no ar e quica correndo)
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
@@ -388,7 +391,7 @@ const desenha = () => {
   cx.restore(); // fim da parte espelhada; placar e textos ficam sempre na posição normal
   if (estado === 'portal') { // clarão azul na hora da virada
     const d = Math.abs(tPortal - T_SUGA - T_VIRA / 2) / (T_VIRA / 2 + 0.15);
-    if (d < 1) { cx.fillStyle = (noite ? 'rgba(154,165,181,' : 'rgba(35,62,246,') + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
+    if (d < 1) { cx.fillStyle = (escuro() ? 'rgba(154,165,181,' : 'rgba(35,62,246,') + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
   }
   if (avisoFase > 0 && estado !== 'portal') {
     cx.globalAlpha = Math.min(1, avisoFase); cx.fillStyle = TINTA(); cx.textAlign = 'center'; cx.font = '700 18px system-ui, sans-serif';
@@ -400,11 +403,11 @@ const desenha = () => {
     for (let i = 0; i < 10; i++) {
       const bx = W - 24 - (9 - i) * 16, by = H - 14;
       cx.beginPath(); cx.arc(bx, by, 4, 0, Math.PI * 2);
-      cx.fillStyle = i < cheias ? (noite ? '#e3e9f2' : '#fff') : (noite ? '#3a4658' : 'rgba(255,255,255,.35)'); cx.fill();
+      cx.fillStyle = i < cheias ? (escuro() ? '#e3e9f2' : '#fff') : (escuro() ? '#3a4658' : 'rgba(255,255,255,.35)'); cx.fill();
     } }
   // barrinha de velocidade (frear ◀ / acelerar ▶): moldura escura e listras na diagonal
   { const bx = 16, by = Math.round(chaoY() + 33), bw = 84, bh = 12, nivel = Math.max(0, Math.min(1, (acel - 0.6) / 0.85));
-    cx.fillStyle = TINTA(); cx.fillRect(bx, by, bw, bh); cx.fillStyle = noite ? NOITE_FUNDO : '#ffffff'; cx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+    cx.fillStyle = TINTA(); cx.fillRect(bx, by, bw, bh); cx.fillStyle = escuro() ? NOITE_FUNDO : '#ffffff'; cx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
     cx.save(); cx.beginPath(); cx.rect(bx + 3, by + 3, (bw - 6) * nivel, bh - 6); cx.clip(); cx.fillStyle = TINTA();
     for (let x = bx - bh; x < bx + bw; x += 6) { cx.beginPath(); cx.moveTo(x, by + bh); cx.lineTo(x + 3, by + bh); cx.lineTo(x + 3 + bh, by); cx.lineTo(x + bh, by); cx.fill(); }
     cx.restore(); }

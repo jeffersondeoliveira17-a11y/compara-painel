@@ -8,7 +8,8 @@ const CH = 'cp-jogo-recorde', CT = 'cp-jogo-tempo';
 const LIMITE = 8 * 60; // segundos de jogo por dia
 const forca = /[?&]cafe(=|&|$)/.test(location.search); // o mesmo teste do pause pro café
 // o jogo só existe no pause pro café: nas horas pares, nos primeiros 15 minutos
-const janela = () => { const d = new Date(); return forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15); };
+const LIBERADO = true; window.cpLiberado = LIBERADO; // fase de testes: o jogo abre a qualquer hora e é sempre o do cachorro; para voltar às regras (pause do café e jogo do dia), troque para false
+const janela = () => { const d = new Date(); return LIBERADO || forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15); };
 const hoje = () => new Date().toDateString();
 const leUso = () => { if (forca) return 0; try { const o = JSON.parse(localStorage.getItem(CT) || '{}'); return o.dia === hoje() ? (+o.s || 0) : 0; } catch (e) { return 0; } };
 let usado = leUso(), cont = 0;
@@ -402,7 +403,7 @@ const desenha = () => {
 
 // ---------- abrir e fechar ----------
 // terça-feira é o dia da bolha e quarta o do cãozinho; ?bolha e ?cao forçam um deles
-const jogoDoDia = () => /[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao';
+const jogoDoDia = () => /[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : LIBERADO ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao';
 // trava a página no topo enquanto o jogo está aberto (setas, espaço, roda do mouse e dedo não rolam a tela)
 const SCROLL_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
 let travado = false;

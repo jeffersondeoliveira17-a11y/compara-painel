@@ -7,7 +7,7 @@ if (!area) return;
 const V = window.PAINEL_VERSAO || '1';
 const CT = 'cp-jogo-tempo', CR = 'cp-bolha-recorde', LIMITE = 8 * 60; // o tempo diário de 8 minutos é dividido com o jogo do cãozinho
 const forca = /[?&](cafe|bolha)(=|&|$)/.test(location.search);
-const janela = () => { const d = new Date(); return forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15); };
+const janela = () => { const d = new Date(); return window.cpLiberado || forca || (d.getHours() % 2 === 0 && d.getMinutes() < 15); };
 const hoje = () => new Date().toDateString();
 const leUso = () => { if (forca) return 0; try { const o = JSON.parse(localStorage.getItem(CT) || '{}'); return o.dia === hoje() ? (+o.s || 0) : 0; } catch (e) { return 0; } };
 let usado = 0;

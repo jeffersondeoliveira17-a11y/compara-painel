@@ -382,3 +382,5 @@
 #cp-jogo .jg-x:hover,#cp-jogo.noite .jg-x,#cp-jogo.noite .jg-x:hover{background:none}
 #cp-jogo .jg-x:hover img{filter:brightness(1.12)}
 #cp-jogo .jg-x:active img{transform:translateY(1px)}
+#cp-jogo .jg-x{width:30px;height:30px}
+#cp-jogo .jg-x img{width:26px;height:26px}

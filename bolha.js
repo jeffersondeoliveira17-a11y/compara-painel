@@ -126,15 +126,17 @@ const mexeCaule = (dt) => { desl += dt * VEL; const n = Math.floor(desl / 4) * 4
 // ---------- estado do jogo ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, tJogo = 0, morreuEm = 0, fimEm = 0, motivo = '';
 let bs = [], parts = [], dedos = [], rajada = 0, fase0 = 0, salva = 0, mult = 14, MAX = 8;
-const nova = (x, y, vx, vy) => ({ x, y, vx, vy, sq: 0, ph: Math.random() * 6.28 });
+const TAMB = [1.25, 1, 0.78, 0.55]; // tamanhos das bolhas: um pouco maior, o normal, menor e menorzinha
+let ciclo = 0, pontos = 0;
+const nova = (x, y, vx, vy, e = 1) => ({ x, y, vx, vy, e, sq: 0, ph: Math.random() * 6.28 });
 const reinicia = () => {
   bs = [nova(W / 2, H / 2, (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 14), -6)];
-  parts = []; dedos = []; tJogo = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
+  parts = []; dedos = []; tJogo = 0; pontos = 0; ciclo = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
 };
 const empurra = (px, py) => {
   dedos.push({ x: px, y: py, t: 0 });
   bs.forEach((b) => {
-    const dx = b.x - px, dy = b.y - py, d = Math.hypot(dx, dy) || 1, alcance = BR + 70;
+    const dx = b.x - px, dy = b.y - py, d = Math.hypot(dx, dy) || 1, alcance = BR * b.e + 70;
     if (d > alcance) return;
     const forcaP = 55 + 110 * (1 - d / alcance); // empurrão suave: quanto mais perto do toque, mais forte
     b.vx += dx / d * forcaP; b.vy += dy / d * forcaP;
@@ -142,12 +144,11 @@ const empurra = (px, py) => {
     b.sq = 1;
   });
 };
-const estoura = () => {
-  estado = 'estourando'; morreuEm = performance.now();
-  const cores = ['#52e4f2', '#f77ae9', '#eaf2f2', '#6a6a6a'];
-  bs.forEach((b) => { for (let k = 0; k < 18; k++) { const a = Math.random() * 6.28, sp = 60 + Math.random() * 170; parts.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, c: cores[k % 4], t: 0 }); } });
-  bs = [];
-  const pts = Math.floor(tJogo * 10);
+const cores = ['#52e4f2', '#f77ae9', '#eaf2f2', '#6a6a6a'];
+const estouraUma = (b) => { for (let k = 0; k < 14; k++) { const a = Math.random() * 6.28, sp = 60 + Math.random() * 170; parts.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, c: cores[k % 4], t: 0 }); } };
+const estoura = () => { // acabou a última bolha: fim da partida
+  estado = 'estourando'; morreuEm = performance.now(); bs = [];
+  const pts = Math.floor(pontos);
   if (pts > recorde) { recorde = pts; try { localStorage.setItem(CR, String(recorde)); } catch (e) { /* segue */ } }
   gravaUso();
 };
@@ -164,7 +165,7 @@ const passo = (agora) => {
   const dt = Math.min(0.05, (agora - t0) / 1000); t0 = agora;
   mexeCaule(dt);
   if (estado === 'jogando') {
-    tJogo += dt; usado += dt; salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
+    tJogo += dt; pontos += bs.length * 10 * dt; usado += dt; salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
     const dif = Math.min(1, tJogo / 120);
     // a cada tanto tempo uma bolha se divide em duas: cada vez mais bolhas para cuidar
@@ -172,10 +173,10 @@ const passo = (agora) => {
     if (mult <= 0 && bs.length < MAX) {
       mult = Math.max(7, 14 - tJogo / 25);
       const o = bs[Math.floor(Math.random() * bs.length)], lado = o.x < W / 2 ? 1 : -1, cima = o.y < H / 2 ? 1 : -1;
-      bs.push(nova(o.x + lado * BR * 1.3, o.y + cima * BR * 0.8, lado * 22, cima * 12));
+      const e = TAMB[ciclo++ % TAMB.length]; // cada bolha nova vem de um tamanho
+      bs.push(nova(o.x + lado * BR * 1.3, o.y + cima * BR * 0.8, lado * 22, cima * 12, e));
     }
     rajada -= dt; const sopra = rajada <= 0; if (sopra) rajada = 4 + Math.random() * 3 - dif * 1.5;
-    const rr = BR * 0.88;
     for (const b of bs) {
       if (sopra) { b.vx += (Math.random() < 0.5 ? -1 : 1) * (18 + 40 * dif); b.vy += (Math.random() - 0.5) * (20 + 40 * dif); }
       const vento = Math.sin(tJogo * 0.7 + fase0 + b.ph) * (10 + 38 * dif);
@@ -184,18 +185,21 @@ const passo = (agora) => {
     }
     // as bolhas não se atravessam: afastam-se com delicadeza
     for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {
-      const p = bs[i], q = bs[j], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1, min = BR * 1.9;
+      const p = bs[i], q = bs[j], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1, min = BR * 0.95 * (p.e + q.e);
       if (d < min) { const f = (min - d) / min * 120 * dt, nx = dx / d, ny = dy / d; p.vx -= nx * f; p.vy -= ny * f; q.vx += nx * f; q.vy += ny * f; }
     }
+    const mortas = [];
     for (const b of bs) {
+      const rr = BR * 0.88 * b.e;
       b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2);
       // paredes: no trecho com espinhos a bolha estoura; no trecho liso ela bate e volta
       const zc = espinho(0, b.x) ? ZONA : ZLISO, zb = espinho(1, b.x) ? ZONA : ZLISO, ze = espinho(2, b.y) ? ZONA : ZLISO, zd = espinho(3, b.y) ? ZONA : ZLISO;
-      if (b.y - rr < zc) { if (zc === ZONA) { estoura(); break; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
-      if (b.y + rr > H - zb) { if (zb === ZONA) { estoura(); break; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }
-      if (b.x - rr < ze) { if (ze === ZONA) { estoura(); break; } b.x = ze + rr; b.vx = Math.abs(b.vx) * 0.75 + 8; b.sq = 1; }
-      if (b.x + rr > W - zd) { if (zd === ZONA) { estoura(); break; } b.x = W - zd - rr; b.vx = -Math.abs(b.vx) * 0.75 - 8; b.sq = 1; }
+      if (b.y - rr < zc) { if (zc === ZONA) { mortas.push(b); continue; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
+      if (b.y + rr > H - zb) { if (zb === ZONA) { mortas.push(b); continue; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }
+      if (b.x - rr < ze) { if (ze === ZONA) { mortas.push(b); continue; } b.x = ze + rr; b.vx = Math.abs(b.vx) * 0.75 + 8; b.sq = 1; }
+      if (b.x + rr > W - zd) { if (zd === ZONA) { mortas.push(b); continue; } b.x = W - zd - rr; b.vx = -Math.abs(b.vx) * 0.75 - 8; b.sq = 1; }
     }
+    if (mortas.length) { mortas.forEach(estouraUma); bs = bs.filter((b) => !mortas.includes(b)); if (!bs.length) estoura(); } // estourou uma: as outras seguem; só perde quando acabam todas
   } else if (estado === 'estourando') {
     if (agora - morreuEm > 650) estado = 'morto';
   } else if (estado === 'fim' && agora - fimEm > 3200) { fecha(); return; }
@@ -217,7 +221,7 @@ const desenha = (agora) => {
   // bolhas (achatam um pouco ao serem empurradas)
   bs.forEach((b) => {
     const s = Math.sin(agora / 260 + b.ph) * 0.03, q = b.sq * 0.12;
-    g.save(); g.translate(Math.round(b.x), Math.round(b.y)); g.scale(1 + s + q, 1 - s - q); g.drawImage(bolhaSpr, -BR, -BR); g.restore();
+    g.save(); g.translate(Math.round(b.x), Math.round(b.y)); g.scale(1 + s + q, 1 - s - q); g.drawImage(bolhaSpr, -BR * b.e, -BR * b.e, BR * 2 * b.e, BR * 2 * b.e); g.restore();
   });
   parts.forEach((p) => { g.globalAlpha = Math.max(0, 1 - p.t / 0.9); g.fillStyle = p.c; g.fillRect(Math.round(p.x), Math.round(p.y), 5, 5); }); g.globalAlpha = 1;
   // dedo: sobe até o ponto do toque e some
@@ -226,7 +230,8 @@ const desenha = (agora) => {
   g.fillStyle = '#c3ccd9'; g.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; g.textAlign = 'left';
   if (estado !== 'fim') g.fillText('restam ' + mmss(LIMITE - usado), ZONA + 8, ZONA + 18);
   g.textAlign = 'right'; g.font = '700 14px ui-monospace, Menlo, Consolas, monospace';
-  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(tJogo * 10), W - ZONA - 44, ZONA + 18);
+  g.fillText('HI ' + pts5(recorde) + '   ' + pts5(pontos), W - ZONA - 44, ZONA + 18);
+  if (estado === 'jogando') { g.font = '600 12px ui-monospace, Menlo, Consolas, monospace'; g.fillText(bs.length + (bs.length === 1 ? ' bolha' : ' bolhas'), W - ZONA - 44, ZONA + 34); }
   g.textAlign = 'center';
   const ps = window.cpPS;
   const pixPS = (mx, my, s) => { if (!ps) return; g.save(); g.translate(Math.round(mx - 39 * s), Math.round(my - 15 * s)); g.scale(s, s); g.save(); g.translate(1, 1.4); g.fillStyle = '#0d1218'; g.fill(ps); g.restore(); g.fillStyle = '#ffffff'; g.fill(ps); g.restore(); };

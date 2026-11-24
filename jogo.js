@@ -125,18 +125,19 @@ const AVE_W = 66; // largura do passarinho no chão (33 quadradinhos x 2)
 const novoObst = () => {
   const n0 = obst.length;
   let poleiro = false;
-  const k = 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
+  const grande = Math.random() < Math.min(0.3, 0.14 + 0.05 * fase); // pedra gigante: ~2,7x a pedra básica, ainda dá para pular (pulo máximo ~149 px)
+  const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   const o = { x: W + 20, w: 32 * k, h: 22 * k, k };
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (fase >= 1 && Math.random() < Math.min(0.5, 0.25 + 0.1 * fase)) {
+  if (grande) { /* gigante vem sozinha */ } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);
     fim = P(b2.x + b2.w + vel * (0.5 + Math.random() * 0.06)); obst.push(fim);
-  } else if (Math.random() < Math.min(0.6, 0.25 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
+  } else if (Math.random() < Math.min(0.6, 0.3 + 0.1 * fase)) { fim = P(o.x + o.w + 22 + Math.random() * 16); obst.push(fim); }
   if (ave && !ave.rock && fim.x + fim.w > ave.x - 70 && o.x < ave.x + AVE_W + 70) { const dx = ave.x + AVE_W + 70 - o.x; for (let q = n0; q < obst.length; q++) obst[q].x += dx; fim = obst[obst.length - 1]; } // pedra nunca nasce em cima do passarinho
   return fim.x + fim.w - o.x; // largura do conjunto, para o espaçamento da próxima
 };
@@ -174,7 +175,7 @@ const passo = (agora) => {
   } else if (agora - fimEm > 3200) { fecha(); return; }
   if (estado === 'portal') passoPortal(dt);
   if (estado === 'jogando') {
-    vel = Math.min(920 + 60 * fase, vel + (9 + 2 * fase) * dt);
+    vel = Math.min(1040 + 80 * fase, vel + (14 + 3 * fase) * dt);
     acel += (alvoAcel - acel) * Math.min(1, 4 * dt); const v = vel * acel; player.x = 90 + (acel - 1) * 90; // acelerar: o cachorro corre mais e avança na tela; frear: recua
     dist += v * dt / 14;
     chaoX = (chaoX - v * dt) % CHAO_W; matoX = (matoX - v * dt * 0.6) % MATO_P; decoX = (decoX - v * dt * 0.8) % DECO_P;

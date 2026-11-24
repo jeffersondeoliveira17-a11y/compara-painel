@@ -40,7 +40,7 @@ const mede = () => {
 
 // ---------- desenhos em pixel ----------
 // bolha vetorizada da referência (24 x 24 quadradinhos): anel cinza e branco com reflexos em azul-água e rosa
-const BU = 3, BN = 24;
+const BU = 2, BN = 24;
 const BOLHA = ['.........gWWWWg.........', '.......gg......WW.......', '.....gg..........WW.....', '....g.....CCCCW....W....', '...g...P...PPCCWWW..W...', '..g..........CCCCCW..W..', '..g..........PPCCCWW.g..', '.g.............PCCCW..W.', '.g..............PCCW..g.', 'g................PCWW..W', 'g................PCCW..W', 'W.................CCC..g', 'W.................PCC..g', 'W.................PC...g', 'W...P..............P...g', '.W..P..............P..g.', '.W..CP................g.', '..W.WCP...........C..g..', '..W..CWP.........CC..g..', '...g..WCPPg.....CP..g...', '....W..............g....', '.....Wg..........gg.....', '.......WgPg....gg.......', '.........WWWWgg.........'];
 const BCOR = { g: '#6a6a6a', W: '#eaf2f2', C: '#52e4f2', P: '#f77ae9' };
 const bolhaSpr = (() => {
@@ -48,7 +48,7 @@ const bolhaSpr = (() => {
   BOLHA.forEach((l, j) => [...l].forEach((ch, i) => { if (BCOR[ch]) { g.fillStyle = BCOR[ch]; g.fillRect(i * BU, j * BU, BU, BU); } }));
   return c;
 })();
-const BR = BN * BU / 2; // raio da bolha em pixels (36)
+const BR = BN * BU / 2; // raio da bolha em pixels (24)
 // dedinho que empurra (12 x 14 quadradinhos)
 const DEDO = ['....KKKK....', '...KWWWWK...', '...KWWWWK...', '...KWWWWK...', '...KWWWWKKK.', '...KWWWWKWWK', '..KKWWWWKWWK', '.KSKWWWWWWWK', '.KSWWWWWWWWK', '.KSWWWWWWWWK', '..KSWWWWWWK.', '..KSWWWWWWK.', '...KSWWWWK..', '...KKKKKKK..'];
 const dedoSpr = (() => {
@@ -86,24 +86,28 @@ const moldura = () => {
 
 // ---------- estado do jogo ----------
 let aberto = false, estado = 'pronto', raf = 0, t0 = 0, tJogo = 0, morreuEm = 0, fimEm = 0, motivo = '';
-let b, parts = [], dedos = [], vento = 0, rajada = 0, fase0 = 0, salva = 0;
+let bs = [], parts = [], dedos = [], rajada = 0, fase0 = 0, salva = 0, mult = 14, MAX = 8;
+const nova = (x, y, vx, vy) => ({ x, y, vx, vy, sq: 0, ph: Math.random() * 6.28 });
 const reinicia = () => {
-  b = { x: W / 2, y: H / 2, vx: (Math.random() < 0.5 ? -1 : 1) * (30 + Math.random() * 30), vy: -20, sq: 0, rot: 0 };
-  parts = []; dedos = []; tJogo = 0; vento = 0; rajada = 2.5 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0;
+  bs = [nova(W / 2, H / 2, (Math.random() < 0.5 ? -1 : 1) * (14 + Math.random() * 14), -6)];
+  parts = []; dedos = []; tJogo = 0; rajada = 3 + Math.random() * 2; fase0 = Math.random() * 6.28; salva = 0; mult = 14;
 };
 const empurra = (px, py) => {
   dedos.push({ x: px, y: py, t: 0 });
-  const dx = b.x - px, dy = b.y - py, d = Math.hypot(dx, dy) || 1, alcance = BR + 80;
-  if (d > alcance) return;
-  const forcaP = 230 + 330 * (1 - d / alcance); // quanto mais perto do toque, mais forte o empurrão
-  b.vx += dx / d * forcaP; b.vy += dy / d * forcaP;
-  const v = Math.hypot(b.vx, b.vy), lim = 560; if (v > lim) { b.vx *= lim / v; b.vy *= lim / v; }
-  b.sq = 1;
+  bs.forEach((b) => {
+    const dx = b.x - px, dy = b.y - py, d = Math.hypot(dx, dy) || 1, alcance = BR + 70;
+    if (d > alcance) return;
+    const forcaP = 55 + 110 * (1 - d / alcance); // empurrão suave: quanto mais perto do toque, mais forte
+    b.vx += dx / d * forcaP; b.vy += dy / d * forcaP;
+    const v = Math.hypot(b.vx, b.vy), lim = 210; if (v > lim) { b.vx *= lim / v; b.vy *= lim / v; }
+    b.sq = 1;
+  });
 };
 const estoura = () => {
   estado = 'estourando'; morreuEm = performance.now();
-  const cores = ['#59dff0', '#ff7ee0', '#f2f4f8', '#9aa0ab'];
-  for (let k = 0; k < 26; k++) { const a = Math.random() * 6.28, s = 80 + Math.random() * 220; parts.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, c: cores[k % 4], t: 0 }); }
+  const cores = ['#52e4f2', '#f77ae9', '#eaf2f2', '#6a6a6a'];
+  bs.forEach((b) => { for (let k = 0; k < 18; k++) { const a = Math.random() * 6.28, sp = 60 + Math.random() * 170; parts.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, c: cores[k % 4], t: 0 }); } });
+  bs = [];
   const pts = Math.floor(tJogo * 10);
   if (pts > recorde) { recorde = pts; try { localStorage.setItem(CR, String(recorde)); } catch (e) { /* segue */ } }
   gravaUso();
@@ -122,15 +126,31 @@ const passo = (agora) => {
   if (estado === 'jogando') {
     tJogo += dt; usado += dt; salva += dt; if (salva > 5) { salva = 0; gravaUso(); }
     if (usado >= LIMITE || !janela()) { motivo = usado >= LIMITE ? 'Acabaram seus 8 minutos de hoje.' : 'O pause pro café acabou.'; estado = 'fim'; fimEm = agora; gravaUso(); }
-    // vento: sopra para os lados e cresce com o tempo; de vez em quando vem uma rajada
-    const dif = Math.min(1, tJogo / 90);
-    rajada -= dt; if (rajada <= 0) { rajada = 3 + Math.random() * 3 - dif * 1.5; const lado = Math.random() < 0.5 ? -1 : 1; b.vx += lado * (60 + 120 * dif); b.vy += (Math.random() - 0.5) * (80 + 120 * dif); }
-    vento = Math.sin(tJogo * 0.8 + fase0) * (35 + 110 * dif);
-    b.vx += vento * dt; b.vy += (46 + 30 * dif) * dt + Math.sin(tJogo * 1.3 + fase0) * 20 * dt; // leve peso para baixo
-    b.vx *= Math.pow(0.86, dt); b.vy *= Math.pow(0.86, dt);
-    b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2); b.rot += b.vx * dt * 0.004;
+    const dif = Math.min(1, tJogo / 120);
+    // a cada tanto tempo uma bolha se divide em duas: cada vez mais bolhas para cuidar
+    mult -= dt;
+    if (mult <= 0 && bs.length < MAX) {
+      mult = Math.max(7, 14 - tJogo / 25);
+      const o = bs[Math.floor(Math.random() * bs.length)], lado = o.x < W / 2 ? 1 : -1, cima = o.y < H / 2 ? 1 : -1;
+      bs.push(nova(o.x + lado * BR * 1.3, o.y + cima * BR * 0.8, lado * 22, cima * 12));
+    }
+    rajada -= dt; const sopra = rajada <= 0; if (sopra) rajada = 4 + Math.random() * 3 - dif * 1.5;
     const rr = BR * 0.88;
-    if (b.x - rr < ZONA || b.x + rr > W - ZONA || b.y - rr < ZONA || b.y + rr > H - ZONA) estoura();
+    for (const b of bs) {
+      if (sopra) { b.vx += (Math.random() < 0.5 ? -1 : 1) * (18 + 40 * dif); b.vy += (Math.random() - 0.5) * (20 + 40 * dif); }
+      const vento = Math.sin(tJogo * 0.7 + fase0 + b.ph) * (10 + 38 * dif);
+      b.vx += vento * dt; b.vy += (14 + 10 * dif) * dt + Math.sin(tJogo * 1.1 + b.ph) * 8 * dt; // peso bem leve para baixo
+      b.vx *= Math.pow(0.72, dt); b.vy *= Math.pow(0.72, dt);
+    }
+    // as bolhas não se atravessam: afastam-se com delicadeza
+    for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) {
+      const p = bs[i], q = bs[j], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1, min = BR * 1.9;
+      if (d < min) { const f = (min - d) / min * 120 * dt, nx = dx / d, ny = dy / d; p.vx -= nx * f; p.vy -= ny * f; q.vx += nx * f; q.vy += ny * f; }
+    }
+    for (const b of bs) {
+      b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2);
+      if (b.x - rr < ZONA || b.x + rr > W - ZONA || b.y - rr < ZONA || b.y + rr > H - ZONA) { estoura(); break; }
+    }
   } else if (estado === 'estourando') {
     if (agora - morreuEm > 650) estado = 'morto';
   } else if (estado === 'fim' && agora - fimEm > 3200) { fecha(); return; }
@@ -149,12 +169,11 @@ const desenha = (agora) => {
   g.fillStyle = 'rgba(200,215,240,.16)';
   for (let k = 0; k < 18; k++) { const sx = ((k * 137.5) % 1) * 0 + (k * 211 % Math.max(60, W - 2 * ZONA)) + ZONA, sy = (k * 97 % Math.max(40, H - 2 * ZONA)) + ZONA; g.fillRect(Math.round(sx), Math.round(sy), 4, 4); }
   if (molduraC) g.drawImage(molduraC, 0, 0, W, H);
-  // bolha (achata um pouco ao ser empurrada)
-  if (estado !== 'estourando' && estado !== 'morto') {
-    const s = Math.sin(agora / 260) * 0.03, q = b.sq * 0.12;
-    const sx = 1 + s + q, sy = 1 - s - q;
-    g.save(); g.translate(Math.round(b.x), Math.round(b.y)); g.scale(sx, sy); g.drawImage(bolhaSpr, -BR, -BR); g.restore();
-  }
+  // bolhas (achatam um pouco ao serem empurradas)
+  bs.forEach((b) => {
+    const s = Math.sin(agora / 260 + b.ph) * 0.03, q = b.sq * 0.12;
+    g.save(); g.translate(Math.round(b.x), Math.round(b.y)); g.scale(1 + s + q, 1 - s - q); g.drawImage(bolhaSpr, -BR, -BR); g.restore();
+  });
   parts.forEach((p) => { g.globalAlpha = Math.max(0, 1 - p.t / 0.9); g.fillStyle = p.c; g.fillRect(Math.round(p.x), Math.round(p.y), 5, 5); }); g.globalAlpha = 1;
   // dedo: sobe até o ponto do toque e some
   dedos.forEach((d) => { const k = Math.min(1, d.t / 0.12), sai = Math.max(0, (d.t - 0.16) / 0.12); g.globalAlpha = 1 - sai; g.drawImage(dedoSpr, Math.round(d.x - 6 * 3 + 0), Math.round(d.y - 2 + (1 - k) * 26 + sai * 10)); }); g.globalAlpha = 1;

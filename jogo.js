@@ -376,7 +376,7 @@ const desenha = () => {
       cx.fillStyle = i < cheias ? (noite ? '#e3e9f2' : '#fff') : (noite ? '#3a4658' : 'rgba(255,255,255,.35)'); cx.fill();
     } }
   // barrinha de velocidade (frear ◀ / acelerar ▶): moldura escura e listras na diagonal
-  { const bx = 16, by = Math.round(chaoY() + 15), bw = 84, bh = 12, nivel = Math.max(0, Math.min(1, (acel - 0.6) / 0.85));
+  { const bx = 16, by = Math.round(chaoY() + 28), bw = 84, bh = 12, nivel = Math.max(0, Math.min(1, (acel - 0.6) / 0.85));
     cx.fillStyle = TINTA(); cx.fillRect(bx, by, bw, bh); cx.fillStyle = noite ? NOITE_FUNDO : '#ffffff'; cx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
     cx.save(); cx.beginPath(); cx.rect(bx + 3, by + 3, (bw - 6) * nivel, bh - 6); cx.clip(); cx.fillStyle = TINTA();
     for (let x = bx - bh; x < bx + bw; x += 6) { cx.beginPath(); cx.moveTo(x, by + bh); cx.lineTo(x + 3, by + bh); cx.lineTo(x + 3 + bh, by); cx.lineTo(x + bh, by); cx.fill(); }

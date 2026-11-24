@@ -136,7 +136,11 @@ const reinicia = () => {
 // buraco no chão (obra): bacia em degraus de 4 px aberta na grama (cantinhos verdes arredondados), terra marrom clara na borda e mais escura no fundo
 const mistCor = (h, alvo, t) => { const a = [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)), b = [1, 3, 5].map((k) => parseInt(alvo.slice(k, k + 2), 16)); return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',') + ')'; };
 const desenhaBuraco = (o, cy) => {
-  const esc = noite && !o.cor, P = (h) => (esc ? mistCor(h, '#26303f', 0.28) : h);
+  const esc = noite && !o.cor, P = (h) => { // antes de o cachorro passar o buraco é cinza azulado, como as pedras; depois ganha cor
+    if (!esc) return h;
+    const L = (0.299 * parseInt(h.slice(1, 3), 16) + 0.587 * parseInt(h.slice(3, 5), 16) + 0.114 * parseInt(h.slice(5, 7), 16)) / 255;
+    return mistCor('#26303f', '#8b9bb3', Math.min(1, 0.15 + L * 1.1));
+  };
   const cell = 4, x0 = Math.round(o.x), w = Math.round(o.w / cell) * cell, y0 = Math.round(cy) - 2;
   const INS = [0, 0, 4, 8, 12, 20, 28]; // quanto a bacia entra de cada lado, linha a linha (fundo arredondado)
   INS.forEach((ins, r) => {

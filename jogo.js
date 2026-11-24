@@ -19,7 +19,7 @@ const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2:
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
-let noite = flagNoite;
+let noite = true; // o jogo começa à noite (cinza) e vai ganhando cor; a fase seguinte é de dia
 const NOITE_FUNDO = '#26303f';
 const toRgb = (l) => l.map((h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)));
 // rampas de 8 tons (do escuro ao claro) entre duas cores: mais degraus de cinza e branco
@@ -112,7 +112,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -162,7 +162,7 @@ const passoPortal = (dt) => {
   tPortal += dt;
   if (tPortal < T_SUGA) { vel = fasePt * Math.max(0, 1 - tPortal / T_SUGA); }
   else {
-    if (!viraFeito) { viraFeito = true; fase++; noite = flagNoite || fase % 2 === 1; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
+    if (!viraFeito) { viraFeito = true; fase++; noite = fase % 2 === 0; mor = null; morEm = 5 + Math.random() * 5; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
       portal = { x: player.x + player.w / 2 - portalAlt() * PORT_W / PORT_H / 2, w: portalAlt() * PORT_W / PORT_H, h: portalAlt() }; }
     if (tPortal >= T_SUGA + T_VIRA + T_SOLTA) { portal = null; vel = 520 + 50 * fase; estado = 'jogando'; }
   }
@@ -216,8 +216,8 @@ const passo = (agora) => {
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
     if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60, sp: sorteiaAve() }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
-    if (!mor) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
-    else { mor.x -= mor.v * dt; mor.t += dt; if (mor.x < -110) { mor = null; morEm = 8 + Math.random() * 10; } }
+    if (!mor && noite) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
+    else if (mor) { mor.x -= mor.v * dt; mor.t += dt; if (mor.x < -110) { mor = null; morEm = 8 + Math.random() * 10; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
       balao.x += balao.vx * dt; balao.y += balao.vy * dt;
@@ -384,7 +384,7 @@ window.addEventListener('resize', () => { if (aberto) { mede(); } });
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
-document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; aplicaTema(); } });
+document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; if (!noite) mor = null; aplicaTema(); } });
 document.addEventListener('keyup', (e) => { if (aberto && ['ArrowRight', 'ArrowLeft', 'd', 'D', 'a', 'A'].includes(e.key)) alvoAcel = 1; });
 document.addEventListener('keydown', (e) => {
   if (aberto) {

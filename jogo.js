@@ -282,7 +282,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  if (tig && IM.tig.complete && IM.tig.naturalWidth) { const u = 1.2, w = IM.tig.naturalWidth * u, h = IM.tig.naturalHeight * u; if (IM.casa.complete && IM.casa.naturalWidth) { const cw = IM.casa.naturalWidth * 4, ch = IM.casa.naturalHeight * 4; cx.drawImage(IM.casa, Math.round(tig.x - 66), cy + 5 - ch, cw, ch); } cx.drawImage(IM.tig, Math.round(tig.x), cy + 5 - h, w, h); } // tigela do cachorro na largada
+  if (tig && IM.tig.complete && IM.tig.naturalWidth) { const u = 1.2, w = IM.tig.naturalWidth * u, h = IM.tig.naturalHeight * u; if (IM.casa.complete && IM.casa.naturalWidth) { const cw = IM.casa.naturalWidth * 5.5, ch = IM.casa.naturalHeight * 5.5; cx.drawImage(IM.casa, Math.round(tig.x - 90), cy + 5 - ch, cw, ch); } cx.drawImage(IM.tig, Math.round(tig.x), cy + 5 - h, w, h); } // tigela do cachorro na largada
   const piaAve = () => { if (!(ave && IM.ave.complete && IM.ave.naturalWidth)) return; const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras

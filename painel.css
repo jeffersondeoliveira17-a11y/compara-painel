@@ -492,3 +492,6 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 /* guias do Jefferson (24/11, 2o print): cartao claro encolhe por cima (topo em ~139px), painel escuro desce ate a linha de cima do Barueri (~220px); Barueri fica onde estava */
 .cp-clima .cl-box{margin-top:18.6px}
 .cp-clima .cl-box>*:last-child:not(.cl-g){margin-top:-7.7px}
+
+/* acoes rapidas: o vao no meio entre os cartoes fica igual a distancia da borda do cartao branco ate o cartao rosa (14px de padding + 1px de borda) */
+.cp-qas{column-gap:15px}

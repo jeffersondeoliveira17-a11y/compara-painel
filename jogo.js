@@ -360,20 +360,34 @@ const desenha = () => {
 // ---------- abrir e fechar ----------
 // terça-feira é o dia da bolha e quarta o do cãozinho; ?bolha e ?cao forçam um deles
 const jogoDoDia = () => /[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao';
+// trava a página no topo enquanto o jogo está aberto (setas, espaço, roda do mouse e dedo não rolam a tela)
+const SCROLL_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
+let travado = false;
+const semRolar = (e) => { if (travado && e.cancelable) e.preventDefault(); };
+const semRolarTecla = (e) => { if (travado && SCROLL_KEYS.includes(e.key) && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) e.preventDefault(); };
+window.cpTrava = (on) => {
+  if (on === travado) return; travado = on;
+  const h = document.documentElement, b = document.body;
+  if (on) { h.scrollTop = 0; b.scrollTop = 0; window.scrollTo(0, 0); document.querySelectorAll('.cp-main, .cp-app').forEach((el) => { el.scrollTop = 0; }); h.style.overflow = 'hidden'; b.style.overflow = 'hidden'; }
+  else { h.style.overflow = ''; b.style.overflow = ''; }
+};
+window.addEventListener('wheel', semRolar, { passive: false });
+window.addEventListener('touchmove', semRolar, { passive: false });
+window.addEventListener('keydown', semRolarTecla, true);
 const abre = () => {
   if (aberto) return;
   if (jogoDoDia() === 'bolha' && window.cpBolha) { window.cpBolha.abre(); return; }
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
-  aberto = true; box.hidden = false; mede(); reinicia(); estado = 'pronto'; dica.classList.remove('off');
+  aberto = true; window.cpTrava(true); box.hidden = false; mede(); reinicia(); estado = 'pronto'; dica.classList.remove('off');
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
   box.focus({ preventScroll: true });
 };
 const fecha = () => {
   if (!aberto) return;
-  aberto = false; box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
+  aberto = false; window.cpTrava(false); box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
   setTimeout(() => { if (!aberto) box.hidden = true; }, 260);
 };
 window.cpJogo = { abre, fecha };

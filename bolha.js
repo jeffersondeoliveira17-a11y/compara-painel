@@ -212,14 +212,14 @@ const abre = () => {
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
-  aberto = true; box.hidden = false; mede(); reinicia(); estado = 'pronto';
+  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); estado = 'pronto';
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
   box.focus({ preventScroll: true });
 };
 const fecha = () => {
   if (!aberto) return;
-  aberto = false; box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
+  aberto = false; if (window.cpTrava) window.cpTrava(false); box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
   setTimeout(() => { if (!aberto) box.hidden = true; }, 260);
 };
 window.cpBolha = { abre, fecha };

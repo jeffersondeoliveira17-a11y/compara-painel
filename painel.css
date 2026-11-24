@@ -506,3 +506,6 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 /* curvas concentricas: raio do cartao de dentro = raio do de fora (20) menos o recuo (~10); painel escuro = cartao claro menos o recuo (5) */
 .cp-clima .cl-box{border-radius:10px}
 .cp-clima .cl-g{border-radius:5px}
+
+/* icones de Sensacao e Umidade: 3px mais para a esquerda */
+.cp-clima .cl-g .gi{translate:-3px 0}

@@ -74,7 +74,7 @@ const sorteiaEspinhos = () => {
       if (n === 2) { let b = s0 + 22 + r() * (SEG - 44); if (Math.abs(b - a) < 44) b = a + (a - s0 < SEG / 2 ? 48 : -48); lista.push(b); }
       lista.forEach((t) => { if (t > 26 && t < L - 26) esp[lado].push(ajusta(t)); });
     }
-    const q = Math.max(1, Math.round(L / 520)), ini = lado === 0 ? 150 : 90, fim = L - (lado === 0 ? 260 : 90); // rosinhas: poucas por lado, longe dos cantos, do texto e dos espinhos
+    const q = Math.max(1, Math.round(L / 400)), ini = lado === 0 ? 150 : 90, fim = L - (lado === 0 ? 260 : 90); // rosinhas: poucas por lado, longe dos cantos, do texto e dos espinhos
     for (let k = 0, tent = 0; k < q && tent < 60 && fim > ini; tent++) { const t = ini + r() * (fim - ini); if (esp[lado].some((e) => Math.abs(e - t) < 46) || rosas[lado].some((e) => Math.abs(e - t) < 160)) continue; rosas[lado].push(ajusta(t)); k++; }
   });
 };
@@ -107,8 +107,9 @@ const moldura = () => {
       }
     }
   };
-  const flor = (lado) => rosas[lado].forEach((t) => { // rosa crescendo do caule para dentro da arena
-    const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = 3;
+  const TAM = [2.5, 1.5, 2, 1.5, 2.5]; // tamanhos alternados (em px por quadradinho)
+  const flor = (lado) => rosas[lado].forEach((t, n) => { // rosa crescendo do caule para dentro da arena
+    const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = Math.max(1, Math.round(TAM[(n + lado * 2) % TAM.length] * dpr)) / dpr;
     ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (14 - j) * k, k, k); } });
   });
   const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l); g.restore(); };

@@ -80,13 +80,11 @@
   });
 })();
 
-// linha suave do cartao do tempo: fica na altura do topo do cartao rosa (primeira acao rapida)
+// linha suave do cartao do tempo: logo abaixo da data (solta, sem prender no cartao rosa)
 (() => {
   const poe = () => {
-    const c = document.getElementById('cp-clima'), q = document.querySelector('.cp-qa-b'); if (!c || !q || !c.offsetParent) return;
-    const y = Math.round(q.getBoundingClientRect().top - c.getBoundingClientRect().top - 1);
-    const d = document.getElementById('cp-oi-data'); let sobe = 0;
-    if (d) { d.style.top = '3px'; sobe = Math.max(0, Math.min(10, Math.round(d.getBoundingClientRect().bottom - c.getBoundingClientRect().top - (y - 3)))); d.style.top = (3 - sobe) + 'px'; } // se a data encostar na linha, sobe só o necessário
+    const c = document.getElementById('cp-clima'), d = document.getElementById('cp-oi-data'); if (!c || !d || !c.offsetParent) return;
+    const y = Math.round(d.getBoundingClientRect().bottom - c.getBoundingClientRect().top + 6);
     c.style.setProperty('--cl-linha', y + 'px'); c.classList.toggle('cl-com-linha', y > 20);
   };
   window.addEventListener('resize', poe); window.addEventListener('load', poe); setTimeout(poe, 400); setTimeout(poe, 1500);

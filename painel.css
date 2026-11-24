@@ -477,3 +477,9 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-oi .cp-clima{position:relative}
 .cp-oi .cp-clima::before{content:"";position:absolute;left:16px;right:16px;top:var(--cl-linha,0px);height:1px;background:rgba(255,255,255,.28);display:none;pointer-events:none}
 .cp-oi .cp-clima.cl-com-linha::before{display:block}
+
+/* o numero da temperatura nunca quebra em duas linhas: encolhe um pouco se faltar espaco */
+.cp-clima .cl-n{white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:flex-start}
+.cp-clima .cl-n #cl-t{font-size:38px;line-height:1}
+.cp-clima .cl-n sup{font-size:17px}
+.cp-clima .cp-oi-d{top:9px!important;margin-bottom:12px}

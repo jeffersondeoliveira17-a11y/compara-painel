@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { moita: img('icones/moita-chao.svg'), nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -107,7 +107,7 @@ let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // 
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
 let motivo = '', fimEm = 0, aberto = false, estado = 'pronto', raf = 0, t0 = 0, morreuEm = 0;
-let burst = null, poeira = [], poeiraEm = 0, acel = 1, alvoAcel = 1, matoX = 0, arvO = null, arvEm = 0, arvTipo = 'chao', vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
+let folhas = [], burst = null, poeira = [], poeiraEm = 0, acel = 1, alvoAcel = 1, matoX = 0, arvO = null, arvEm = 0, arvTipo = 'chao', vel, dist, recorde = 0, obst, nuvensF, chaoX, prox;
 const player = { x: 90, y: 0, vy: 0, w: 105, h: 50, noChao: true };
 try { recorde = parseInt(localStorage.getItem(CH) || '0', 10) || 0; } catch (e) { recorde = 0; }
 const CHAO_W = 256, CHAO_H = 60; // faixa do chão: 64x15 quadradinhos de 4 px
@@ -128,7 +128,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; burst = null; poeira = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -157,7 +157,9 @@ const desenhaBuraco = (o, cy) => {
 const BURST_ORD = [15, 16, 17, 18, 19, 20, 21, 22, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], BURST_W = 287, BURST_H = 252, BURST_ESC = 0.45, BURST_DT = 0.045;
 // poeirinha nas patinhas: bolinhas brancas com sombra cinza, nascem nos pés, andam com o chão e somem
 const sopra = (x, y, n, forca) => { for (let i = 0; i < n; i++) poeira.push({ x: x + (Math.random() - 0.5) * 10, y: y - Math.random() * 3, vx: -(30 + Math.random() * 50) * forca, vy: -(18 + Math.random() * 34), r: 2 + Math.random() * 2, t: 0, vida: 0.35 + Math.random() * 0.25 }); };
-const atualizaPoeira = (dt, v) => { poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; burst.x -= v * dt * 0.35; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
+const FOLHA_COR = ['#00b84a', '#05823a', '#00ff6a', '#024a29']; // verdes da moita
+const atualizaFolhas = (dt, v) => { folhas.forEach((f) => { f.t += dt; f.x += (f.vx - v * 0.5) * dt; f.y += f.vy * dt; f.vy += 420 * dt; }); folhas = folhas.filter((f) => f.t < f.vida); };
+const atualizaPoeira = (dt, v) => { atualizaFolhas(dt, v); poeira.forEach((p) => { p.t += dt; p.x += (p.vx - v * 0.9) * dt; p.y += p.vy * dt; p.vy *= 0.94; }); poeira = poeira.filter((p) => p.t < p.vida); if (burst) { burst.t += dt; burst.x -= v * dt * 0.35; if (burst.t >= BURST_ORD.length * BURST_DT) burst = null; } };
 const pula = () => {
   if (estado === 'pronto') { estado = 'jogando'; dica.classList.add('off'); burst = { t: 0, x: player.x + 15, y: chaoY() - 42 }; }
   if (estado === 'jogando' && player.noChao) { player.vy = -PULO; player.noChao = false; sopra(player.x + 25, chaoY() + 2, 4, 1.2); }
@@ -176,13 +178,15 @@ const novoObst = () => {
   const cone = cena, kc = 2.1 + Math.random() * 0.4;
   // montinho de terra (20x13 quadradinhos): ~15% dos obstáculos que não são cone nem pedra gigante
   const terra = false, kt = 3;
-  const o = terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
+  // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
+  const moita = !grande && !cena && Math.random() < 0.2, km = 2 + Math.random() * 0.3, roca = moita && Math.random() < 0.55;
+  const o = moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
-  if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
+  if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra && !o.moita) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (grande) { /* gigante vem sozinha */ } else if (o.cone) {
+  if (grande || o.moita) { /* gigante e moita vêm sozinhas */ } else if (o.cone) {
     if (cena) { // cone, depois (buraco e montinho) em qualquer ordem: um pulo no cone, aterrissa e outro pulo passa o par
       const bu = { x: 0, w: 76, h: 20, buraco: true, jag: Array.from({ length: 16 }, () => [Math.random() < 0.4 ? 4 : 0, Math.random() < 0.4 ? 4 : 0]) }, mt = { x: 0, w: 20 * 3.1, h: 13 * 3.1, k: 3.1, terra: true };
       const ini = o.x + o.w + 80 + Math.random() * 20;
@@ -263,9 +267,14 @@ const passo = (agora) => {
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     if (invul > 0) invul -= dt;
     for (const o of obst) {
-      if (o.batida) continue;
+      if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
+        const dentro = a.x + a.w > o.x + 8 && a.x < o.x + o.w - 8 && a.y + a.h > chaoY() - o.h + 8;
+        if (dentro) { o.folhaT = (o.folhaT || 0) - dt; if (o.folhaT <= 0) { o.folhaT = 0.045; for (let q = 0; q < 2; q++) folhas.push({ x: a.x + a.w * (0.2 + Math.random() * 0.6), y: a.y + a.h * (0.3 + Math.random() * 0.6), vx: -30 - Math.random() * 90, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } }
+      }
+      if (o.batida || (o.moita && !o.roca)) continue; // moita sem pedra: o cachorro atravessa
       // buraco: só pega quem está com as patas no chão em cima dele (pulando alto, passa)
-      const b = o.buraco ? { x: o.x + 12, y: chaoY() - 14, w: o.w - 24, h: 24 } : { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
+      const rk = o.moita ? o.roca : null; // moita com pedra: só a pedra escondida machuca
+      const b = o.buraco ? { x: o.x + 12, y: chaoY() - 14, w: o.w - 24, h: 24 } : rk ? { x: o.x + (o.w - rk.w) / 2 + rk.w * 0.14, y: chaoY() - rk.h + AFUNDA + rk.h * 0.2, w: rk.w * 0.72, h: rk.h * 0.8 } : { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       const ax = o.buraco ? a.x + 14 : a.x, aw = o.buraco ? a.w - 28 : a.w;
       if (ax < b.x + b.w && ax + aw > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
         if (invul > 0) continue;
@@ -389,7 +398,7 @@ const desenha = () => {
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
-  obst.forEach((o) => o.buraco ? desenhaBuraco(o, cy) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  obst.forEach((o) => o.moita ? (o.roca && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }
@@ -418,6 +427,9 @@ const desenha = () => {
     else { cx.drawImage(mono(pose, 0), -player.w / 2, -player.h / 2, player.w, player.h); if (cor > 0.01) { cx.globalAlpha = alfa * cor; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); } }
   }
   cx.restore();
+  // moitas do chão: ficam na frente do cachorro, que passa por dentro delas
+  obst.forEach((o) => { if (o.moita && IM.moita.complete && IM.moita.naturalWidth) cx.drawImage(o.cor ? IM.moita : S(IM.moita), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); });
+  folhas.forEach((f) => { cx.globalAlpha = Math.min(1, (f.vida - f.t) * 3); cx.fillStyle = FOLHA_COR[f.c]; cx.fillRect(Math.round(f.x), Math.round(f.y), f.r, f.r); cx.globalAlpha = 1; });
   // portal (10 quadros do GIF, 10 por segundo)
   if (portal) {
     let a = 1;

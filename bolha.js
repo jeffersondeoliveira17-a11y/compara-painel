@@ -57,7 +57,7 @@ const dedoSpr = (() => {
   DEDO.forEach((l, j) => [...l].forEach((ch, i) => { if (cor[ch]) { g.fillStyle = cor[ch]; g.fillRect(i * u, j * u, u, u); } }));
   return c;
 })();
-// moldura de roseira em trechos trançados: um trecho com espinhos (estoura), outro só com o caule trançado (a bolha quica)
+// moldura de roseira em trechos: um trecho com espinhos (estoura), outro só com o caule solto (a bolha quica)
 const SEG = 120, ZLISO = 20; // comprimento de cada trecho; distância da borda onde a bolha quica no trecho liso
 const OFF = [0, 1, 1, 0]; // desencontro entre cima, baixo, esquerda e direita: onde um lado tem espinho, o oposto costuma ser liso
 const trecho = (lado, pos) => (Math.floor(pos / SEG) + OFF[lado]) % 2 === 0; // este trecho da borda é o do caule com espinhos (senão é o trançado)
@@ -79,8 +79,8 @@ const sorteiaEspinhos = () => {
   });
 };
 const espinho = (lado, pos) => esp[lado].some((t) => Math.abs(pos - (t + 2)) <= 17);
-const ROSA = ["...RR.....", ".RRRWRRR..", ".RRWRRWWR.", ".RRWRRWWR.", "RRRWRRRRR.", "RRRRWRRRWR", ".RRRRWWWRR", "...RRRRRR.", ".G.RRR.RR.", ".GG.RR....", "GG........", "G.........", "G..GGG....", "G.GGG.....", "G.GG......"]; // rosa vetorizada (10 x 15 quadradinhos): R pétala, W brilho, G caule e folha
-const COR_ROSA = { R: '#d3202f', W: '#f6dede', G: '#2f9a4a' };
+const ROSA = ["......RRRR.....", ".Ggg.RRRRBRR...", ".gLGDRRRRRDBDR.", "..gGDDRRBBRRBD.", "g.DDRDRDDBBRRRD", "ggDRRDRDRDRRRRD", "gGDDRDRDDDDRRDD", ".gGDDDDRRRRRDD.", ".gGGDRDDDDDDRD.", "..ggDDRRRRDRRDg", "...gGDDRRRDDDLG", "..gLGgGDDDGGGg.", "...gg.gGg.ggg..", ".......gg......"]; // rosa vetorizada (15 x 14 quadradinhos): D, R, B, H = tons de vermelho; g, G, L = tons de verde (caule e folhas)
+const COR_ROSA = { D: '#5a0f1c', R: '#b3182f', B: '#e0213f', H: '#ff6b86', g: '#0f4a26', G: '#1e7a3c', L: '#3aa65a' };
 let molduraC = null;
 const moldura = () => {
   sorteiaEspinhos();
@@ -97,20 +97,18 @@ const moldura = () => {
           g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
         }
         if (n % 19 === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
-      } else { // trecho liso: dois fios que se trançam, sem espinho
-        const k = Math.round(Math.sin(p / 11)); // -1, 0 ou 1
-        const ya = 8 + u * (1 + k), yb = 8 + u * (1 - k);
-        const frente = Math.cos(p / 11) > 0;
-        g.fillStyle = '#17502a'; g.fillRect(p, 8 + u, u, u); // miolo escuro que liga os dois fios
-        g.fillStyle = '#1f6a36'; g.fillRect(p, frente ? yb : ya, u, u);
-        g.fillStyle = frente ? '#35a24e' : '#4cc063'; g.fillRect(p, frente ? ya : yb, u, u);
+      } else { // trecho liso: um caule só, solto, ondulando devagar, com folhas e uma gavinha de vez em quando
+        const y = 8 + u * Math.round(1 + Math.sin(p / 40 + lado));
+        g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
+        if (n % 13 === 5) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y, u, u / 2); } // folhinha para cima
+        if (n % 13 === 11) { g.fillStyle = '#2f8a46'; g.fillRect(p, y + 2 * u, u, u); g.fillRect(p + u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 2 * u, u, u); } // gavinha enrolada
       }
     }
   };
-  const TAM = [2.5, 1.5, 2, 1.5, 2.5]; // tamanhos alternados (em px por quadradinho)
+  const TAM = [2.2, 1.6, 2, 1.6, 2.2]; // tamanhos alternados (em px por quadradinho)
   const flor = (lado) => rosas[lado].forEach((t, n) => { // rosa crescendo do caule para dentro da arena
     const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = Math.max(1, Math.round(TAM[(n + lado * 2) % TAM.length] * dpr)) / dpr;
-    ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (14 - j) * k, k, k); } });
+    ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (ROSA.length - 1 - j) * k, k, k); } });
   });
   const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l); g.restore(); };
   lado(0, 0, 0, W, 0); lado(W, H, Math.PI, W, 1); lado(0, H, -Math.PI / 2, H, 2); lado(W, 0, Math.PI / 2, H, 3);

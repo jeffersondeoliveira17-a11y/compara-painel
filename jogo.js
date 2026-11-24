@@ -151,12 +151,12 @@ const novoObst = () => {
   const grande = Math.random() < Math.min(0.3, 0.14 + 0.05 * fase); // pedra gigante: ~2,7x a pedra básica, ainda dá para pular (pulo máximo ~149 px)
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
   // cone de trânsito (22x24 quadradinhos) no lugar de algumas pedras: ~28% dos obstáculos comuns
-  const cone = !grande && Math.random() < 0.28, kc = 2.1 + Math.random() * 0.4;
+  const cone = !grande && Math.random() < 0.18, kc = 2.1 + Math.random() * 0.4;
   const o = cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
-  const P = (x) => (Math.random() < 0.28 ? { x, w: 22 * 2.1, h: 24 * 2.1, k: 2.1, cone: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
+  const P = (x) => (Math.random() < 0.18 ? { x, w: 22 * 2.1, h: 24 * 2.1, k: 2.1, cone: true } : { x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
   if (grande) { /* gigante vem sozinha */ } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)

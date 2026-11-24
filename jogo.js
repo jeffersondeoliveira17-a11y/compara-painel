@@ -185,7 +185,11 @@ const novoObst = () => {
 // o balão anda em coordenadas de tela (sempre da direita para a esquerda, mesmo com o jogo espelhado)
 const novoBalao = () => {
   const cy = chaoY();
-  if (Math.random() < 0.55) { // grande: nasce atrás do chão, à direita, e sobe na diagonal para a esquerda
+  const sorte = Math.random();
+  if (sorte < 0.22) { // gigante: bem mais alto que a tela, lá no fundo, sobe devagar
+    const h = Math.max(300, Math.min(600, cy * 1.9)), w = h * BAL_AR;
+    balao = { grande: true, gigante: true, w, h, x: W * (0.1 + Math.random() * 0.6), y: cy - 30, vx: -(10 + Math.random() * 8), vy: -(22 + Math.random() * 10), a: 0.95 };
+  } else if (sorte < 0.6) { // grande: nasce atrás do chão, à direita, e sobe na diagonal para a esquerda
     const h = Math.max(120, Math.min(300, cy * 1.05)), w = h * BAL_AR;
     balao = { grande: true, w, h, x: W * (0.45 + Math.random() * 0.4), y: cy - 6, vx: -(26 + Math.random() * 14), vy: -(16 + Math.random() * 10), a: 1 };
   } else { // pequeno, lá no fundo, devagar
@@ -352,7 +356,6 @@ const desenha = () => {
   cx.restore();
   // chão
   // balão: atrás das moitas e do chão
-  if (mor) { const fr = IM.mor[Math.floor(mor.t / 0.08) % 4]; if (fr.complete && fr.naturalWidth) { const w = fr.naturalWidth * mor.u, h = fr.naturalHeight * mor.u; cx.drawImage(fr, Math.round(mor.x), Math.round(mor.y0 + Math.sin(mor.t * 2.2 + mor.f) * 14), w, h); } } // morcego batendo asa (4 quadros)
   if (balao) {
     cx.save(); cx.globalAlpha = balao.a;
     const bx = espelho ? W - balao.x - balao.w : balao.x; // posição na tela vira posição do mundo espelhado
@@ -360,6 +363,7 @@ const desenha = () => {
     dCor(IM.balao, faixa(0.15, 0.5), bx, balao.y, balao.w, balao.h);
     cx.restore();
   }
+  /* morcego sempre na frente do balão (que está mais longe) */ if (mor) { const fr = IM.mor[Math.floor(mor.t / 0.08) % 4]; if (fr.complete && fr.naturalWidth) { const w = fr.naturalWidth * mor.u, h = fr.naturalHeight * mor.u; cx.drawImage(fr, Math.round(mor.x), Math.round(mor.y0 + Math.sin(mor.t * 2.2 + mor.f) * 14), w, h); } } // morcego batendo asa (4 quadros)
   // árvore ao fundo, metade escondida atrás da moita (cor muda a cada fase: rosa, azul claro, verde)
   if (arvO && arvO.tipo === 'fundo') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('fundo'); if (ai && ai.complete && ai.naturalWidth) dCor(ai, faixa(0.35, 0.7), Math.round(arvO.x), Math.round(cy + 4 - ah), aw, ah); }
   // moitas ao fundo (andam mais devagar que o chão)

@@ -127,7 +127,7 @@ const novoObst = () => {
   let poleiro = false;
   const grande = Math.random() < Math.min(0.3, 0.14 + 0.05 * fase); // pedra gigante: ~2,7x a pedra básica, ainda dá para pular (pulo máximo ~149 px)
   const k = grande ? 4.8 : 1.8 + Math.random() * 0.7; // escala da pedra (32x22 quadradinhos)
-  const o = { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 24 : 0 }; // a pedra gigante afunda mais 24 px no chão
+  const o = { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 10 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra') { ave = { rock: o }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques

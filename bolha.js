@@ -30,25 +30,26 @@ let avT = 0;
 const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 3600); };
 
 
-// ---------- barra da pausa (fora do jogo, como uma barra de tarefas): cronômetro regressivo até o fim do intervalo ----------
-if (!document.getElementById('cp-barra')) {
-  const barra = document.createElement('div');
-  barra.id = 'cp-barra'; barra.hidden = true; barra.setAttribute('role', 'timer'); barra.setAttribute('aria-label', 'Tempo que resta da pausa para o café');
-  barra.innerHTML = '<span class="bp-fio"><i></i></span><img src="icones/cronometro.svg?v=' + V + '" alt="" width="32" height="24"><span class="bp-tx">Pausa pro café</span><b class="bp-t">15:00</b>';
-  area.append(barra);
-  const fio = barra.querySelector('.bp-fio i'), tt = barra.querySelector('.bp-t');
-  let tmB = 0, fimP = 0;
-  const PAUSA = 15 * 60;
-  const resta = () => Math.max(0, (fimP - Date.now()) / 1000);
-  const volta = () => { const r = resta(); tt.textContent = mmss(r); fio.style.width = (100 * r / PAUSA) + '%'; barra.classList.toggle('fim', r <= 60); };
-  window.cpBarra = (on) => {
-    clearInterval(tmB);
-    barra.hidden = !on; area.classList.toggle('cp-com-barra', on);
-    if (!on) return;
-    const d = new Date(), manual = forca || window.cpLiberado; // no teste a pausa começa agora; no normal ela termina no minuto 15 da hora
-    fimP = manual ? Date.now() + PAUSA * 1000 : new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 15, 0).getTime();
-    volta(); tmB = setInterval(volta, 250);
-  };
+// ---------- cronômetro da pausa (fica na barra de ferramentas lá em cima, fora do jogo): contagem regressiva até o fim do intervalo ----------
+if (!document.getElementById('cp-pausa')) {
+  const dir = document.querySelector('.cp-bar-dir');
+  if (dir) {
+    const chip = document.createElement('div');
+    chip.id = 'cp-pausa'; chip.hidden = true; chip.setAttribute('role', 'timer'); chip.setAttribute('aria-label', 'Tempo que resta da pausa para o café'); chip.title = 'Tempo que resta da pausa pro café';
+    chip.innerHTML = '<img src="icones/cronometro.svg?v=' + V + '" alt="" width="32" height="24"><b class="pa-t">15:00</b><span class="pa-fio"><i></i></span>';
+    dir.insertBefore(chip, dir.firstChild);
+    const tt = chip.querySelector('.pa-t'), fio = chip.querySelector('.pa-fio i');
+    const PAUSA = 15 * 60; let t0P = 0;
+    const volta = () => {
+      const d = new Date(), manual = forca || window.cpLiberado, naPausa = d.getHours() % 2 === 0 && d.getMinutes() < 15;
+      chip.hidden = !(manual || naPausa);
+      if (chip.hidden) { t0P = 0; return; }
+      if (!t0P) t0P = Date.now();
+      const r = manual && !naPausa ? Math.max(0, PAUSA - (Date.now() - t0P) / 1000) : Math.max(0, (new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 15, 0).getTime() - Date.now()) / 1000);
+      tt.textContent = mmss(r); fio.style.width = (100 * r / PAUSA) + '%'; chip.classList.toggle('fim', r <= 60);
+    };
+    volta(); setInterval(volta, 500);
+  }
 }
 
 let W = 0, H = 0, dpr = 1;
@@ -285,14 +286,14 @@ const abre = () => {
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }
-  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; if (window.cpBarra) window.cpBarra(true); mede(); reinicia(); estado = 'pronto';
+  aberto = true; if (window.cpTrava) window.cpTrava(true); box.hidden = false; mede(); reinicia(); estado = 'pronto';
   requestAnimationFrame(() => box.classList.add('on'));
   t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(passo);
   box.focus({ preventScroll: true });
 };
 const fecha = () => {
   if (!aberto) return;
-  aberto = false; if (window.cpTrava) window.cpTrava(false); if (window.cpBarra) window.cpBarra(false); box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
+  aberto = false; if (window.cpTrava) window.cpTrava(false); box.classList.remove('on'); cancelAnimationFrame(raf); gravaUso();
   setTimeout(() => { if (!aberto) box.hidden = true; }, 260);
 };
 window.cpBolha = { abre, fecha };

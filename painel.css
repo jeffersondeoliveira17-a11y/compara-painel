@@ -462,16 +462,15 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-oi .cp-clima:has(.cl-cafe.on){background-color:transparent;transition:background-color 0s linear .75s}
 .cp-clima .cl-cafe.on{background:linear-gradient(#4f9de8,#4f9de8) 0 0/100% calc(100% - 1px) no-repeat}
 
-/* barra da pausa: fica embaixo do cartão, fora da área do jogo */
-#cp-barra{position:absolute;left:0;right:0;bottom:0;height:44px;z-index:31;display:flex;align-items:center;gap:10px;padding:0 14px;background:#241a4a;color:#e9e2ff;border-bottom-left-radius:inherit;border-bottom-right-radius:inherit;overflow:hidden;box-shadow:0 -2px 0 #3a2c70}
-#cp-barra[hidden]{display:none}
-#cp-barra img{width:32px;height:24px;image-rendering:pixelated;display:block;flex:none}
-#cp-barra .bp-tx{font:600 12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;opacity:.85;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#cp-barra .bp-t{font:700 22px/1 ui-monospace,Menlo,Consolas,monospace;color:#ff2a63;letter-spacing:.06em;text-shadow:0 0 10px rgba(255,42,99,.45);font-variant-numeric:tabular-nums}
-#cp-barra .bp-fio{position:absolute;left:0;right:0;top:0;height:3px;background:#3a2c70}
-#cp-barra .bp-fio i{display:block;height:100%;width:100%;background:#9b7bd6;transition:width .25s linear}
-#cp-barra.fim .bp-t{animation:bp-pisca 1s steps(2,jump-none) infinite}
-#cp-barra.fim .bp-fio i{background:#ff2a63}
-@keyframes bp-pisca{50%{opacity:.35}}
-#cp-oi.cp-com-barra #cp-bolha,#cp-oi.cp-com-barra #cp-jogo{bottom:44px;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
-@media (prefers-reduced-motion:reduce){#cp-barra.fim .bp-t{animation:none}}
+/* cronômetro da pausa pro café: pílula na barra de ferramentas, fora do jogo */
+#cp-pausa{position:relative;display:flex;align-items:center;gap:8px;height:44px;padding:0 14px 0 10px;margin-right:10px;border-radius:999px;background:#241a4a;box-shadow:inset 0 0 0 1.5px #3a2c70;overflow:hidden;flex:none}
+#cp-pausa[hidden]{display:none}
+#cp-pausa img{width:32px;height:24px;image-rendering:pixelated;display:block;flex:none}
+#cp-pausa .pa-t{font:700 20px/1 ui-monospace,Menlo,Consolas,monospace;color:#ff2a63;letter-spacing:.05em;text-shadow:0 0 10px rgba(255,42,99,.45);font-variant-numeric:tabular-nums}
+#cp-pausa .pa-fio{position:absolute;left:14px;right:14px;bottom:5px;height:3px;border-radius:2px;background:#3a2c70}
+#cp-pausa .pa-fio i{display:block;height:100%;width:100%;border-radius:2px;background:#9b7bd6;transition:width .5s linear}
+#cp-pausa.fim .pa-t{animation:pa-pisca 1s steps(2,jump-none) infinite}
+#cp-pausa.fim .pa-fio i{background:#ff2a63}
+@keyframes pa-pisca{50%{opacity:.35}}
+@media (max-width:560px){#cp-pausa{height:38px;padding:0 10px 0 8px;margin-right:6px}#cp-pausa .pa-t{font-size:16px}#cp-pausa img{width:26px;height:20px}}
+@media (prefers-reduced-motion:reduce){#cp-pausa.fim .pa-t{animation:none}}

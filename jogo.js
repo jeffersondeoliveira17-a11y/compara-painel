@@ -48,7 +48,7 @@ const mono = (im, cen) => {
   g.putImageData(d, 0, 0); monoC.set(im, c); return c;
 };
 const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao ? 3 : (im === IM.mato || IM.arv.includes(im)) ? 1 : 0)) : im);
-const TINTA = () => (noite ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite ? NOITE_TOM[1] : '#2c4a5c');
+const TINTA = () => (noite && !ceuClaro() ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite && !ceuClaro() ? NOITE_TOM[1] : '#2c4a5c');
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -72,7 +72,14 @@ const pixTexto = (_txt, mx, my, k) => {
   cx.fillStyle = '#ffffff'; cx.fill(PS_P); cx.restore();
 };
 // modo noite que vai ganhando cor: quanto mais o cachorro avança na fase, mais o cenário volta às cores (nuvens, balão, moitas, chão)
-const progFase = () => Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS));
+const FORCA_P = (/[?&]amanhecer=([\d.]+)/.exec(location.search) || [])[1]; // teste: ?amanhecer=0.7 trava o progresso da fase (0 a 1)
+const progFase = () => (FORCA_P !== undefined ? Math.min(1, +FORCA_P) : Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)));
+// amanhecer: perto do fim da fase noturna o céu sai do cinza, passa por roxo escuro, roxo claro, rosa e laranja, até o azul do dia
+const CEU = [[0.45, '#26303f', '#26303f'], [0.62, '#2b2150', '#43306a'], [0.78, '#4d3b80', '#b8638f'], [0.9, '#8a7bc4', '#f6a35f'], [1, '#cfe6f5', '#cfe6f5']];
+const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mistura = (a, b, t) => { const A = hex2(a), B = hex2(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',') + ')'; };
+const ceuCores = (p) => { if (p <= CEU[0][0]) return null; for (let i = 1; i < CEU.length; i++) if (p <= CEU[i][0]) { const a = CEU[i - 1], b = CEU[i], t = (p - a[0]) / (b[0] - a[0]); return [mistura(a[1], b[1], t), mistura(a[2], b[2], t)]; } return [CEU[4][1], CEU[4][2]]; };
+const ceuClaro = () => noite && progFase() > 0.82; // céu claro: textos escuros
 const faixa = (a, b) => Math.max(0, Math.min(1, (progFase() - a) / (b - a)));
 const dCor = (im, k, ...a) => { cx.drawImage(S(im), ...a); if (noite && k > 0.01) { const g = cx.globalAlpha; cx.globalAlpha = g * k; cx.drawImage(im, ...a); cx.globalAlpha = g; } };
 
@@ -227,7 +234,7 @@ const passo = (agora) => {
   if (avisoFase > 0) avisoFase -= dt;
   if (estado === 'jogando' || estado === 'portal') {
     if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60, sp: sorteiaAve() }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
-    if (!mor && noite) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
+    if (!mor && noite && progFase() < 0.55) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
     else if (mor) { mor.x -= mor.v * dt; mor.t += dt; if (mor.x < -110) { mor = null; morEm = 8 + Math.random() * 10; } }
     if (!balao) { balaoEm -= dt; if (balaoEm <= 0) novoBalao(); }
     else {
@@ -280,10 +287,11 @@ const ESTRELAS = (() => { let a = 7; const r = () => { a = (a * 16807) % 2147483
   for (let i = 0; i < 34; i++) { const tp = i % 17 === 0 ? 'grande' : tipos[Math.floor(r() * tipos.length)]; l.push({ x: r(), y: r(), tp, c: tp === 'grande' ? 3 : (tp === 'ponto' ? 1 + Math.floor(r() * 2) : 2), vel: 0.35 + r() * 0.5, fase: r() * 6.28 }); } return l; })();
 const desenhaEstrelas = (cyChao) => {
   if (!noite) return;
+  const some = 1 - faixa(0.55, 0.85); if (some <= 0.02) return;
   const t = performance.now() / 1000, topo = 30, base = Math.max(topo + 20, cyChao - 70);
   ESTRELAS.forEach((e) => {
     const b = 0.5 + 0.5 * Math.sin(t * e.vel + e.fase); // um ciclo leva de 7 a 18 segundos
-    const a = 0.3 + 0.7 * b; if (a < 0.05) return;
+    const a = (0.3 + 0.7 * b) * some; if (a < 0.05) return;
     const x = Math.round(e.x * (W - 20) + 10), y = Math.round(topo + e.y * (base - topo)), c = e.c;
     cx.globalAlpha = a; cx.fillStyle = '#f4f7ff';
     const q = (dx, dy) => cx.fillRect(x + dx * c, y + dy * c, c, c);
@@ -304,6 +312,7 @@ const desenhaCoracao = (x, y, c, cheio) => { // cada quadradinho ocupa um númer
 const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
+  if (noite) { const c = ceuCores(progFase()); if (c) { const g = cx.createLinearGradient(0, 0, 0, chaoY()); g.addColorStop(0, c[0]); g.addColorStop(1, c[1]); cx.fillStyle = g; cx.fillRect(0, 0, W, H); } }
   const cy = chaoY();
   cx.save();
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda

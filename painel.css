@@ -384,3 +384,21 @@
 #cp-jogo .jg-x:active img{transform:translateY(1px)}
 #cp-jogo .jg-x{width:30px;height:30px}
 #cp-jogo .jg-x img{width:26px;height:26px}
+
+/* jogo da bolha: mesma moldura do jogo do cãozinho */
+#cp-bolha{position:absolute;inset:0;z-index:30;border-radius:inherit;overflow:hidden;background:#cfe6f5;opacity:0;transform:scale(.985);transition:opacity .25s ease,transform .25s ease;outline:none;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#cp-bolha.on{opacity:1;transform:none}
+#cp-bolha[hidden]{display:none}
+#cp-bolha canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cp-bolha .jg-x{position:absolute;top:10px;right:12px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(16,37,50,.85);color:#fff;font:400 22px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;padding:0 0 3px}
+#cp-bolha .jg-x:hover{background:#102532}
+#cp-bolha .jg-x:focus-visible{outline:3px solid #fff;outline-offset:2px}
+#cp-bolha{transition:opacity .25s ease,transform .25s ease,background-color .5s ease}
+#cp-bolha .jg-x{width:44px;height:44px;border-radius:0;background:none;padding:0;display:grid;place-items:center}
+#cp-bolha .jg-x img{width:40px;height:40px;image-rendering:pixelated;display:block}
+#cp-bolha .jg-x:hover img{filter:brightness(1.12)}
+#cp-bolha .jg-x:active img{transform:translateY(1px)}
+#cp-bolha .jg-x{width:30px;height:30px}
+#cp-bolha .jg-x img{width:26px;height:26px}
+#cp-bolha{background:#1b2130}
+@media (max-width:760px){#cp-bolha{min-height:220px}}

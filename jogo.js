@@ -63,6 +63,7 @@ const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnima
 const cv = box.querySelector('canvas'), cx = cv.getContext('2d'), dica = box.querySelector('.jg-dica'), fechar = box.querySelector('.jg-x');
 // "PRESS START" vetorizado da referência (fonte pixel): 78 x 30 quadradinhos, desenhado como forma única
 const PS_P = new Path2D('M0 0h12v1h-12zM16 0h12v1h-12zM32 0h14v1h-14zM50 0h10v1h-10zM66 0h10v1h-10zM0 1h12v1h-12zM16 1h12v1h-12zM32 1h14v1h-14zM50 1h10v1h-10zM66 1h10v1h-10zM0 2h4v1h-4zM10 2h4v1h-4zM16 2h4v1h-4zM26 2h4v1h-4zM32 2h4v1h-4zM48 2h4v1h-4zM58 2h4v1h-4zM64 2h4v1h-4zM74 2h4v1h-4zM0 3h4v1h-4zM10 3h4v1h-4zM16 3h4v1h-4zM26 3h4v1h-4zM32 3h4v1h-4zM48 3h4v1h-4zM58 3h4v1h-4zM64 3h4v1h-4zM74 3h4v1h-4zM0 4h4v1h-4zM10 4h4v1h-4zM16 4h4v1h-4zM26 4h4v1h-4zM32 4h4v1h-4zM48 4h4v1h-4zM64 4h4v1h-4zM0 5h4v1h-4zM10 5h4v1h-4zM16 5h4v1h-4zM26 5h4v1h-4zM32 5h4v1h-4zM48 5h4v1h-4zM64 5h4v1h-4zM0 6h4v1h-4zM10 6h4v1h-4zM16 6h4v1h-4zM24 6h6v1h-6zM32 6h12v1h-12zM50 6h10v1h-10zM66 6h10v1h-10zM0 7h4v1h-4zM10 7h4v1h-4zM16 7h4v1h-4zM24 7h6v1h-6zM32 7h12v1h-12zM50 7h10v1h-10zM66 7h10v1h-10zM0 8h12v1h-12zM16 8h10v1h-10zM32 8h4v1h-4zM58 8h4v1h-4zM74 8h4v1h-4zM0 9h12v1h-12zM16 9h10v1h-10zM32 9h4v1h-4zM58 9h4v1h-4zM74 9h4v1h-4zM0 10h4v1h-4zM16 10h4v1h-4zM22 10h6v1h-6zM32 10h4v1h-4zM48 10h4v1h-4zM58 10h4v1h-4zM64 10h4v1h-4zM74 10h4v1h-4zM0 11h4v1h-4zM16 11h4v1h-4zM22 11h6v1h-6zM32 11h4v1h-4zM48 11h4v1h-4zM58 11h4v1h-4zM64 11h4v1h-4zM74 11h4v1h-4zM0 12h4v1h-4zM16 12h4v1h-4zM24 12h6v1h-6zM32 12h14v1h-14zM50 12h10v1h-10zM66 12h10v1h-10zM0 13h4v1h-4zM16 13h4v1h-4zM24 13h6v1h-6zM32 13h14v1h-14zM50 13h10v1h-10zM66 13h10v1h-10zM5 16h10v1h-10zM19 16h12v1h-12zM35 16h6v1h-6zM47 16h12v1h-12zM63 16h12v1h-12zM5 17h10v1h-10zM19 17h12v1h-12zM35 17h6v1h-6zM47 17h12v1h-12zM63 17h12v1h-12zM3 18h4v1h-4zM13 18h4v1h-4zM23 18h4v1h-4zM33 18h4v1h-4zM39 18h4v1h-4zM47 18h4v1h-4zM57 18h4v1h-4zM67 18h4v1h-4zM3 19h4v1h-4zM13 19h4v1h-4zM23 19h4v1h-4zM33 19h4v1h-4zM39 19h4v1h-4zM47 19h4v1h-4zM57 19h4v1h-4zM67 19h4v1h-4zM3 20h4v1h-4zM23 20h4v1h-4zM31 20h4v1h-4zM41 20h4v1h-4zM47 20h4v1h-4zM57 20h4v1h-4zM67 20h4v1h-4zM3 21h4v1h-4zM23 21h4v1h-4zM31 21h4v1h-4zM41 21h4v1h-4zM47 21h4v1h-4zM57 21h4v1h-4zM67 21h4v1h-4zM5 22h10v1h-10zM23 22h4v1h-4zM31 22h4v1h-4zM41 22h4v1h-4zM47 22h4v1h-4zM55 22h6v1h-6zM67 22h4v1h-4zM5 23h10v1h-10zM23 23h4v1h-4zM31 23h4v1h-4zM41 23h4v1h-4zM47 23h4v1h-4zM55 23h6v1h-6zM67 23h4v1h-4zM13 24h4v1h-4zM23 24h4v1h-4zM31 24h14v1h-14zM47 24h10v1h-10zM67 24h4v1h-4zM13 25h4v1h-4zM23 25h4v1h-4zM31 25h14v1h-14zM47 25h10v1h-10zM67 25h4v1h-4zM3 26h4v1h-4zM13 26h4v1h-4zM23 26h4v1h-4zM31 26h4v1h-4zM41 26h4v1h-4zM47 26h4v1h-4zM53 26h6v1h-6zM67 26h4v1h-4zM3 27h4v1h-4zM13 27h4v1h-4zM23 27h4v1h-4zM31 27h4v1h-4zM41 27h4v1h-4zM47 27h4v1h-4zM53 27h6v1h-6zM67 27h4v1h-4zM5 28h10v1h-10zM23 28h4v1h-4zM31 28h4v1h-4zM41 28h4v1h-4zM47 28h4v1h-4zM55 28h6v1h-6zM67 28h4v1h-4zM5 29h10v1h-10zM23 29h4v1h-4zM31 29h4v1h-4zM41 29h4v1h-4zM47 29h4v1h-4zM55 29h6v1h-6zM67 29h4v1h-4z');
+window.cpPS = PS_P; // o jogo da bolha usa o mesmo texto
 const pixTexto = (_txt, mx, my, k) => {
   const s = k, w = 78 * s, h = 30 * s, x0 = Math.round(mx - w / 2), y0 = Math.round(my - h / 2);
   cx.save(); cx.translate(x0, y0); cx.scale(s, s);
@@ -356,8 +357,11 @@ const desenha = () => {
 };
 
 // ---------- abrir e fechar ----------
+// terça-feira é o dia da bolha e quarta o do cãozinho; ?bolha e ?cao forçam um deles
+const jogoDoDia = () => /[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao';
 const abre = () => {
   if (aberto) return;
+  if (jogoDoDia() === 'bolha' && window.cpBolha) { window.cpBolha.abre(); return; }
   if (!janela()) { avisa('O joguinho só abre no pause pro café: nas horas pares, nos primeiros 15 minutos.'); return; }
   usado = leUso();
   if (usado >= LIMITE) { avisa('Seus 8 minutos de jogo de hoje já acabaram. Volte amanhã!'); return; }

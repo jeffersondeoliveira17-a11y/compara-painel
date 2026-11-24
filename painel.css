@@ -500,5 +500,5 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-clima .cp-oi-d{padding-left:10px}
 .cp-clima .cl-g>div{padding-left:8px}
 .cp-clima .cl-n{transform:translateY(7px)}
-.cp-clima .cl-t svg#cl-i{transform:translate(0,10px)}
-.cp-clima .cl-box>*:last-child:not(.cl-g){padding:11px 0 0}
+.cp-clima .cl-t svg#cl-i{transform:translate(2px,10px)}
+.cp-clima .cl-box>*:last-child:not(.cl-g){padding:13px 0 0}

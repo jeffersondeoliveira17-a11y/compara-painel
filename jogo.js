@@ -102,7 +102,7 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
-let curaT = 0; // brilho do coração que acabou de voltar
+let curaT = 0, voam = []; // curaT: brilho do coração que voltou; voam: coraçõezinhos que sobem em espiral
 let vidas = 3, invul = 0; // 3 vidas: cada batida tira uma e o cachorro vai perdendo a cor
 let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
@@ -129,7 +129,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -272,10 +272,11 @@ const passo = (agora) => {
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     if (invul > 0) invul -= dt;
     if (curaT > 0) curaT -= dt;
+    voam.forEach((h) => { h.t += dt; }); voam = voam.filter((h) => h.t < 1.8);
     for (const o of obst) {
       if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
         const dentro = a.x + a.w > o.x + 8 && a.x < o.x + o.w - 8 && a.y + a.h > chaoY() - o.h + 8;
-        if (dentro && !o.roca && !o.vidaDada && vidas < 3 && estado === 'jogando') { o.vidaDada = true; vidas++; curaT = 1.2; for (let q = 0; q < 10; q++) folhas.push({ x: a.x + a.w * Math.random(), y: a.y + a.h * (0.2 + Math.random() * 0.5), vx: -20 - Math.random() * 60, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } // moita vazia: recupera uma vida
+        if (dentro && !o.roca && !o.vidaDada && vidas < 3 && estado === 'jogando') { o.vidaDada = true; vidas++; curaT = 1.2; voam.push({ x: player.x + player.w * 0.55, y: player.y + 4, t: 0, f: Math.random() * 6.28 }); for (let q = 0; q < 10; q++) folhas.push({ x: a.x + a.w * Math.random(), y: a.y + a.h * (0.2 + Math.random() * 0.5), vx: -20 - Math.random() * 60, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } // moita vazia: recupera uma vida
         if (dentro) { o.folhaT = (o.folhaT || 0) - dt; if (o.folhaT <= 0) { o.folhaT = 0.045; for (let q = 0; q < 2; q++) folhas.push({ x: a.x + a.w * (0.2 + Math.random() * 0.6), y: a.y + a.h * (0.3 + Math.random() * 0.6), vx: -30 - Math.random() * 90, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } }
       }
       if (o.batida || (o.moita && !o.roca)) continue; // moita sem pedra: o cachorro atravessa
@@ -436,6 +437,7 @@ const desenha = () => {
   cx.restore();
   // moitas do chão: ficam na frente do cachorro, que passa por dentro delas
   obst.forEach((o) => { if (o.moita && IM.moita.complete && IM.moita.naturalWidth) cx.drawImage(o.cor ? IM.moita : S(IM.moita), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); });
+  voam.forEach((h) => { const e = h.t / 1.8, ang = h.f + h.t * 7, raio = 6 + 20 * e; cx.globalAlpha = Math.min(1, (1 - e) * 2.2); desenhaCoracao(h.x + Math.cos(ang) * raio - 10, h.y - h.t * 62 + Math.sin(ang) * raio * 0.35, 2, true); cx.globalAlpha = 1; }); // coração subindo em espiral
   folhas.forEach((f) => { cx.globalAlpha = Math.min(1, (f.vida - f.t) * 3); cx.fillStyle = FOLHA_COR[f.c]; cx.fillRect(Math.round(f.x), Math.round(f.y), f.r, f.r); cx.globalAlpha = 1; });
   // portal (10 quadros do GIF, 10 por segundo)
   if (portal) {

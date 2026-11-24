@@ -509,3 +509,9 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 
 /* icones de Sensacao e Umidade: 3px mais para a esquerda */
 .cp-clima .cl-g .gi{translate:-3px 0}
+
+/* card do clima 10px mais largo (até o guia rosa) e área de trabalho alinhada ao guia verde */
+@media (min-width:901px){
+  #cp-oi .cp-clima{flex:0 0 168px!important;width:168px!important;min-width:168px!important;max-width:168px!important}
+  #cp-oi .cp-oi-t{margin-left:1.4px}
+}

@@ -264,12 +264,32 @@ const passaro = (a) => {
   cx.fillStyle = cor('#2f3d4d', '#e3e9f2');
   m.forEach((lin, r) => { for (let c = 0; c < lin.length; c++) if (lin[c] === 'x') cx.fillRect(Math.round(a.x + c * u), Math.round(a.y + r * u), u, u); });
 };
+// ---------- estrelas do céu da noite: espalhadas, de tamanhos bem variados, com brilho lento ----------
+const ESTRELAS = (() => { let a = 7; const r = () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; const tipos = ['ponto', 'ponto', 'ponto', 'ponto', 'mais', 'mais', 'losango', 'brilho']; const l = [];
+  for (let i = 0; i < 34; i++) { const tp = i % 17 === 0 ? 'grande' : tipos[Math.floor(r() * tipos.length)]; l.push({ x: r(), y: r(), tp, c: tp === 'grande' ? 3 : (tp === 'ponto' ? 1 + Math.floor(r() * 2) : 2), vel: 0.35 + r() * 0.5, fase: r() * 6.28 }); } return l; })();
+const desenhaEstrelas = (cyChao) => {
+  if (!noite) return;
+  const t = performance.now() / 1000, topo = 30, base = Math.max(topo + 20, cyChao - 70);
+  ESTRELAS.forEach((e) => {
+    const b = 0.5 + 0.5 * Math.sin(t * e.vel + e.fase); // um ciclo leva de 7 a 18 segundos
+    const a = 0.3 + 0.7 * b; if (a < 0.05) return;
+    const x = Math.round(e.x * (W - 20) + 10), y = Math.round(topo + e.y * (base - topo)), c = e.c;
+    cx.globalAlpha = a; cx.fillStyle = '#f4f7ff';
+    const q = (dx, dy) => cx.fillRect(x + dx * c, y + dy * c, c, c);
+    if (e.tp === 'ponto') q(0, 0);
+    else if (e.tp === 'mais') { q(0, 0); q(-1, 0); q(1, 0); q(0, -1); q(0, 1); }
+    else if (e.tp === 'losango') { q(0, -1); q(-1, 0); q(1, 0); q(0, 1); }
+    else { q(0, 0); q(-1, 0); q(1, 0); q(0, -1); q(0, 1); if (b > 0.55) { q(-2, 0); q(2, 0); q(0, -2); q(0, 2); } if (e.tp === 'grande' && b > 0.8) { q(-3, 0); q(3, 0); q(0, -3); q(0, 3); } }
+  });
+  cx.globalAlpha = 1;
+};
 const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
   const cy = chaoY();
   cx.save();
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda
+  desenhaEstrelas(cy);
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.8;
   nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => dCor(IM.nuvem, faixa(0, 0.35), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás

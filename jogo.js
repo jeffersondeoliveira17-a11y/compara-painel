@@ -289,6 +289,13 @@ const desenhaEstrelas = (cyChao) => {
   });
   cx.globalAlpha = 1;
 };
+// coração de 7x7 quadradinhos, desenhado célula por célula (nítido em qualquer tela)
+const CORACAO = ['.##.##.', '#WR#Rd#', '#RRRRd#', '#RRRRd#', '.#RRd#.', '..#d#..', '...#...'];
+const COR_CHEIO = { '#': '#000', W: '#fff', R: '#e00024', d: '#b40200' }, COR_VAZIO = { '#': '#000', W: '#fff', R: '#d9d9d9', d: '#b3b3b3' };
+const desenhaCoracao = (x, y, c, cheio) => { // cada quadradinho ocupa um número inteiro de pixels da tela (em qualquer zoom), para os dois lados ficarem iguais
+  const p = cheio ? COR_CHEIO : COR_VAZIO, cd = Math.max(2, Math.round(c * dpr)), x0 = Math.round(x * dpr), y0 = Math.round(y * dpr);
+  CORACAO.forEach((lin, j) => { for (let i = 0; i < 7; i++) { const ch = lin[i]; if (ch === '.') continue; cx.fillStyle = p[ch]; cx.fillRect((x0 + i * cd) / dpr, (y0 + j * cd) / dpr, cd / dpr, cd / dpr); } });
+};
 const desenha = () => {
   if (!W) return;
   cx.clearRect(0, 0, W, H);
@@ -378,9 +385,7 @@ const desenha = () => {
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
   if (estado !== 'fim') { cx.fillStyle = TINTA2(); cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
   if (estado !== 'fim') { // vidas: 3 corações
-    cx.save(); cx.imageSmoothingEnabled = false;
-    for (let i = 0; i < 3; i++) { const im = i < vidas ? IM.vida1 : IM.vida0; if (im.complete && im.naturalWidth) cx.drawImage(im, 16 + i * 26, 60, 21, 21); }
-    cx.restore();
+    for (let i = 0; i < 3; i++) desenhaCoracao(16 + i * 26, 60, 3, i < vidas);
   }
   if (estado === 'fim') {
     cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);

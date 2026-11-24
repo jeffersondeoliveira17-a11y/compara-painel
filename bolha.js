@@ -57,26 +57,37 @@ const dedoSpr = (() => {
   DEDO.forEach((l, j) => [...l].forEach((ch, i) => { if (cor[ch]) { g.fillStyle = cor[ch]; g.fillRect(i * u, j * u, u, u); } }));
   return c;
 })();
-// moldura de roseira: caule verde ondulado com espinhos para dentro e folhinhas; cada lado é desenhado "em cima" e girado
+// moldura de roseira em trechos trançados: um trecho com espinhos (estoura), outro só com o caule trançado (a bolha quica)
+const SEG = 120, ZLISO = 20; // comprimento de cada trecho; distância da borda onde a bolha quica no trecho liso
+const OFF = [0, 1, 1, 0]; // desencontro entre cima, baixo, esquerda e direita: onde um lado tem espinho, o oposto costuma ser liso
+const espinho = (lado, pos) => (Math.floor(pos / SEG) + OFF[lado]) % 2 === 0;
 let molduraC = null;
 const moldura = () => {
   const c = document.createElement('canvas'); c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
   const u = 4;
-  const cima = (comp) => {
+  const cima = (comp, lado) => {
     for (let p = 0; p < comp; p += u) {
-      const y = 8 + (Math.sin(p / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
-      g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
+      const canon = lado === 1 ? W - p - u : lado === 2 ? H - p - u : p; // posição "de verdade" ao longo da borda
       const n = p / u;
-      if (n % 7 === 3) { // espinho: triangulo de 3 quadradinhos de altura
-        g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
-      }
-      if (n % 19 === 10) { // folha pendurada no caule
-        g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u);
+      if (espinho(lado, canon)) {
+        const y = 8 + (Math.sin(p / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
+        g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
+        if (n % 7 === 3) { // espinho: triângulo de 3 quadradinhos de altura
+          g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
+        }
+        if (n % 19 === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
+      } else { // trecho liso: dois fios que se trançam, sem espinho
+        const k = Math.round(Math.sin(p / 11)); // -1, 0 ou 1
+        const ya = 8 + u * (1 + k), yb = 8 + u * (1 - k);
+        const frente = Math.cos(p / 11) > 0;
+        g.fillStyle = '#17502a'; g.fillRect(p, 8 + u, u, u); // miolo escuro que liga os dois fios
+        g.fillStyle = '#1f6a36'; g.fillRect(p, frente ? yb : ya, u, u);
+        g.fillStyle = frente ? '#35a24e' : '#4cc063'; g.fillRect(p, frente ? ya : yb, u, u);
       }
     }
   };
-  const lado = (tx, ty, ang, comp) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp); g.restore(); };
-  lado(0, 0, 0, W); lado(W, H, Math.PI, W); lado(0, H, -Math.PI / 2, H); lado(W, 0, Math.PI / 2, H);
+  const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); g.restore(); };
+  lado(0, 0, 0, W, 0); lado(W, H, Math.PI, W, 1); lado(0, H, -Math.PI / 2, H, 2); lado(W, 0, Math.PI / 2, H, 3);
   molduraC = c;
 };
 
@@ -145,7 +156,12 @@ const passo = (agora) => {
     }
     for (const b of bs) {
       b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2);
-      if (b.x - rr < ZONA || b.x + rr > W - ZONA || b.y - rr < ZONA || b.y + rr > H - ZONA) { estoura(); break; }
+      // paredes: no trecho com espinhos a bolha estoura; no trecho liso ela bate e volta
+      const zc = espinho(0, b.x) ? ZONA : ZLISO, zb = espinho(1, b.x) ? ZONA : ZLISO, ze = espinho(2, b.y) ? ZONA : ZLISO, zd = espinho(3, b.y) ? ZONA : ZLISO;
+      if (b.y - rr < zc) { if (zc === ZONA) { estoura(); break; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
+      if (b.y + rr > H - zb) { if (zb === ZONA) { estoura(); break; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }
+      if (b.x - rr < ze) { if (ze === ZONA) { estoura(); break; } b.x = ze + rr; b.vx = Math.abs(b.vx) * 0.75 + 8; b.sq = 1; }
+      if (b.x + rr > W - zd) { if (zd === ZONA) { estoura(); break; } b.x = W - zd - rr; b.vx = -Math.abs(b.vx) * 0.75 - 8; b.sq = 1; }
     }
   } else if (estado === 'estourando') {
     if (agora - morreuEm > 650) estado = 'morto';

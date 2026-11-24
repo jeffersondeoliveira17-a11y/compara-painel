@@ -76,6 +76,12 @@ const espDe = (lado, idx) => { // espinhos do trecho idx (1 ou 2, nunca colados)
 };
 const espinhoS = (lado, s) => { const i = Math.floor(s / SEG); for (let d = -1; d <= 1; d++) if (espDe(lado, i + d).some((t) => Math.abs(s - (t + 2)) <= 17)) return true; return false; };
 const espinho = (lado, pos) => espinhoS(lado, pos - DIR[lado] * deslR); // a bolha estoura perto de um espinho (posição na tela -> posição no caule)
+const yLiso = (lado, sc) => { // altura do caule no trecho liso: voltas de tamanho e ritmo variados, algumas bem mais para dentro
+  const A = 0.6 + 1.4 * (0.5 + 0.5 * Math.sin(sc / 210 + lado * 1.7)), fase = sc / 34 + lado + 1.6 * Math.sin(sc / 120);
+  return 4 + 4 * Math.round(A * (1 + Math.sin(fase)));
+};
+const yEsp = (sc) => 8 + (Math.sin(sc / 46) > 0.35 ? 4 : 0); // altura do caule no trecho com espinhos
+const fundoCaule = (lado, sc) => (trechoS(lado, sc) ? yEsp(sc) : yLiso(lado, sc)) + 10; // até onde o caule chega para dentro: a bolha bate aí
 const TAMS = [3.2, 1.3, 2.2, 1.6, 2.8, 1.2, 2.0]; // tamanhos bem variados (px por quadradinho)
 const rosasDe = (lado, idx) => { // quase todo trecho liso tem uma rosa, de tamanho sorteado
   if (trechoS(lado, idx * SEG) || hash(lado, idx, 5) < 0.1) return null;
@@ -94,14 +100,14 @@ const moldura = () => {
       const canon = lado === 1 ? W - p - u : lado === 2 ? H - p - u : p; // posição absoluta ao longo da borda
       const sc = canon - DIR[lado] * deslR, n = Math.round(sc / u); // posição no caule: é ela que ondula, não a da tela
       if (trechoS(lado, sc)) {
-        const y = 8 + (Math.sin(sc / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
+        const y = yEsp(sc); // o caule serpenteia 1 quadradinho
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
         if (espDe(lado, Math.floor(sc / SEG)).some((t) => Math.abs(sc - t) < u / 2 + 0.01)) { // espinho: triângulo de 3 quadradinhos de altura
           g.fillStyle = '#f3e6ec'; g.fillRect(p - u, y + 2 * u, 3 * u, u); g.fillStyle = '#e1cdd7'; g.fillRect(p, y + 3 * u, 2 * u, u); g.fillStyle = '#ffffff'; g.fillRect(p, y + 4 * u, u, u);
         }
         if (md(n, 19) === 10) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); } // folhinha
       } else { // trecho liso: um caule só, solto, ondulando devagar, com folhas e uma gavinha de vez em quando
-        const y = 8 + u * Math.round(1 + Math.sin(sc / 40 + lado));
+        const y = yLiso(lado, sc);
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
         if (md(n, 13) === 5) { g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y, u, u / 2); }
         if (md(n, 13) === 11) { g.fillStyle = '#2f8a46'; g.fillRect(p, y + 2 * u, u, u); g.fillRect(p + u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 3 * u, u, u); g.fillRect(p + 2 * u, y + 2 * u, u, u); }
@@ -114,8 +120,8 @@ const moldura = () => {
     for (let blk = Math.floor((-s0 - 100) / SEG); blk <= Math.ceil((L - s0 + 100) / SEG); blk++) {
       const r = rosasDe(lado, blk); if (!r) continue;
       const t = r.t + s0; if (t < ini || t > fim) continue;
-      const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, k = Math.max(1, Math.round((lado === 0 ? Math.min(r.k, 1.6) : r.k) * dpr)) / dpr; // em cima a rosa fica menor, para não cobrir o placar
-      ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, 12 + (ROSA.length - 1 - j) * k, k, k); } });
+      const p = lado === 1 ? W - t - u : lado === 2 ? H - t - u : t, yb = yLiso(lado, r.t + 7 * r.k) + u, k = Math.max(1, Math.round((lado === 0 ? Math.min(r.k, 1.6) : r.k) * dpr)) / dpr; // em cima a rosa fica menor, para não cobrir o placar
+      ROSA.forEach((lin, j) => { for (let i = 0; i < lin.length; i++) { const ch = lin[i]; if (ch === '.') continue; g.fillStyle = COR_ROSA[ch]; g.fillRect(p + i * k, yb + (ROSA.length - 1 - j) * k, k, k); } });
     }
   };
   const lado = (tx, ty, ang, comp, l) => { g.save(); g.translate(tx, ty); g.rotate(ang); cima(comp, l); flor(l, comp); g.restore(); };
@@ -216,11 +222,12 @@ const passo = (agora) => {
       const rr = BR * 0.88 * b.e;
       b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2);
       // paredes: no trecho com espinhos a bolha estoura; no trecho liso ela bate e volta
-      const zc = espinho(0, b.x) ? ZONA : ZLISO, zb = espinho(1, b.x) ? ZONA : ZLISO, ze = espinho(2, b.y) ? ZONA : ZLISO, zd = espinho(3, b.y) ? ZONA : ZLISO;
-      if (b.y - rr < zc) { if (zc === ZONA) { mortas.push(b); continue; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
-      if (b.y + rr > H - zb) { if (zb === ZONA) { mortas.push(b); continue; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }
-      if (b.x - rr < ze) { if (ze === ZONA) { mortas.push(b); continue; } b.x = ze + rr; b.vx = Math.abs(b.vx) * 0.75 + 8; b.sq = 1; }
-      if (b.x + rr > W - zd) { if (zd === ZONA) { mortas.push(b); continue; } b.x = W - zd - rr; b.vx = -Math.abs(b.vx) * 0.75 - 8; b.sq = 1; }
+      const zl = (lado, pos) => espinho(lado, pos) ? ZONA : Math.max(ZLISO, fundoCaule(lado, pos - DIR[lado] * deslR));
+      const zc = zl(0, b.x), zb = zl(1, b.x), ze = zl(2, b.y), zd = zl(3, b.y);
+      if (b.y - rr < zc) { if (espinho(0, b.x)) { mortas.push(b); continue; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
+      if (b.y + rr > H - zb) { if (espinho(1, b.x)) { mortas.push(b); continue; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }
+      if (b.x - rr < ze) { if (espinho(2, b.y)) { mortas.push(b); continue; } b.x = ze + rr; b.vx = Math.abs(b.vx) * 0.75 + 8; b.sq = 1; }
+      if (b.x + rr > W - zd) { if (espinho(3, b.y)) { mortas.push(b); continue; } b.x = W - zd - rr; b.vx = -Math.abs(b.vx) * 0.75 - 8; b.sq = 1; }
     }
     if (mortas.length) { mortas.forEach(estouraUma); bs = bs.filter((b) => !mortas.includes(b)); if (!bs.length) estoura(); } // estourou uma: as outras seguem; só perde quando acabam todas
   } else if (estado === 'estourando') {

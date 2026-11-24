@@ -30,23 +30,31 @@ let avT = 0;
 const avisa = (t) => { aviso.textContent = t; aviso.hidden = false; requestAnimationFrame(() => aviso.classList.add('on')); clearTimeout(avT); avT = setTimeout(() => { aviso.classList.remove('on'); setTimeout(() => { aviso.hidden = true; }, 300); }, 3600); };
 
 
-// ---------- cronômetro da pausa (fica na barra de ferramentas lá em cima, fora do jogo): contagem regressiva até o fim do intervalo ----------
+// ---------- cronômetro da pausa (fica na barra de ferramentas lá em cima, fora do jogo): os números são do próprio visor do relógio ----------
 if (!document.getElementById('cp-pausa')) {
   const dir = document.querySelector('.cp-bar-dir');
   if (dir) {
     const chip = document.createElement('div');
     chip.id = 'cp-pausa'; chip.hidden = true; chip.setAttribute('role', 'timer'); chip.setAttribute('aria-label', 'Tempo que resta da pausa para o café'); chip.title = 'Tempo que resta da pausa pro café';
-    chip.innerHTML = '<img src="icones/cronometro.svg?v=' + V + '" alt="" width="32" height="24"><b class="pa-t">15:00</b><span class="pa-fio"><i></i></span>';
+    chip.innerHTML = '<svg viewBox="0 0 24 18" shape-rendering="crispEdges" aria-hidden="true"><image href="icones/cronometro-base.svg?v=' + V + '" width="24" height="18"/><rect x="1" y="4" width="22" height="7" fill="#28184d"/><path class="pa-d" fill="#ef0e4c" d=""/></svg>';
     dir.insertBefore(chip, dir.firstChild);
-    const tt = chip.querySelector('.pa-t'), fio = chip.querySelector('.pa-fio i');
+    const dp = chip.querySelector('.pa-d');
+    const G = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001010010', '111101111101111', '111101111001111']; // dígitos 3x5, o mesmo desenho do visor
+    const COLS = [2, 6, 14, 18];
     const PAUSA = 15 * 60; let t0P = 0;
+    const desenhaVisor = (r) => {
+      const n = Math.max(0, Math.ceil(r)), txt = String(Math.floor(n / 60)).padStart(2, '0') + String(n % 60).padStart(2, '0');
+      let d = 'M11 6h1v1h-1zM11 8h1v1h-1z'; // dois pontos
+      for (let k = 0; k < 4; k++) { const m = G[+txt[k]]; for (let i = 0; i < 15; i++) if (m[i] === '1') d += 'M' + (COLS[k] + (i % 3)) + ' ' + (5 + Math.floor(i / 3)) + 'h1v1h-1z'; }
+      dp.setAttribute('d', d);
+    };
     const volta = () => {
       const d = new Date(), manual = forca || window.cpLiberado, naPausa = d.getHours() % 2 === 0 && d.getMinutes() < 15;
       chip.hidden = !(manual || naPausa);
       if (chip.hidden) { t0P = 0; return; }
       if (!t0P) t0P = Date.now();
       const r = manual && !naPausa ? Math.max(0, PAUSA - (Date.now() - t0P) / 1000) : Math.max(0, (new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 15, 0).getTime() - Date.now()) / 1000);
-      tt.textContent = mmss(r); fio.style.width = (100 * r / PAUSA) + '%'; chip.classList.toggle('fim', r <= 60);
+      desenhaVisor(r); chip.classList.toggle('fim', r <= 60);
     };
     volta(); setInterval(volta, 500);
   }

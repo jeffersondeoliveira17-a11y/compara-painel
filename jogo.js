@@ -15,7 +15,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -91,6 +91,7 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
+let vidas = 3, invul = 0; // 3 vidas: cada batida tira uma e o cachorro vai perdendo a cor
 let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
@@ -112,7 +113,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  vidas = 3; invul = 0; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = true; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -202,9 +203,14 @@ const passo = (agora) => {
     if (ave && ave.rock && !obst.includes(ave.rock)) { ave = null; aveEm = 20 + Math.random() * 20; } // a pedra saiu da tela: o passarinho vai embora com ela
     // colisão (caixa da nuvem um pouco menor que o desenho)
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
+    if (invul > 0) invul -= dt;
     for (const o of obst) {
+      if (o.batida) continue;
       const b = { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
+        if (invul > 0) continue;
+        vidas--; o.batida = true;
+        if (vidas > 0) { invul = 1.6; continue; } // perdeu uma vida, mas segue: pisca um pouco e fica mais cinza
         estado = 'morto'; morreuEm = performance.now();
         const pts = Math.floor(dist);
         if (pts > recorde) { recorde = pts; try { localStorage.setItem(CH, String(recorde)); } catch (e) { /* segue */ } }
@@ -327,7 +333,14 @@ const desenha = () => {
     else if (tPortal < T_SUGA + T_VIRA) esc = 0;
     else esc = Math.min(1, (tPortal - T_SUGA - T_VIRA) / T_SOLTA);
   }
-  if (esc > 0.01) { cx.scale(esc, esc); cx.globalAlpha = alfa; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); }
+  if (esc > 0.01) {
+    cx.scale(esc, esc);
+    if (invul > 0 && Math.floor(invul * 10) % 2 === 0) alfa *= 0.35; // pisca enquanto está protegido
+    const cor = vidas >= 3 ? 1 : (vidas === 2 ? 0.6 : (vidas === 1 ? 0.22 : 0)); // cada vida perdida tira cor
+    cx.globalAlpha = alfa;
+    if (cor >= 1) cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h);
+    else { cx.drawImage(mono(pose, 0), -player.w / 2, -player.h / 2, player.w, player.h); if (cor > 0.01) { cx.globalAlpha = alfa * cor; cx.drawImage(pose, -player.w / 2, -player.h / 2, player.w, player.h); } }
+  }
   cx.restore();
   // portal (10 quadros do GIF, 10 por segundo)
   if (portal) {
@@ -364,6 +377,11 @@ const desenha = () => {
   cx.fillStyle = TINTA(); cx.font = '600 15px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'right';
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
   if (estado !== 'fim') { cx.fillStyle = TINTA2(); cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
+  if (estado !== 'fim') { // vidas: 3 corações
+    cx.save(); cx.imageSmoothingEnabled = false;
+    for (let i = 0; i < 3; i++) { const im = i < vidas ? IM.vida1 : IM.vida0; if (im.complete && im.naturalWidth) cx.drawImage(im, 16 + i * 26, 60, 21, 21); }
+    cx.restore();
+  }
   if (estado === 'fim') {
     cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);
     cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);

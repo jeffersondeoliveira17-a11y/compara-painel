@@ -57,12 +57,11 @@ const dedoSpr = (() => {
   DEDO.forEach((l, j) => [...l].forEach((ch, i) => { if (cor[ch]) { g.fillStyle = cor[ch]; g.fillRect(i * u, j * u, u, u); } }));
   return c;
 })();
-// moldura de roseira: caule verde ondulado com espinhos para dentro e algumas rosas; cada lado é desenhado "em cima" e girado
+// moldura de roseira: caule verde ondulado com espinhos para dentro e folhinhas; cada lado é desenhado "em cima" e girado
 let molduraC = null;
 const moldura = () => {
   const c = document.createElement('canvas'); c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
-  const u = 4, R = { R: '#d62445', r: '#f0657c', D: '#8e1630' };
-  const rosa = ['.RRR.', 'RrRrR', 'RRDRR', 'RrRrR', '.RRR.'];
+  const u = 4;
   const cima = (comp) => {
     for (let p = 0; p < comp; p += u) {
       const y = 8 + (Math.sin(p / 46) > 0.35 ? u : 0); // o caule serpenteia 1 quadradinho
@@ -73,9 +72,6 @@ const moldura = () => {
       }
       if (n % 19 === 10) { // folha pendurada no caule
         g.fillStyle = '#4cc063'; g.fillRect(p, y - u, 2 * u, u); g.fillRect(p + u, y - 2 * u, u, u);
-      }
-      if (n % 37 === 18) { // rosa por cima do caule
-        rosa.forEach((l, j) => [...l].forEach((ch, i) => { if (R[ch]) { g.fillStyle = R[ch]; g.fillRect(p - 2 * u + i * u, y - u + j * u, u, u); } }));
       }
     }
   };

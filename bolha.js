@@ -86,13 +86,14 @@ const nasceEsp = () => { // sorteia um lugar livre (trecho com espinhos, longe d
   return false;
 };
 const espinhoS = (lado, s) => { const i = Math.floor(s / SEG); for (let d = -1; d <= 1; d++) if (espDe(lado, i + d).some((t) => Math.abs(s - (t + 2)) <= 17)) return true; return false; };
+const espZona = (lado, pos) => { const sp = pos - DIR[lado] * deslR, e = espL.find((q) => q.lado === lado && q.idade >= 0.75 && Math.abs(sp - (q.t + 2)) <= 17); return e ? yEsp(e.t, lado) + 22 : 0; }; // até onde vai a ponta do espinho mais próximo
 const espinho = (lado, pos) => espinhoS(lado, pos - DIR[lado] * deslR); // a bolha estoura perto de um espinho (posição na tela -> posição no caule)
 const yLiso = (lado, sc) => { // altura do caule no trecho liso: voltas de tamanho e ritmo variados, algumas bem mais para dentro
   const A = 0.6 + 1.4 * (0.5 + 0.5 * Math.sin(sc / 210 + lado * 1.7)), fase = sc / 34 + lado + 1.6 * Math.sin(sc / 120);
   return 4 + 4 * Math.round(A * (1 + Math.sin(fase)));
 };
-const yEsp = (sc) => 8 + (Math.sin(sc / 46) > 0.35 ? 4 : 0); // altura do caule no trecho com espinhos
-const fundoCaule = (lado, sc) => (trechoS(lado, sc) ? yEsp(sc) : yLiso(lado, sc)) + 10; // até onde o caule chega para dentro: a bolha bate aí
+const yEsp = (sc, lado = 0) => 4 * Math.max(1, Math.min(4, Math.round(2.5 + 1.6 * Math.sin(sc / 21 + lado * 1.3 + 1.2 * Math.sin(sc / 90))))); // altura do caule no trecho com espinhos: barrigas largas e suaves (4 a 16 px)
+const fundoCaule = (lado, sc) => (trechoS(lado, sc) ? yEsp(sc, lado) : yLiso(lado, sc)) + 10; // até onde o caule chega para dentro: a bolha bate aí
 const TAMS = [3.2, 1.3, 2.2, 1.6, 2.8, 1.2, 2.0]; // tamanhos bem variados (px por quadradinho)
 const rosasDe = (lado, idx) => { // quase todo trecho liso tem uma rosa, de tamanho sorteado
   if (trechoS(lado, idx * SEG) || hash(lado, idx, 5) < 0.1) return null;
@@ -111,7 +112,7 @@ const moldura = () => {
       const canon = lado === 1 ? W - p - u : lado === 2 ? H - p - u : p; // posição absoluta ao longo da borda
       const sc = canon - DIR[lado] * deslR, n = Math.round(sc / u); // posição no caule: é ela que ondula, não a da tela
       if (trechoS(lado, sc)) {
-        const y = yEsp(sc); // o caule serpenteia 1 quadradinho
+        const y = yEsp(sc, lado); // o caule faz barrigas suaves
         g.fillStyle = '#35a24e'; g.fillRect(p, y, u, u); g.fillStyle = '#1f6a36'; g.fillRect(p, y + u, u, u);
         const ee = espL.find((e) => e.lado === lado && Math.abs(sc - e.t) < u / 2 + 0.01);
         if (ee) { // espinho: triângulo de 3 quadradinhos de altura (nasce em etapas)
@@ -225,7 +226,7 @@ const passo = (agora) => {
       const rr = BR * 0.88 * b.e;
       b.x += b.vx * dt; b.y += b.vy * dt; b.sq = Math.max(0, b.sq - dt * 3.2);
       // paredes: no trecho com espinhos a bolha estoura; no trecho liso ela bate e volta
-      const zl = (lado, pos) => espinho(lado, pos) ? ZONA : Math.max(ZLISO, fundoCaule(lado, pos - DIR[lado] * deslR));
+      const zl = (lado, pos) => espZona(lado, pos) ||  Math.max(ZLISO, fundoCaule(lado, pos - DIR[lado] * deslR));
       const zc = zl(0, b.x), zb = zl(1, b.x), ze = zl(2, b.y), zd = zl(3, b.y);
       if (b.y - rr < zc) { if (espinho(0, b.x)) { mortas.push(b); continue; } b.y = zc + rr; b.vy = Math.abs(b.vy) * 0.75 + 8; b.sq = 1; }
       if (b.y + rr > H - zb) { if (espinho(1, b.x)) { mortas.push(b); continue; } b.y = H - zb - rr; b.vy = -Math.abs(b.vy) * 0.75 - 8; b.sq = 1; }

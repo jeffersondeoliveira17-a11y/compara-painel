@@ -477,11 +477,11 @@ const desenha = () => {
     cx.fillStyle = '#fff'; cx.textAlign = 'center'; cx.font = '700 20px system-ui, sans-serif'; cx.fillText(motivo, W / 2, H / 2 - 6);
     cx.font = '600 15px system-ui, sans-serif'; cx.fillText('Volta ao trabalho!', W / 2, H / 2 + 22);
   }
-  if (estado === 'pronto') pixTexto('', W / 2, H * 0.44, Math.max(1.6, Math.min(2.6, W / 360)));
+  if (estado === 'pronto') pixTexto('', W / 2, H * 0.44, Math.max(1.3, Math.min(1.8, W / 500)));
   if (estado === 'morto') {
-    const w = Math.min(230, W * 0.4), h = w * 15.5 / 31;
+    const w = Math.min(165, W * 0.3), h = w * 15.5 / 31;
     cx.drawImage(S(IM.fim), (W - w) / 2, Math.max(16, (cy - h) / 2 - 6), w, h);
-    pixTexto('', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 18 + 15 * 1.1, 1.1);
+    pixTexto('', W / 2, Math.max(16, (cy - h) / 2 - 6) + h + 16 + 15 * 0.9, 0.9);
   }
 };
 

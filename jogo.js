@@ -403,7 +403,8 @@ const desenha = () => {
 
 // ---------- abrir e fechar ----------
 // terça-feira é o dia da bolha e quarta o do cãozinho; ?bolha e ?cao forçam um deles
-const jogoDoDia = () => /[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : LIBERADO ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao';
+const jogoDoParam = () => { const m = /[?&]cafe=([a-z]+)/i.exec(location.search); const v = m && m[1].toLowerCase(); return v === 'bolha' ? 'bolha' : (v === 'dog' || v === 'cao') ? 'cao' : null; }; // ?cafe=dog ou ?cafe=bolha escolhe o jogo
+const jogoDoDia = () => jogoDoParam() || (/[?&]bolha(=|&|$)/.test(location.search) ? 'bolha' : /[?&]cao(=|&|$)/.test(location.search) ? 'cao' : LIBERADO ? 'cao' : ({ 2: 'bolha', 3: 'cao' })[new Date().getDay()] || 'cao');
 // trava a página no topo enquanto o jogo está aberto (setas, espaço, roda do mouse e dedo não rolam a tela)
 const SCROLL_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
 let travado = false;

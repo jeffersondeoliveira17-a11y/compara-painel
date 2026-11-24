@@ -273,6 +273,7 @@ const passo = (agora) => {
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     if (invul > 0) invul -= dt;
     if (curaT > 0) curaT -= dt;
+    for (const o of obst) if (o.fantasma) { if (o.flashT === undefined && o.x - (player.x + player.w) < 340 && o.x > player.x) o.flashT = 0.4; else if (o.flashT > 0) o.flashT -= dt; } // relâmpago: pouco antes do fantasma chegar, clareia e mostra o que está debaixo do lençol
     voam.forEach((h) => { h.t += dt; }); voam = voam.filter((h) => h.t < 1.8);
     for (const o of obst) {
       if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
@@ -407,7 +408,7 @@ const desenha = () => {
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
-  obst.forEach((o) => o.moita ? (o.roca && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  obst.forEach((o) => o.moita ? (o.roca && !o.fantasma && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }
@@ -437,7 +438,15 @@ const desenha = () => {
   }
   cx.restore();
   // moitas do chão: ficam na frente do cachorro, que passa por dentro delas
-  obst.forEach((o) => { const mi = o.fantasma ? IM.fantasma : IM.moita; if (o.moita && mi.complete && mi.naturalWidth) cx.drawImage(o.cor ? mi : S(mi), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); });
+  const SIL = '#11161f', silDe = (im, w, h, olho) => { const k = im.src + w + h + olho; silDe.c = silDe.c || {}; if (silDe.c[k]) return silDe.c[k]; const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, w, h); g.globalCompositeOperation = 'source-atop'; g.fillStyle = SIL; g.fillRect(0, 0, w, h); if (olho) { g.globalCompositeOperation = 'destination-out'; g.fillRect(0, 0, Math.round(w * 12 / 33), Math.round(h * 8 / 31)); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#fff'; g.fillRect(Math.round(w * 17 / 33), Math.round(h * 12 / 31), Math.round(w * 3 / 33), Math.round(h * 3 / 31)); } return (silDe.c[k] = c); };
+  obst.forEach((o) => { // relâmpago do fantasma: dois clarões rápidos que mostram a silhueta da pedra e do passarinho escondidos
+    if (!o.fantasma) return; if (!(o.flashT > 0)) { o.piscando = false; return; } const u = 0.4 - o.flashT; o.piscando = u < 0.09 || (u > 0.15 && u < 0.36); if (!o.piscando) return;
+    cx.globalAlpha = 0.24; cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); cx.globalAlpha = 1;
+    if (!o.roca) return; const r = o.roca, rx = o.x + (o.w - r.w) / 2, ry = cy - r.h + AFUNDA;
+    if (IM.pedra.complete && IM.pedra.naturalWidth) cx.drawImage(silDe(IM.pedra, Math.round(r.w), Math.round(r.h), false), Math.round(rx), Math.round(ry));
+    const im = IM.ave; if (im.complete && im.naturalWidth) { const u2 = 2, w = im.naturalWidth * u2, h = im.naturalHeight * u2; cx.save(); cx.translate(Math.round(o.x + o.w / 2 - w / 2) + w, Math.round(ry + 3 - h)); cx.scale(-1, 1); cx.drawImage(silDe(im, w, h, true), 0, 0); cx.restore(); }
+  });
+  obst.forEach((o) => { const mi = o.fantasma ? IM.fantasma : IM.moita; if (o.fantasma && o.piscando) cx.globalAlpha = 0.16; if (o.moita && mi.complete && mi.naturalWidth) cx.drawImage(o.cor ? mi : S(mi), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); cx.globalAlpha = 1; });
   voam.forEach((h) => { const e = h.t / 1.8, ang = h.f + h.t * 7, raio = 6 + 20 * e; cx.globalAlpha = Math.min(1, (1 - e) * 2.2); desenhaCoracao(h.x + Math.cos(ang) * raio - 10, h.y - h.t * 62 + Math.sin(ang) * raio * 0.35, 2, true); cx.globalAlpha = 1; }); // coração subindo em espiral
   folhas.forEach((f) => { cx.globalAlpha = Math.min(1, (f.vida - f.t) * 3); cx.fillStyle = FOLHA_COR[f.c]; cx.fillRect(Math.round(f.x), Math.round(f.y), f.r, f.r); cx.globalAlpha = 1; });
   // portal (10 quadros do GIF, 10 por segundo)

@@ -170,11 +170,7 @@ const novoObst = () => {
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
-  if (grande) { /* gigante vem sozinha */ } else if (o.cone) {
-    // cone nunca vem em dupla de cones: vem com um buraco no chão, antes ou depois dele (um pulo só passa nos dois)
-    const bu = { x: o.x, w: 76, h: 20, buraco: true }, gap = 28 + Math.random() * 14;
-    if (Math.random() < 0.5) { bu.x = o.x; o.x = bu.x + bu.w + gap; } else bu.x = o.x + o.w + gap;
-    obst.push(bu); fim = bu.x > o.x ? bu : o;
+  if (grande) { /* gigante vem sozinha */ } else if (o.cone) { /* cone vem sozinho: nunca dois cones juntos, nem buraco */
   } else if (Math.random() < Math.min(0.55, 0.22 + 0.1 * fase)) {
     // trio: duas pedras coladas (um pulo passa nas duas) e a terceira logo depois do pouso (segundo pulo)
     const b2 = P(o.x + o.w + 22 + Math.random() * 16); obst.push(b2);

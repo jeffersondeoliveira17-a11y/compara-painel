@@ -494,4 +494,4 @@ body{padding:0!important;background:var(--color-panel,#f5f5f5)}
 .cp-clima .cl-box>*:last-child:not(.cl-g){margin-top:-7.7px}
 
 /* acoes rapidas: o vao no meio entre os cartoes fica igual a distancia da borda do cartao branco ate o cartao rosa (14px de padding + 1px de borda) */
-.cp-qas{column-gap:15px}
+.cp-qas{column-gap:13px}

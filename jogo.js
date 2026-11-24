@@ -111,7 +111,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  tig = { x: 50, cx: 0 }; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  tig = { x: 56 }; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = 0; matoX = 0; obst = []; chaoX = 0; prox = 900; fase = 0; noite = flagNoite; aplicaTema(); espelho = false; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -282,7 +282,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
-  if (tig && IM.tig.complete && IM.tig.naturalWidth) { const u = 2, w = IM.tig.naturalWidth * u, h = IM.tig.naturalHeight * u; cx.drawImage(IM.tig, Math.round(tig.x), cy + 5 - h, w, h); if (IM.casa.complete && IM.casa.naturalWidth) { const cw = IM.casa.naturalWidth * 2, ch = IM.casa.naturalHeight * 2; cx.drawImage(IM.casa, Math.round(tig.x - 48), cy + 5 - ch, cw, ch); } } // tigela do cachorro na largada
+  if (tig && IM.tig.complete && IM.tig.naturalWidth) { const u = 1.2, w = IM.tig.naturalWidth * u, h = IM.tig.naturalHeight * u; if (IM.casa.complete && IM.casa.naturalWidth) { const cw = IM.casa.naturalWidth * 4, ch = IM.casa.naturalHeight * 4; cx.drawImage(IM.casa, Math.round(tig.x - 66), cy + 5 - ch, cw, ch); } cx.drawImage(IM.tig, Math.round(tig.x), cy + 5 - h, w, h); } // tigela do cachorro na largada
   const piaAve = () => { if (!(ave && IM.ave.complete && IM.ave.naturalWidth)) return; const u = 2, w = IM.ave.naturalWidth * u, h = IM.ave.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(IM.ave, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras

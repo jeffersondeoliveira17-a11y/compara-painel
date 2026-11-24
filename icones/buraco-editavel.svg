@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 84 36" width="336" height="144" shape-rendering="crispEdges">
+  <!-- Buraco do jogo (quadradinhos de 4 px). Tons de terra: claro #a26f3e, médio #8f5d33, fundo #5a361f e #3a2112 (os dois últimos mais escuros). -->
+  <g id="parede"><!-- borda e fundo da bacia --><path fill="#8f5d33" d="M0 0h76v4h-76zM0 4h76v4h-76zM4 8h68v4h-68zM8 12h60v4h-60z"/><path fill="#5a361f" d="M12 16h52v4h-52zM20 20h36v4h-36z"/><path fill="#3a2112" d="M28 24h20v4h-20z"/></g>
+  <g id="miolo"><!-- terra por dentro, escurecendo com a profundidade --><path fill="#a26f3e" d="M4 0h68v4h-68zM4 4h68v4h-68z"/><path fill="#8f5d33" d="M8 8h60v4h-60zM12 12h52v4h-52z"/><path fill="#5a361f" d="M16 16h44v4h-44z"/><path fill="#3a2112" d="M24 20h28v4h-28z"/></g>
+  <g id="luz-esquerda" fill="#a26f3e"><!-- lado esquerdo iluminado --><path d="M0 0h4v4h-4zM0 4h4v4h-4zM4 8h4v4h-4zM8 12h4v4h-4zM12 16h4v4h-4zM20 20h4v4h-4z"/></g>
+  <g id="sombra-direita" fill="#5a361f"><!-- lado direito mais escuro --><path d="M72 0h4v4h-4zM72 4h4v4h-4zM68 8h4v4h-4z"/></g>
+  <g id="grama"><!-- tufos de grama entrando no buraco --><path fill="#6fcf55" d="M-2 -2h10v3h-10zM70 -2h8v3h-8z"/><path fill="#55b83f" d="M-2 1h6v3h-6zM-2 4h6v3h-6zM74 1h4v3h-4zM74 4h4v3h-4z"/></g>
+</svg>

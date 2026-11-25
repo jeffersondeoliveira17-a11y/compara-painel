@@ -32,7 +32,7 @@
 #cpg .mn.tb .fr button svg{width:19px;height:19px;fill:currentColor}#cpg .mn.tb .fr button span{display:none}
 #cpg .mn.tb .fr button:hover{background:rgba(127,127,127,.25)}#cpg .mn.tb .fr button.ug.on{background:var(--on)}
 #cpg .mn.tb .fim{display:grid;grid-template-columns:1fr 1fr;padding:4px 6px 8px}#cpg .mn.tb.mi .fim{grid-template-columns:1fr}
-#cpg .mn.tb .f1{width:28px;height:28px;margin:0 auto;border-radius:3px;background:var(--c);border:0;padding:0}
+#cpg .mn.tb .f1{width:28px;height:28px;margin:0 auto;border-radius:3px;background:var(--c);border:0;padding:0;cursor:pointer}
 #cpg .mn.tb .rz{position:absolute;top:0;right:0;bottom:0;width:6px;cursor:ew-resize;z-index:3}#cpg .mn.tb .rz:hover{background:linear-gradient(90deg,transparent,rgba(58,154,224,.5))}
 #cpg .tp{position:absolute;z-index:8;pointer-events:auto;background:var(--bg);color:var(--fg);border:1px solid var(--ln);border-radius:4px;padding:4px;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.4)}
 #cpg .tp button{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;color:var(--fg);font:inherit;padding:6px 10px;border-radius:3px;cursor:pointer;text-align:left;white-space:nowrap}#cpg .tp button:hover{background:rgba(127,127,127,.25)}#cpg .tp button i{width:10px;font-style:normal}`;
@@ -81,7 +81,7 @@
   };
   const menu = () => {
     mn.classList.toggle('mi', !!conf.min); mn.style.width = ''; mn.classList.toggle('cre', conf.tema === 'cre'); mn.classList.toggle('esc', conf.tema !== 'cre');
-    mn.querySelector('.cs').innerHTML = CORES.map(([hex0, nome], i) => '<div class="c" style="--c:' + hexDe(i) + '"><div class="cell"><button class="sw' + (conf.cor === i ? ' on' : '') + '" data-c="' + i + '" title="' + nome + ' · clique: usar esta cor · dois cliques: mudar a cor"></button><button class="lk' + (trav(i) ? ' on' : '') + '" data-l="' + i + '" title="Travar as linhas ' + nome.toLowerCase() + '">' + CAD(trav(i)) + '</button></div></div>').join('');
+    mn.querySelector('.cs').innerHTML = CORES.map(([hex0, nome], i) => '<div class="c" style="--c:' + hexDe(i) + '"><div class="cell"><button class="sw' + (conf.cor === i ? ' on' : '') + '" data-c="' + i + '" title="' + nome + ' · clique: usa esta cor e seleciona as linhas dela"></button><button class="lk' + (trav(i) ? ' on' : '') + '" data-l="' + i + '" title="Travar as linhas ' + nome.toLowerCase() + '">' + CAD(trav(i)) + '</button></div></div>').join('');
     { const f1 = mn.querySelector('.f1'), f2 = mn.querySelector('.f2'); if (f1) f1.style.background = hexDe(conf.cor); if (f2) f2.style.background = hexDe(conf.ant != null ? conf.ant : (conf.cor + 1) % CORES.length); }
     mn.querySelector('.mm').textContent = conf.min ? '▸▸' : '◂◂';
     { const u = mn.querySelector('.ug'), a = estadoUnir(); if (u) { u.innerHTML = ELO + '<span>' + a.txt + '</span>'; u.title = a.txt + ' · segure Shift e clique nas linhas para escolher; depois clique aqui para unir (ou soltar)'; u.classList.toggle('on', a.modo !== ''); u.style.opacity = a.modo ? 1 : 0.7; } }
@@ -127,7 +127,7 @@
   const cria = () => {
     const st = document.createElement('style'); st.textContent = css + cssTb; document.head.append(st);
     root = document.createElement('div'); root.id = 'cpg';
-    root.innerHTML = '<div class="r rh"></div><div class="r rv"></div><div class="cn" title="Apagar as linhas destravadas">×</div><div class="mn tb"><div class="hd"><button class="mm" title="Abrir / fechar a barra"></button><button class="xx" title="Fechar as guias (Esc)">✕</button></div><div class="gp"></div><div class="cs"></div><hr><div class="fr"><button class="ug"></button><button class="pt" title="Copiar área da tela (seleciona e copia a imagem; só vai para o Ctrl+V, não salva arquivo)">' + SELI + '<span>Copiar área</span></button><button class="lp" title="Limpar linhas (apaga as destravadas)">' + XI + '<span>Limpar linhas</span></button><button class="tm" title="Tema e opções">' + DOTS + '</button></div><div class="fim"><div class="f1" title="Cor das próximas linhas"></div></div><div class="rz" title="Arraste a borda: larga = 2 colunas, estreita = 1 coluna"></div><input type="color" class="pk" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"></div>';
+    root.innerHTML = '<div class="r rh"></div><div class="r rv"></div><div class="cn" title="Apagar as linhas destravadas">×</div><div class="mn tb"><div class="hd"><button class="mm" title="Abrir / fechar a barra"></button><button class="xx" title="Fechar as guias (Esc)">✕</button></div><div class="gp"></div><div class="cs"></div><hr><div class="fr"><button class="ug"></button><button class="pt" title="Copiar área da tela (seleciona e copia a imagem; só vai para o Ctrl+V, não salva arquivo)">' + SELI + '<span>Copiar área</span></button><button class="lp" title="Limpar linhas (apaga as destravadas)">' + XI + '<span>Limpar linhas</span></button><button class="tm" title="Tema e opções">' + DOTS + '</button></div><div class="fim"><button class="f1" title="Clique para mudar esta cor"></button></div><div class="rz" title="Arraste a borda: larga = 2 colunas, estreita = 1 coluna"></div><input type="color" class="pk" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"></div>';
     rh = root.querySelector('.rh'); rv = root.querySelector('.rv'); mn = root.querySelector('.mn');
     root.addEventListener('pointerdown', (e) => {
       const t = e.target;
@@ -141,7 +141,10 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && on && sel.size) { sel.clear(); menu(); desenha(); } });
     mn.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.c != null) { const agora = Date.now(), i = +b.dataset.c; if (ultimo.i === i && agora - ultimo.t < 450) { ultimo = { i: -1, t: 0 }; abreCor(b); return; } ultimo = { i, t: agora }; if (conf.cor !== i) conf.ant = conf.cor; conf.cor = i; }
+      if (b.dataset.c != null) { const i = +b.dataset.c; if (conf.cor !== i) conf.ant = conf.cor; conf.cor = i; // clicar na bolinha: seleciona as linhas dessa cor (e as unidas a elas)
+        const ids = new Set(gs.filter((g) => (g.c || 0) === i && g.gr).map((g) => g.gr)), ja = gs.filter((g) => (g.c || 0) === i || (g.gr && ids.has(g.gr)));
+        const todas = ja.length && ja.every((g) => sel.has(g)); sel.clear(); if (!todas) ja.forEach((g) => sel.add(g)); }
+      else if (b.classList.contains('f1')) { abreCor(b); return; }
       else if (b.dataset.l != null) { const i = +b.dataset.l; conf.trava = trav(i) ? conf.trava.filter((x) => x !== i) : conf.trava.concat(i); }
       else if (b.classList.contains('mm')) conf.min = !conf.min;
       else if (b.classList.contains('pt')) { copiaArea(); return; }
@@ -152,8 +155,8 @@
       else if (b.classList.contains('sw2') || b.classList.contains('f2')) { const c0 = conf.cor; conf.cor = conf.ant != null ? conf.ant : (c0 + 1) % CORES.length; conf.ant = c0; }
       grava(); menu(); desenha();
     });
-    function abreCor(b) { // dois cliques na bolinha: abre o seletor de cor
-      const i = +b.dataset.c, pk = mn.querySelector('.pk'); conf.cor = i; pk.value = hexDe(i);
+    function abreCor(b) { // quadrado de baixo: abre o seletor da cor atual
+      const i = conf.cor, pk = mn.querySelector('.pk'); pk.value = hexDe(i);
       pk.oninput = () => { conf.cores[i] = pk.value; pkAte = Date.now() + 1500; menu(); desenha(); }; pk.onchange = () => { pkAte = Date.now() + 700; grava(); }; // muda a cor de todas as linhas desse grupo (nenhuma linha nova)
       const mr = mn.getBoundingClientRect(), r = b.getBoundingClientRect(); Object.assign(pk.style, { left: Math.round(r.left - mr.left) + 'px', top: Math.round(mr.height) + 'px', width: '1px', height: '1px', pointerEvents: 'auto' }); // o seletor abre embaixo do menu (topo dele na base do menu)
       pkAte = Date.now() + 15000;

@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), nuvem: img('icones/nuvem.svg'), banco: img('icones/nuvens-tempestade.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -124,6 +124,7 @@ const chPasso = (dt) => {
   ch.k += Math.sign(ch.alvo - ch.k) * Math.min(Math.abs(ch.alvo - ch.k), dt / 2);
   chMove(ch.fundo, Math.round(Math.min(110, 30 + W / 14) * ch.k), true, dt);
   chMove(ch.frente, Math.round(Math.min(6, 3 + W / 500) * ch.k), false, dt);
+  ch.bx = ((ch.bx || 0) - 9 * dt) % 1416; if (ch.bx > 0) ch.bx -= 1416;
   ch.ondas.forEach((o) => { o.t += dt; }); ch.ondas = ch.ondas.filter((o) => o.t < 0.7);
   if (ch.k > 0.7 && !ch.raio) { ch.raioEm -= dt; if (ch.raioEm <= 0) { ch.raioEm = flagChuva ? 6 : 27 + Math.random() * 3; ch.raio = chRaio(); } }
   if (ch.raio) { ch.raio.t += dt; if (ch.raio.t > 0.5) ch.raio = null; }
@@ -138,6 +139,13 @@ const chFundo = () => { // atrás de tudo (nuvens, moitas, cachorro): céu fecha
   if (r) { const u = r.t, vis = u < 0.08 || (u > 0.14 && u < 0.28), fade = Math.max(0, 1 - u / 0.5); cx.fillStyle = 'rgba(205,222,255,' + ((vis ? 0.16 : 0.05) * fade) + ')'; cx.fillRect(0, 0, W, cy);
     if (vis) { const traca = (p, w, c) => { cx.strokeStyle = c; cx.lineWidth = w; cx.lineJoin = 'miter'; cx.beginPath(); p.forEach((q, i) => (i ? cx.lineTo(Math.round(q[0]), Math.round(q[1])) : cx.moveTo(Math.round(q[0]), Math.round(q[1])))); cx.stroke(); }; traca(r.pts, 5, 'rgba(140,180,255,.14)'); r.ramos.forEach((b) => traca(b, 1, 'rgba(225,236,255,.6)')); traca(r.pts, 2, 'rgba(200,220,255,.9)'); traca(r.pts, 1, '#fff'); } }
   chRisca(ch.fundo, ch.k);
+  const bi = IM.banco; if (bi.complete && bi.naturalWidth) { // teto de nuvens de tempestade: desce do topo, cobre a largura toda e anda devagar para a esquerda
+    const q = 4, tw = bi.naturalWidth * q, th = bi.naturalHeight * q, y = -(1 - ch.k) * th, ga = cx.globalAlpha, sm = cx.imageSmoothingEnabled;
+    if (!ch.bc) { const c = document.createElement('canvas'); c.width = tw; c.height = th; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(bi, 0, 0, tw, th); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,20,34,.3)'; g.fillRect(0, 0, tw, th); ch.bc = c; } // um pouco mais escuro, para combinar com a noite
+    cx.imageSmoothingEnabled = false; cx.globalAlpha = Math.min(1, ch.k * 1.4);
+    const lamp = r && (r.t < 0.08 || (r.t > 0.14 && r.t < 0.28));
+    for (let x = (ch.bx || 0); x < W; x += tw) { cx.drawImage(ch.bc, Math.round(x), Math.round(y)); if (lamp) { cx.globalCompositeOperation = 'lighter'; cx.globalAlpha = 0.22; cx.drawImage(ch.bc, Math.round(x), Math.round(y)); cx.globalCompositeOperation = 'source-over'; cx.globalAlpha = Math.min(1, ch.k * 1.4); } } // o raio acende as nuvens por dentro
+    cx.globalAlpha = ga; cx.imageSmoothingEnabled = sm; }
   cx.restore();
 };
 const chDesenha = () => { // na frente: só alguns pingos e marolas no chão

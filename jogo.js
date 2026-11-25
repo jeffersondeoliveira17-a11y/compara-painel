@@ -104,11 +104,11 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const flagChuva = /[?&]chuva(=|&|$)/.test(location.search);
 let ch = null;
 const chReset = () => { ch = { k: flagChuva ? 1 : 0, alvo: flagChuva ? 1 : 0, em: flagChuva ? 1e9 : 10 + Math.random() * 10, fundo: [], frente: [], ondas: [], raio: null, raioEm: flagChuva ? 3 : 8 }; };
-const chGota = (fundo, espalha) => { const cy = chaoY(); if (fundo) { const yEnd = cy - 2 - Math.random() * 6, len = 7 + Math.random() * 10; return { x: -H * 0.3 + Math.random() * (W + H * 0.3), y: espalha ? Math.random() * yEnd : -len, len, v: 420 + Math.random() * 260, a: 0.12 + Math.random() * 0.18, yEnd }; } const yEnd = cy + 4 + Math.random() * Math.min(10, Math.max(2, H - cy - 8)), len = 16 + Math.random() * 14; return { x: -H * 0.4 + Math.random() * (W + H * 0.4), y: espalha ? Math.random() * yEnd : -len, len, v: 900 + Math.random() * 350, a: 0.3 + Math.random() * 0.25, yEnd }; };
+const chGota = (fundo, espalha) => { const cy = chaoY(); if (fundo) { const yEnd = cy - 2 - Math.random() * 6, len = 7 + Math.random() * 10; return { x: -H * 0.3 + Math.random() * (W + H * 0.3), y: espalha ? Math.random() * yEnd : -len, len, v: 420 + Math.random() * 260, a: 0.12 + Math.random() * 0.18, yEnd }; } const yEnd = cy + 2 + Math.random() * 7, len = 16 + Math.random() * 14; return { x: -H * 0.4 + Math.random() * (W + H * 0.4), y: espalha ? Math.random() * yEnd : -len, len, v: 900 + Math.random() * 350, a: 0.3 + Math.random() * 0.25, yEnd }; };
 const chRaio = () => { const cy = chaoY(), alt = cy - 6, pts = [[W * (0.1 + Math.random() * 0.8), 0]], ramos = []; let [x, y] = pts[0]; while (y < alt) { y += 7 + Math.random() * 9; x += (Math.random() - 0.5) * 16; pts.push([x, Math.min(y, alt)]); } for (let q = 0; q < 2 + Math.floor(Math.random() * 2); q++) { const i = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 4)), s = Math.random() < 0.5 ? -1 : 1, r = [pts[i].slice()]; let [bx, by] = r[0]; for (let m = 0, n = 3 + Math.floor(Math.random() * 3); m < n; m++) { by += 6 + Math.random() * 6; bx += s * (3 + Math.random() * 8); if (by < alt) r.push([bx, by]); } ramos.push(r); } return { t: 0, pts, ramos }; };
 const chMove = (arr, n, fundo, dt) => {
   while (arr.length < n) arr.push(chGota(fundo, true));
-  for (let i = arr.length - 1; i >= 0; i--) { const g = arr[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (!fundo && Math.random() < 0.35 && ch.ondas.length < 5) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 3 + Math.random() * 4 }); if (arr.length > n) arr.splice(i, 1); else arr[i] = chGota(fundo, false); } }
+  for (let i = arr.length - 1; i >= 0; i--) { const g = arr[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (arr.length > n) arr.splice(i, 1); else arr[i] = chGota(fundo, false); } }
 };
 const chPasso = (dt) => {
   if (!ch) chReset();
@@ -124,11 +124,13 @@ const chCor = () => (escuro() ? '223,233,247' : '70,100,130');
 const chRisca = (arr, k) => { const cor = chCor(); cx.lineWidth = 1; arr.forEach((g) => { cx.strokeStyle = 'rgba(' + cor + ',' + (g.a * k) + ')'; cx.beginPath(); cx.moveTo(Math.round(g.x), Math.round(g.y)); cx.lineTo(Math.round(g.x - g.len * 0.45), Math.round(g.y - g.len)); cx.stroke(); }); };
 const chFundo = () => { // atrás de tudo (nuvens, moitas, cachorro): céu fechado, chuvisco distante e o raio lá longe
   if (!ch || ch.k <= 0.01) return;
+  cx.save(); if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // desfaz o espelho das fases ímpares: a chuva cai sempre para o mesmo lado
   const cy = chaoY(); cx.fillStyle = 'rgba(10,16,28,' + (0.14 * ch.k) + ')'; cx.fillRect(0, 0, W, cy);
   const r = ch.raio;
   if (r) { const u = r.t, vis = u < 0.08 || (u > 0.14 && u < 0.28), fade = Math.max(0, 1 - u / 0.5); cx.fillStyle = 'rgba(205,222,255,' + ((vis ? 0.16 : 0.05) * fade) + ')'; cx.fillRect(0, 0, W, cy);
     if (vis) { const traca = (p, w, c) => { cx.strokeStyle = c; cx.lineWidth = w; cx.lineJoin = 'miter'; cx.beginPath(); p.forEach((q, i) => (i ? cx.lineTo(Math.round(q[0]), Math.round(q[1])) : cx.moveTo(Math.round(q[0]), Math.round(q[1])))); cx.stroke(); }; traca(r.pts, 5, 'rgba(140,180,255,.14)'); r.ramos.forEach((b) => traca(b, 1, 'rgba(225,236,255,.6)')); traca(r.pts, 2, 'rgba(200,220,255,.9)'); traca(r.pts, 1, '#fff'); } }
   chRisca(ch.fundo, ch.k);
+  cx.restore();
 };
 const chDesenha = () => { // na frente: só alguns pingos e marolas no chão
   if (!ch || ch.k <= 0.01) return;

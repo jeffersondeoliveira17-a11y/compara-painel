@@ -120,7 +120,8 @@ const chMove = (arr, n, fundo, dt) => {
 };
 const chPasso = (dt) => {
   if (!ch) chReset();
-  if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 35 + Math.random() * 25 : 20 + Math.random() * 20; if (ch.alvo) ch.raioEm = 6 + Math.random() * 6; } }
+  if (!flagChuva && fase !== 2) { ch.alvo = 0; ch.em = 10 + Math.random() * 10; } // a tempestade é só da terceira etapa (ir, voltar e ir de novo)
+  else if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 35 + Math.random() * 25 : 20 + Math.random() * 20; if (ch.alvo) ch.raioEm = 6 + Math.random() * 6; } }
   ch.k += Math.sign(ch.alvo - ch.k) * Math.min(Math.abs(ch.alvo - ch.k), dt / 2);
   chMove(ch.fundo, Math.round(Math.min(110, 30 + W / 14) * ch.k), true, dt);
   chMove(ch.frente, Math.round(Math.min(6, 3 + W / 500) * ch.k), false, dt);
@@ -232,7 +233,7 @@ const novoObst = () => {
   const terra = false, kt = 3;
   // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
   const moita = !grande && !cena && Math.random() < 0.1, km = Math.random() < 0.4 ? 2.3 : 1.4 + Math.random() * 0.9, roca = moita && Math.random() < 0.55, rs = 0.55 + 0.45 * Math.min(1, (km - 1.4) / 0.9) * (0.8 + Math.random() * 0.2); // moita: 2.3 e o tamanho maximo; menores levam pedra menor; menos moitas
-  const fant = !moita && !grande && !cena && Math.random() < 0.12, fh = 22 * 1.8 + 46 + 2.3, froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
+  const fant = !moita && !grande && !cena && noite && progFase() < 0.55 && Math.random() < 0.12, fh = 22 * 1.8 + 46 + 2.3, froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
   const o = fant ? { x: W + 20, w: fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra && !o.moita) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }

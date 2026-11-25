@@ -405,7 +405,7 @@ const desenhaLua = () => { // lua minguante: aparece à noite, anda devagar pelo
   const v = (1 - faixa(0.55, 0.85)) * (1 - (ch ? ch.k : 0)), im = IM.lua; if (!noite || v <= 0.02 || !im.complete || !im.naturalWidth) return;
   const q = 4, w = im.naturalWidth * q, h = im.naturalHeight * q, p = Math.max(0, Math.min(1, progFase()));
   cx.save(); if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } cx.imageSmoothingEnabled = false; cx.globalAlpha = 0.96 * v;
-  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(40 + 18 * p), w, h); cx.restore(); };
+  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), 24, w, h); cx.restore(); };
 const desenhaEstrelas = (cyChao) => {
   if (!noite) return;
   desenhaLua();

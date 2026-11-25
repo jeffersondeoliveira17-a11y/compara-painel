@@ -234,9 +234,9 @@ const novoObst = () => {
   const terra = false, kt = 3;
   // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
   const moita = !grande && !cena && Math.random() < 0.1, km = Math.random() < 0.4 ? 2.3 : 1.4 + Math.random() * 0.9, roca = moita && Math.random() < 0.55, rs = 0.55 + 0.45 * Math.min(1, (km - 1.4) / 0.9) * (0.8 + Math.random() * 0.2); // moita: 2.3 e o tamanho maximo; menores levam pedra menor; menos moitas
-  const fant = !moita && !grande && !cena && noite && progFase() < 0.55 && dist >= fantLib && Math.random() < 0.3, fh = 22 * 1.8 + 46 + 2.3, froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
+  const fant = !moita && !grande && !cena && noite && progFase() < 0.55 && dist >= fantLib && Math.random() < 0.5, fh = 22 * 1.8 + 46 + 2.3, froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
   const o = fant ? { x: W + 20, w: fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
-  if (fant) fantLib = dist + 2000 + Math.random() * 700; // fantasma é raro: só volta depois de um bom trecho (uns 3 por fase)
+  if (fant) fantLib = dist + 1400 + Math.random() * 500; // fantasma é raro: só volta depois de um bom trecho (uns 3 por fase)
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra && !o.moita) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
   // a cada portal o jogo fica mais difícil: mais duplas e, a partir da fase 2, trios para pular em 2 toques

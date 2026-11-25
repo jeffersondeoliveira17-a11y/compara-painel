@@ -104,18 +104,18 @@ const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra
 const flagChuva = /[?&]chuva(=|&|$)/.test(location.search);
 let ch = null;
 const chReset = () => { ch = { k: flagChuva ? 1 : 0, alvo: flagChuva ? 1 : 0, em: flagChuva ? 1e9 : 10 + Math.random() * 10, fundo: [], frente: [], ondas: [], raio: null, raioEm: flagChuva ? 3 : 8 }; };
-const chGota = (fundo, espalha) => { const cy = chaoY(); if (fundo) { const yEnd = cy - 2 - Math.random() * 6, len = 7 + Math.random() * 10; return { x: -H * 0.3 + Math.random() * (W + H * 0.3), y: espalha ? Math.random() * yEnd : -len, len, v: 420 + Math.random() * 260, a: 0.12 + Math.random() * 0.18, yEnd }; } const yEnd = cy + 8 + Math.random() * Math.max(4, H - cy - 18), len = 16 + Math.random() * 14; return { x: -H * 0.4 + Math.random() * (W + H * 0.4), y: espalha ? Math.random() * yEnd : -len, len, v: 900 + Math.random() * 350, a: 0.3 + Math.random() * 0.25, yEnd }; };
+const chGota = (fundo, espalha) => { const cy = chaoY(); if (fundo) { const yEnd = cy - 2 - Math.random() * 6, len = 7 + Math.random() * 10; return { x: -H * 0.3 + Math.random() * (W + H * 0.3), y: espalha ? Math.random() * yEnd : -len, len, v: 420 + Math.random() * 260, a: 0.12 + Math.random() * 0.18, yEnd }; } const yEnd = cy + 4 + Math.random() * Math.min(10, Math.max(2, H - cy - 8)), len = 16 + Math.random() * 14; return { x: -H * 0.4 + Math.random() * (W + H * 0.4), y: espalha ? Math.random() * yEnd : -len, len, v: 900 + Math.random() * 350, a: 0.3 + Math.random() * 0.25, yEnd }; };
 const chRaio = () => { const cy = chaoY(), alt = cy - 6, pts = [[W * (0.1 + Math.random() * 0.8), 0]], ramos = []; let [x, y] = pts[0]; while (y < alt) { y += 7 + Math.random() * 9; x += (Math.random() - 0.5) * 16; pts.push([x, Math.min(y, alt)]); } for (let q = 0; q < 2 + Math.floor(Math.random() * 2); q++) { const i = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 4)), s = Math.random() < 0.5 ? -1 : 1, r = [pts[i].slice()]; let [bx, by] = r[0]; for (let m = 0, n = 3 + Math.floor(Math.random() * 3); m < n; m++) { by += 6 + Math.random() * 6; bx += s * (3 + Math.random() * 8); if (by < alt) r.push([bx, by]); } ramos.push(r); } return { t: 0, pts, ramos }; };
 const chMove = (arr, n, fundo, dt) => {
   while (arr.length < n) arr.push(chGota(fundo, true));
-  for (let i = arr.length - 1; i >= 0; i--) { const g = arr[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (!fundo && Math.random() < 0.6 && ch.ondas.length < 14) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 4 + Math.random() * 7 }); if (arr.length > n) arr.splice(i, 1); else arr[i] = chGota(fundo, false); } }
+  for (let i = arr.length - 1; i >= 0; i--) { const g = arr[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (!fundo && Math.random() < 0.35 && ch.ondas.length < 5) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 3 + Math.random() * 4 }); if (arr.length > n) arr.splice(i, 1); else arr[i] = chGota(fundo, false); } }
 };
 const chPasso = (dt) => {
   if (!ch) chReset();
   if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 35 + Math.random() * 25 : 20 + Math.random() * 20; if (ch.alvo) ch.raioEm = 6 + Math.random() * 6; } }
   ch.k += Math.sign(ch.alvo - ch.k) * Math.min(Math.abs(ch.alvo - ch.k), dt / 2);
   chMove(ch.fundo, Math.round(Math.min(110, 30 + W / 14) * ch.k), true, dt);
-  chMove(ch.frente, Math.round(Math.min(12, 4 + W / 160) * ch.k), false, dt);
+  chMove(ch.frente, Math.round(Math.min(6, 3 + W / 500) * ch.k), false, dt);
   ch.ondas.forEach((o) => { o.t += dt; }); ch.ondas = ch.ondas.filter((o) => o.t < 0.7);
   if (ch.k > 0.7 && !ch.raio) { ch.raioEm -= dt; if (ch.raioEm <= 0) { ch.raioEm = flagChuva ? 6 : 27 + Math.random() * 3; ch.raio = chRaio(); } }
   if (ch.raio) { ch.raio.t += dt; if (ch.raio.t > 0.5) ch.raio = null; }

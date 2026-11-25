@@ -98,39 +98,42 @@ const PORTAL_PTS = 10000; // pontuação do primeiro portal e de cada portal seg
 const PORT_N = 10, PORT_W = 33, PORT_H = 62; // quadros do GIF do portal (10 quadros de 33 x 62)
 const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra, vira, sai e o portal some
 
-// ---------- tempestade: chuva diagonal com marolas no chão e raios (flash que clareia o cenário) ----------
-// Vem e vai sozinha (começa em 10 a 20 s, dura 18 a 32 s, descansa 25 a 50 s). Com ?chuva na URL fica sempre ligada, para testar.
+// ---------- tempestade: chuva e raio lá no fundo, só um pouquinho de chuva na frente ----------
+// Vem e vai sozinha (começa em 10 a 20 s, dura 35 a 60 s, descansa 20 a 40 s). O raio é pequeno e distante, atrás das moitas, a cada ~28 s.
+// Com ?chuva na URL fica sempre ligada, para testar.
 const flagChuva = /[?&]chuva(=|&|$)/.test(location.search);
 let ch = null;
-const chReset = () => { ch = { k: flagChuva ? 1 : 0, alvo: flagChuva ? 1 : 0, em: flagChuva ? 1e9 : 10 + Math.random() * 10, gotas: [], ondas: [], raio: null, raioEm: 2.5 }; };
-const chGota = (espalha) => { const cy = chaoY(), yEnd = cy + 6 + Math.random() * Math.max(4, H - cy - 16), perto = Math.random() < 0.35, len = perto ? 30 + Math.random() * 28 : 14 + Math.random() * 18; return { x: -H * 0.5 + Math.random() * (W + H * 0.5), y: espalha ? Math.random() * yEnd : -len, len, v: perto ? 1250 + Math.random() * 400 : 800 + Math.random() * 350, a: perto ? 0.55 + Math.random() * 0.3 : 0.22 + Math.random() * 0.2, w: perto ? 2 : 1, yEnd }; };
-const chRaio = () => { const cy = chaoY(), pts = [[W * (0.12 + Math.random() * 0.76), 0]], ramos = []; let [x, y] = pts[0]; const dr = (Math.random() - 0.5) * 14; while (y < cy + 4) { y += 12 + Math.random() * 16; x += (Math.random() - 0.5) * 30 + dr * 0.3; pts.push([x, y]); } for (let q = 0; q < 3 + Math.floor(Math.random() * 2); q++) { const i = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 4)), s = Math.random() < 0.5 ? -1 : 1, r = [pts[i].slice()]; let [bx, by] = r[0]; for (let m = 0, n = 4 + Math.floor(Math.random() * 5); m < n; m++) { by += 9 + Math.random() * 8; bx += s * (4 + Math.random() * 14); r.push([bx, by]); } ramos.push(r); } return { t: 0, pts, ramos }; };
+const chReset = () => { ch = { k: flagChuva ? 1 : 0, alvo: flagChuva ? 1 : 0, em: flagChuva ? 1e9 : 10 + Math.random() * 10, fundo: [], frente: [], ondas: [], raio: null, raioEm: flagChuva ? 3 : 8 }; };
+const chGota = (fundo, espalha) => { const cy = chaoY(); if (fundo) { const yEnd = cy - 2 - Math.random() * 6, len = 7 + Math.random() * 10; return { x: -H * 0.3 + Math.random() * (W + H * 0.3), y: espalha ? Math.random() * yEnd : -len, len, v: 420 + Math.random() * 260, a: 0.12 + Math.random() * 0.18, yEnd }; } const yEnd = cy + 8 + Math.random() * Math.max(4, H - cy - 18), len = 16 + Math.random() * 14; return { x: -H * 0.4 + Math.random() * (W + H * 0.4), y: espalha ? Math.random() * yEnd : -len, len, v: 900 + Math.random() * 350, a: 0.3 + Math.random() * 0.25, yEnd }; };
+const chRaio = () => { const cy = chaoY(), alt = cy - 6, pts = [[W * (0.1 + Math.random() * 0.8), 0]], ramos = []; let [x, y] = pts[0]; while (y < alt) { y += 7 + Math.random() * 9; x += (Math.random() - 0.5) * 16; pts.push([x, Math.min(y, alt)]); } for (let q = 0; q < 2 + Math.floor(Math.random() * 2); q++) { const i = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 4)), s = Math.random() < 0.5 ? -1 : 1, r = [pts[i].slice()]; let [bx, by] = r[0]; for (let m = 0, n = 3 + Math.floor(Math.random() * 3); m < n; m++) { by += 6 + Math.random() * 6; bx += s * (3 + Math.random() * 8); if (by < alt) r.push([bx, by]); } ramos.push(r); } return { t: 0, pts, ramos }; };
+const chMove = (arr, n, fundo, dt) => {
+  while (arr.length < n) arr.push(chGota(fundo, true));
+  for (let i = arr.length - 1; i >= 0; i--) { const g = arr[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (!fundo && Math.random() < 0.6 && ch.ondas.length < 14) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 4 + Math.random() * 7 }); if (arr.length > n) arr.splice(i, 1); else arr[i] = chGota(fundo, false); } }
+};
 const chPasso = (dt) => {
   if (!ch) chReset();
-  if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 18 + Math.random() * 14 : 25 + Math.random() * 25; } }
+  if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 35 + Math.random() * 25 : 20 + Math.random() * 20; if (ch.alvo) ch.raioEm = 6 + Math.random() * 6; } }
   ch.k += Math.sign(ch.alvo - ch.k) * Math.min(Math.abs(ch.alvo - ch.k), dt / 2);
-  const n = Math.round(Math.min(160, 40 + W / 10) * ch.k);
-  while (ch.gotas.length < n) ch.gotas.push(chGota(true));
-  for (let i = ch.gotas.length - 1; i >= 0; i--) { const g = ch.gotas[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (Math.random() < 0.5 && ch.ondas.length < 40) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 4 + Math.random() * 9 }); if (ch.gotas.length > n) ch.gotas.splice(i, 1); else ch.gotas[i] = chGota(false); } }
+  chMove(ch.fundo, Math.round(Math.min(110, 30 + W / 14) * ch.k), true, dt);
+  chMove(ch.frente, Math.round(Math.min(12, 4 + W / 160) * ch.k), false, dt);
   ch.ondas.forEach((o) => { o.t += dt; }); ch.ondas = ch.ondas.filter((o) => o.t < 0.7);
-  if (ch.k > 0.7 && !ch.raio) { ch.raioEm -= dt; if (ch.raioEm <= 0) { ch.raioEm = 3.5 + Math.random() * 5; ch.raio = chRaio(); } }
+  if (ch.k > 0.7 && !ch.raio) { ch.raioEm -= dt; if (ch.raioEm <= 0) { ch.raioEm = flagChuva ? 6 : 27 + Math.random() * 3; ch.raio = chRaio(); } }
   if (ch.raio) { ch.raio.t += dt; if (ch.raio.t > 0.5) ch.raio = null; }
 };
-const chDesenha = () => {
+const chCor = () => (escuro() ? '223,233,247' : '70,100,130');
+const chRisca = (arr, k) => { const cor = chCor(); cx.lineWidth = 1; arr.forEach((g) => { cx.strokeStyle = 'rgba(' + cor + ',' + (g.a * k) + ')'; cx.beginPath(); cx.moveTo(Math.round(g.x), Math.round(g.y)); cx.lineTo(Math.round(g.x - g.len * 0.45), Math.round(g.y - g.len)); cx.stroke(); }); };
+const chFundo = () => { // atrás de tudo (nuvens, moitas, cachorro): céu fechado, chuvisco distante e o raio lá longe
   if (!ch || ch.k <= 0.01) return;
-  const k = ch.k, cor = escuro() ? '223,233,247' : '70,100,130';
-  cx.fillStyle = 'rgba(10,16,28,' + (0.2 * k) + ')'; cx.fillRect(0, 0, W, H); // céu fecha
-  cx.lineCap = 'butt';
-  ch.gotas.forEach((g) => { cx.strokeStyle = 'rgba(' + cor + ',' + (g.a * k) + ')'; cx.lineWidth = g.w; cx.beginPath(); cx.moveTo(Math.round(g.x), Math.round(g.y)); cx.lineTo(Math.round(g.x - g.len * 0.45), Math.round(g.y - g.len)); cx.stroke(); });
-  ch.ondas.forEach((o) => { const e = o.t / 0.7, r = o.r * (0.35 + e), a = (1 - e) * 0.8 * k; cx.strokeStyle = 'rgba(' + cor + ',' + a + ')'; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(Math.round(o.x), Math.round(o.y), r, r * 0.28, 0, 0, 6.2832); cx.stroke(); if (e > 0.2) { cx.beginPath(); cx.ellipse(Math.round(o.x), Math.round(o.y), r * 0.55, r * 0.15, 0, 0, 6.2832); cx.stroke(); } });
-  const r = ch.raio; if (!r) return;
-  const u = r.t, vis = u < 0.08 || (u > 0.14 && u < 0.3), fade = Math.max(0, 1 - u / 0.5);
-  cx.fillStyle = 'rgba(205,222,255,' + ((vis ? 0.4 : 0.14) * fade) + ')'; cx.fillRect(0, 0, W, H); // clarão
-  if (!vis) return;
-  const traca = (p, w, c) => { cx.strokeStyle = c; cx.lineWidth = w; cx.lineJoin = 'miter'; cx.beginPath(); p.forEach((q, i) => (i ? cx.lineTo(Math.round(q[0]), Math.round(q[1])) : cx.moveTo(Math.round(q[0]), Math.round(q[1])))); cx.stroke(); };
-  traca(r.pts, 9, 'rgba(140,180,255,.22)'); r.ramos.forEach((b) => traca(b, 5, 'rgba(140,180,255,.16)'));
-  r.ramos.forEach((b) => traca(b, 1, 'rgba(235,242,255,.85)'));
-  traca(r.pts, 4, 'rgba(190,215,255,.9)'); traca(r.pts, 2, '#fff');
+  const cy = chaoY(); cx.fillStyle = 'rgba(10,16,28,' + (0.14 * ch.k) + ')'; cx.fillRect(0, 0, W, cy);
+  const r = ch.raio;
+  if (r) { const u = r.t, vis = u < 0.08 || (u > 0.14 && u < 0.28), fade = Math.max(0, 1 - u / 0.5); cx.fillStyle = 'rgba(205,222,255,' + ((vis ? 0.16 : 0.05) * fade) + ')'; cx.fillRect(0, 0, W, cy);
+    if (vis) { const traca = (p, w, c) => { cx.strokeStyle = c; cx.lineWidth = w; cx.lineJoin = 'miter'; cx.beginPath(); p.forEach((q, i) => (i ? cx.lineTo(Math.round(q[0]), Math.round(q[1])) : cx.moveTo(Math.round(q[0]), Math.round(q[1])))); cx.stroke(); }; traca(r.pts, 5, 'rgba(140,180,255,.14)'); r.ramos.forEach((b) => traca(b, 1, 'rgba(225,236,255,.6)')); traca(r.pts, 2, 'rgba(200,220,255,.9)'); traca(r.pts, 1, '#fff'); } }
+  chRisca(ch.fundo, ch.k);
+};
+const chDesenha = () => { // na frente: só alguns pingos e marolas no chão
+  if (!ch || ch.k <= 0.01) return;
+  chRisca(ch.frente, ch.k); const cor = chCor();
+  ch.ondas.forEach((o) => { const e = o.t / 0.7, r = o.r * (0.35 + e); cx.strokeStyle = 'rgba(' + cor + ',' + ((1 - e) * 0.7 * ch.k) + ')'; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(Math.round(o.x), Math.round(o.y), r, r * 0.28, 0, 0, 6.2832); cx.stroke(); });
 };
 
 // ---------- balão: de vez em quando sobe de trás da paisagem (grande, na diagonal) ou passa pequeno ao fundo ----------
@@ -420,6 +423,7 @@ const desenha = () => {
   cx.save();
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } // fases ímpares: tudo espelhado, o cachorro corre da direita para a esquerda
   desenhaEstrelas(cy);
+  chFundo(); // raio e chuvisco bem ao fundo, atrás das nuvens e das moitas
   // nuvenzinhas ao fundo
   cx.save(); cx.globalAlpha = 0.8;
   nuvensF.slice().sort((a, b) => b.w - a.w).forEach((n) => dCor(IM.nuvem, faixa(0, 0.35), n.x, n.y, n.w, n.w * 107.2 / 171)); // maiores atrás

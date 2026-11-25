@@ -403,9 +403,9 @@ const ESTRELAS = (() => { let a = 7; const r = () => { a = (a * 16807) % 2147483
   for (let i = 0; i < 34; i++) { const tp = i % 17 === 0 ? 'grande' : tipos[Math.floor(r() * tipos.length)]; l.push({ x: r(), y: r(), tp, c: tp === 'grande' ? 3 : (tp === 'ponto' ? 1 + Math.floor(r() * 2) : 2), vel: 0.35 + r() * 0.5, fase: r() * 6.28 }); } return l; })();
 const desenhaLua = () => { // lua minguante: aparece à noite, anda devagar pelo céu e some com o amanhecer (e na tempestade)
   const v = (1 - faixa(0.55, 0.85)) * (1 - (ch ? ch.k : 0)), im = IM.lua; if (!noite || v <= 0.02 || !im.complete || !im.naturalWidth) return;
-  const q = 2, w = im.naturalWidth * q, h = im.naturalHeight * q, p = Math.max(0, Math.min(1, progFase()));
+  const q = 4, w = im.naturalWidth * q, h = im.naturalHeight * q, p = Math.max(0, Math.min(1, progFase()));
   cx.save(); if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } cx.imageSmoothingEnabled = false; cx.globalAlpha = 0.96 * v;
-  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(46 + 22 * p), w, h); cx.restore(); };
+  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(40 + 18 * p), w, h); cx.restore(); };
 const desenhaEstrelas = (cyChao) => {
   if (!noite) return;
   desenhaLua();

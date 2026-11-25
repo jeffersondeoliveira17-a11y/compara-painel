@@ -11,12 +11,17 @@
   const XI = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 8l12 12L36 8l4 4-12 12 12 12-4 4-12-12-12 12-4-4 12-12L8 12z"/></svg>';
   const DOTS = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="9" cy="24" r="4.5"/><circle cx="24" cy="24" r="4.5"/><circle cx="39" cy="24" r="4.5"/></svg>';
   const VOLTA = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M20 8L6 20l14 12v-8c10 0 16 3 20 14 0-14-7-26-20-26z"/></svg>';
+  const hist = [], refaz = []; // Ctrl+Z desfaz e Ctrl+Shift+Z refaz (guarda fotos da lista de linhas)
+  const foto = () => JSON.stringify(gs);
+  const marca = () => { hist.push(foto()); if (hist.length > 100) hist.shift(); refaz.length = 0; };
+  const volta = (de, para) => { if (!de.length) return false; para.push(foto()); try { gs = JSON.parse(de.pop()); } catch (e) { return false; } sel.clear(); grava(); if (mn) menu(); desenha(); return true; };
   let removidas = []; // linhas apagadas pelo "limpar", para o botão de voltar
   const sel = new Set(); // linhas escolhidas com Shift+clique (para unir)
   const CAD = (fechado) => '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill-rule="evenodd" d="' + (fechado ? "M40.62 47.88 L7.50 47.91 L7.20 47.88 L6.88 47.16 L6.10 46.75 L5.14 45.38 L4.94 43.12 L4.94 23.12 L5.10 21.62 L6.08 20.12 L7.38 19.21 L9.77 18.88 L10.46 18.38 L10.44 13.00 L11.01 9.38 L12.12 6.80 L13.13 5.25 L15.12 3.13 L15.82 2.75 L16.38 2.17 L17.50 1.69 L18.25 1.13 L20.00 0.67 L20.52 0.00 L27.35 0.00 L27.79 0.62 L29.75 1.19 L30.38 1.69 L31.50 2.17 L32.75 3.15 L34.75 5.26 L35.72 6.75 L36.12 7.90 L36.78 9.00 L37.42 12.75 L37.48 18.50 L38.25 18.91 L39.62 18.98 L40.50 19.21 L41.80 20.12 L42.73 21.50 L42.94 23.12 L42.92 44.38 L42.62 45.58 L41.78 46.75 L40.90 47.25 L40.62 47.88ZM31.63 18.88 L32.08 18.50 L32.46 17.12 L32.44 13.50 L31.85 10.25 L30.74 8.25 L29.68 7.12 L28.50 6.21 L25.75 5.07 L24.12 4.95 L22.12 5.07 L19.38 6.21 L18.20 7.12 L17.12 8.26 L16.06 10.12 L15.43 13.50 L15.42 17.25 L15.72 18.38 L16.00 18.75 L16.62 18.94 L31.63 18.88ZM24.81 36.88 L25.50 36.67 L26.75 35.80 L27.67 34.50 L27.93 33.25 L27.81 31.75 L26.80 30.12 L25.50 29.21 L24.38 28.96 L22.75 29.06 L21.12 30.08 L20.21 31.38 L19.95 32.62 L20.06 34.12 L21.08 35.75 L22.38 36.67 L23.38 36.91 L24.81 36.88Z" : "M40.62 47.88 L7.50 47.91 L7.20 47.88 L6.88 47.16 L6.10 46.75 L5.14 45.38 L4.94 43.75 L4.95 22.62 L5.14 21.50 L6.08 20.12 L7.38 19.21 L8.38 18.96 L31.25 18.94 L31.87 18.75 L32.18 18.25 L32.46 17.12 L32.45 13.62 L31.76 10.00 L30.73 8.25 L29.66 7.12 L28.50 6.21 L26.25 5.20 L24.50 4.95 L22.25 5.06 L19.38 6.21 L18.19 7.12 L17.14 8.25 L16.12 9.95 L15.62 11.48 L14.25 12.66 L13.38 12.83 L12.50 12.66 L11.13 11.50 L10.94 10.38 L11.10 9.00 L11.70 8.00 L12.12 6.80 L13.12 5.23 L15.12 3.13 L16.26 2.25 L18.12 1.17 L20.02 0.62 L20.41 0.00 L27.41 0.00 L27.85 0.62 L29.75 1.14 L30.38 1.63 L31.62 2.20 L32.75 3.13 L34.78 5.25 L35.75 6.80 L36.79 9.00 L37.43 12.88 L37.48 18.50 L38.25 18.91 L39.62 18.98 L40.50 19.21 L41.80 20.12 L42.73 21.50 L42.94 23.12 L42.92 44.38 L42.62 45.58 L41.78 46.75 L40.90 47.25 L40.62 47.88ZM24.81 36.88 L25.50 36.67 L26.75 35.80 L27.67 34.50 L27.93 33.25 L27.81 31.75 L26.80 30.12 L25.50 29.21 L24.38 28.96 L22.75 29.06 L21.12 30.08 L20.21 31.38 L19.95 32.62 L20.06 34.12 L21.08 35.75 L22.38 36.67 L23.38 36.91 L24.81 36.88Z") + '"/></svg>';
   const hexDe = (i) => (conf.cores && conf.cores[i]) || CORES[i][0];
   const txtDe = (hex) => { const n = parseInt(hex.slice(1), 16), l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#000' : '#fff'; }; // letra preta ou branca conforme a cor
-  const cssTb = `#cpg .mn.tb{position:absolute;width:92px;border-radius:3px;padding:0;overflow:hidden;pointer-events:auto;z-index:5;user-select:none;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.4);background:var(--bg);color:var(--fg)}
+  const cssTb = `#cpg.alt .ln,#cpg.alt .ln.h,#cpg.alt .ln.v{cursor:copy!important}
+#cpg .mn.tb{position:absolute;width:92px;border-radius:3px;padding:0;overflow:hidden;pointer-events:auto;z-index:5;user-select:none;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.4);background:var(--bg);color:var(--fg)}
 #cpg .mn.tb.mi{width:50px}
 #cpg .mn.esc,#cpg .tp.esc{--bg:#535353;--fg:#d6d6d6;--hd:#3d3d3d;--hdf:#bbb;--on:#2b2b2b;--lkb:#535353;--ring:#e8e8e8;--b2:#fff;--ln:#d6d6d6}
 #cpg .mn.cre,#cpg .tp.cre{--bg:#fdeee4;--fg:#2d3a8f;--hd:#3a9ae0;--hdf:#fff;--on:#7fd0dc;--lkb:#fdeee4;--ring:#2d3a8f;--b2:#7fd0dc;--ln:#2d3a8f}
@@ -74,7 +79,7 @@
     const fora = (e) => { if (!t.contains(e.target) && !b.contains(e.target)) { t.remove(); document.removeEventListener('pointerdown', fora, true); } };
     setTimeout(() => document.addEventListener('pointerdown', fora, true), 0);
   };
-  const unir = () => {
+  const unir = () => { marca();
     const a = estadoUnir(), l = [...sel];
     if (a.modo === 'unir') { const id = gs.reduce((m, g) => Math.max(m, g.gr || 0), 0) + 1; l.forEach((g) => { g.gr = id; }); aviso(l.length + ' linhas unidas: andam juntas', 2200); }
     else if (a.modo === 'soltar') { const id = l[0].gr; gs.forEach((g) => { if (g.gr === id) delete g.gr; }); aviso('Grupo desfeito', 2000); }
@@ -91,13 +96,13 @@
     { const u = mn.querySelector('.ug'), a = estadoUnir(); if (u) { u.innerHTML = ELO + '<span>' + a.txt + '</span>'; u.title = a.txt + ' · segure Shift e clique nas linhas para escolher; depois clique aqui para unir (ou soltar)'; u.classList.toggle('on', a.modo !== ''); u.style.opacity = a.modo ? 1 : 0.7; } }
     if (conf.x == null) { mn.style.left = Math.max(20, innerWidth - 232) + 'px'; mn.style.top = '28px'; } else { mn.style.left = Math.min(conf.x, innerWidth - 60) + 'px'; mn.style.top = Math.min(conf.y, innerHeight - 40) + 'px'; }
   };
-  const arrasta = (g, e0) => {
+  const arrasta = (g, e0, dup) => {
     const horiz = g.t === 'h', grupo = g.gr ? gs.filter((o) => o.gr === g.gr && o.t === g.t && o !== g && !trav(o.c || 0)) : [], ini = grupo.map((o) => o.p), p0 = g.p; // linhas unidas (mesma direção) andam juntas
     const mv = (e) => { const p = Math.round(horiz ? e.clientY : e.clientX); g.p = p; grupo.forEach((o, k) => { o.p = Math.max(0, ini[k] + (p - p0)); }); desenha(); };
-    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (g.p < 18) { gs.splice(gs.indexOf(g), 1); sel.delete(g); } grava(); desenha(); };
+    const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (g.p < 18) { gs.splice(gs.indexOf(g), 1); sel.delete(g); } if (hist.length && hist[hist.length - 1] === foto()) hist.pop(); grava(); desenha(); };
     document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); mv(e0);
   };
-  const limpa = () => { const fora = gs.filter((g) => !trav(g.c || 0)); if (fora.length) removidas = fora; gs = gs.filter((g) => trav(g.c || 0)); grava(); if (mn) menu(); };
+  const limpa = () => { marca(); const fora = gs.filter((g) => !trav(g.c || 0)); if (fora.length) removidas = fora; gs = gs.filter((g) => trav(g.c || 0)); grava(); if (mn) menu(); };
   const aviso = (t, ms) => { root.querySelectorAll('.ts').forEach((n) => n.remove()); const n = document.createElement('div'); n.className = 'ts'; n.textContent = t; root.append(n); setTimeout(() => n.remove(), ms || 2800); };
   const pausa = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 80))));
   const tela = async () => { // devolve uma imagem da aba atual
@@ -137,12 +142,21 @@
     root.addEventListener('pointerdown', (e) => {
       const t = e.target;
       if ((t === rh || t === rv) && Date.now() < pkAte) { pkAte = 0; e.preventDefault(); return; } // clique que so fecha o seletor de cor nao cria linha
-      if (t === rh) { const g = { t: 'h', p: Math.round(e.clientY), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
-      else if (t === rv) { const g = { t: 'v', p: Math.round(e.clientX), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
-      else if (t.closest && t.closest('.ln')) { const g = gs[+t.closest('.ln').dataset.i]; if (g && !trav(g.c || 0)) { if (e.shiftKey) { if (sel.has(g)) sel.delete(g); else sel.add(g); menu(); desenha(); e.preventDefault(); return; } arrasta(g, e); e.preventDefault(); } }
+      if (t === rh) { marca(); const g = { t: 'h', p: Math.round(e.clientY), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
+      else if (t === rv) { marca(); const g = { t: 'v', p: Math.round(e.clientX), c: conf.cor }; gs.push(g); arrasta(g, e); e.preventDefault(); }
+      else if (t.closest && t.closest('.ln')) { const g = gs[+t.closest('.ln').dataset.i]; if (g && !trav(g.c || 0)) { if (e.shiftKey) { if (sel.has(g)) sel.delete(g); else sel.add(g); menu(); desenha(); e.preventDefault(); return; } if (e.altKey) { // Alt + arrastar: duplica a linha (e as unidas a ela, mantendo a distância) e arrasta a cópia
+          marca(); const orig = g.gr ? gs.filter((o) => o.gr === g.gr && o.t === g.t && !trav(o.c || 0)) : [g], id = orig.length > 1 ? gs.reduce((m, o) => Math.max(m, o.gr || 0), 0) + 1 : 0, cop = orig.map((o) => { const n = Object.assign({}, o); if (id) n.gr = id; else delete n.gr; return n; });
+          cop.forEach((n) => gs.push(n)); sel.clear(); arrasta(cop[orig.indexOf(g)], e, true); e.preventDefault(); return; }
+        marca(); arrasta(g, e); e.preventDefault(); } }
     });
-    root.addEventListener('dblclick', (e) => { const n = e.target.closest && e.target.closest('.ln'); if (n) { const g = gs[+n.dataset.i]; if (g && !trav(g.c || 0)) { gs.splice(+n.dataset.i, 1); grava(); desenha(); } } });
+    root.addEventListener('dblclick', (e) => { const n = e.target.closest && e.target.closest('.ln'); if (n) { const g = gs[+n.dataset.i]; if (g && !trav(g.c || 0)) { marca(); gs.splice(+n.dataset.i, 1); grava(); desenha(); } } });
     root.querySelector('.cn').addEventListener('click', () => { limpa(); desenha(); });
+    document.addEventListener('keydown', (e) => { // Ctrl+Z desfaz, Ctrl+Shift+Z (ou Ctrl+Y) refaz; Alt mostra o cursor de copiar
+      if (!on) return; const el = e.target, campo = el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName || ''));
+      if (e.key === 'Alt') root.classList.add('alt');
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !campo) { const k = (e.key || '').toLowerCase(); if (k === 'z' || k === 'y') { const ok = (k === 'y' || e.shiftKey) ? volta(refaz, hist) : volta(hist, refaz); if (ok) aviso((k === 'y' || e.shiftKey) ? 'Refeito' : 'Desfeito', 1200); e.preventDefault(); e.stopPropagation(); } }
+    }, true);
+    document.addEventListener('keyup', (e) => { if (e.key === 'Alt') root.classList.remove('alt'); }); window.addEventListener('blur', () => root.classList.remove('alt'));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && on && sel.size) { sel.clear(); menu(); desenha(); } });
     mn.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
@@ -155,7 +169,7 @@
       else if (b.classList.contains('pt')) { copiaArea(); return; }
       else if (b.classList.contains('ug')) { unir(); return; }
       else if (b.classList.contains('lp')) { limpa(); sel.clear(); menu(); desenha(); return; }
-      else if (b.classList.contains('vt')) { gs = gs.concat(removidas); removidas = []; grava(); menu(); desenha(); aviso('Linhas de volta', 1800); return; }
+      else if (b.classList.contains('vt')) { marca(); gs = gs.concat(removidas); removidas = []; grava(); menu(); desenha(); aviso('Linhas de volta', 1800); return; }
       else if (b.classList.contains('xx')) { alterna(); return; }
       else if (b.classList.contains('tm')) { abreTema(b); return; }
       else if (b.classList.contains('sw2') || b.classList.contains('f2')) { const c0 = conf.cor; conf.cor = conf.ant != null ? conf.ant : (c0 + 1) % CORES.length; conf.ant = c0; }

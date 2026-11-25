@@ -15,7 +15,7 @@
   const txtDe = (hex) => { const n = parseInt(hex.slice(1), 16), l = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; return l > 0.55 ? '#000' : '#fff'; }; // letra preta ou branca conforme a cor
   const cssTb = `#cpg .mn.tb{width:178px;background:#fdeee4;color:#2d3a8f;border:3px solid #2d3a8f;border-radius:8px;padding:0;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.28);font:11px/1.2 system-ui,sans-serif;letter-spacing:0}#cpg .mn.tb.mi{width:78px}
 #cpg .mn.tb .hd{display:flex;justify-content:space-between;align-items:center;background:#3a9ae0;height:18px;padding:0 6px;color:#fff;font:700 11px/1.2 system-ui,sans-serif;cursor:move}#cpg .mn.tb .hd button{background:none;border:0;color:#fff;width:auto;height:auto;padding:0 2px;border-radius:0;font:700 12px/1 system-ui,sans-serif;cursor:pointer}
-#cpg .mn.tb .hd b span{color:#fff}#cpg .mn.tb.mi .hd b span{display:none}#cpg .mn.tb .gp{width:30px;height:3px;margin:6px auto 2px;background:repeating-linear-gradient(90deg,#2d3a8f 0 1px,transparent 1px 3px)}
+#cpg .mn.tb .hd b span{color:#fff}#cpg .mn.tb.mi .hd b span{display:none}#cpg .mn.tb .rz{position:absolute;top:0;right:0;bottom:0;width:7px;cursor:ew-resize;z-index:3}#cpg .mn.tb .rz:hover{background:linear-gradient(90deg,transparent,rgba(58,154,224,.45))}#cpg .mn.tb .gp{width:30px;height:3px;margin:6px auto 2px;background:repeating-linear-gradient(90deg,#2d3a8f 0 1px,transparent 1px 3px)}
 #cpg .mn.tb .cs{display:flex;flex-direction:column;gap:4px;padding:6px}#cpg .mn.tb.mi .cs,#cpg .mn.tb.mi .fr{display:grid;grid-template-columns:1fr 1fr}
 #cpg .mn.tb .c{display:flex;flex-direction:row;align-items:center;gap:8px}#cpg .mn.tb .cell{position:relative;width:28px;height:28px;flex:none}
 #cpg .mn.tb .sw{width:28px;height:28px;border:0;background:none;padding:0;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none}#cpg .mn.tb .sw::before{content:"";width:18px;height:18px;border-radius:50%;background:var(--c);border:2px solid #2d3a8f}#cpg .mn.tb .sw.on{background:#7fd0dc}
@@ -61,7 +61,7 @@
     sel.clear(); grava(); menu(); desenha();
   };
   const menu = () => {
-    mn.classList.toggle('mi', !!conf.min);
+    mn.classList.toggle('mi', !!conf.min); mn.style.width = conf.min ? '' : (conf.larg || 178) + 'px';
     mn.querySelector('.cs').innerHTML = CORES.map(([hex0, nome], i) => '<div class="c" style="--c:' + hexDe(i) + '"><div class="cell"><button class="sw' + (conf.cor === i ? ' on' : '') + '" data-c="' + i + '" title="' + nome + ' · clique: usar esta cor · dois cliques: mudar a cor"></button><button class="lk' + (trav(i) ? ' on' : '') + '" data-l="' + i + '" title="Travar as linhas ' + nome.toLowerCase() + '">' + CAD(trav(i)) + '</button></div><span class="nm">' + nome + '</span></div>').join('');
     { const f1 = mn.querySelector('.f1'), f2 = mn.querySelector('.f2'); if (f1) f1.style.background = hexDe(conf.cor); if (f2) f2.style.background = hexDe(conf.ant != null ? conf.ant : (conf.cor + 1) % CORES.length); }
     mn.querySelector('.mm').textContent = conf.min ? '»' : '«';
@@ -108,7 +108,7 @@
   const cria = () => {
     const st = document.createElement('style'); st.textContent = css + cssTb; document.head.append(st);
     root = document.createElement('div'); root.id = 'cpg';
-    root.innerHTML = '<div class="r rh"></div><div class="r rv"></div><div class="cn" title="Apagar as linhas destravadas">×</div><div class="mn tb"><div class="hd"><b>★ <span>Guias</span></b><button class="mm" title="Abrir / fechar"></button></div><div class="gp"></div><div class="cs"></div><hr><div class="fr"><button class="ug" title="Segure Shift e clique nas linhas para escolher. Depois clique aqui: as linhas escolhidas passam a andar juntas (clique de novo para soltar)"></button><button class="pt" title="Seleciona uma área da tela e copia a imagem (só vai para o Ctrl+V, não salva arquivo)">' + SELI + '<span>Copiar área</span></button><button class="lp" title="Apaga as linhas destravadas">' + XI + '<span>Limpar linhas</span></button></div><div class="fim"><button class="f2" title="Trocar com a cor anterior"></button><div class="f1" title="Cor das próximas linhas"></div></div><input type="color" class="pk" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"></div>';
+    root.innerHTML = '<div class="r rh"></div><div class="r rv"></div><div class="cn" title="Apagar as linhas destravadas">×</div><div class="mn tb"><div class="hd"><b>★ <span>Guias</span></b><button class="mm" title="Abrir / fechar"></button></div><div class="gp"></div><div class="cs"></div><hr><div class="fr"><button class="ug" title="Segure Shift e clique nas linhas para escolher. Depois clique aqui: as linhas escolhidas passam a andar juntas (clique de novo para soltar)"></button><button class="pt" title="Seleciona uma área da tela e copia a imagem (só vai para o Ctrl+V, não salva arquivo)">' + SELI + '<span>Copiar área</span></button><button class="lp" title="Apaga as linhas destravadas">' + XI + '<span>Limpar linhas</span></button></div><div class="fim"><button class="f2" title="Trocar com a cor anterior"></button><div class="f1" title="Cor das próximas linhas"></div></div><div class="rz" title="Arraste para ajustar a largura (bem estreita = só ícones)"></div><input type="color" class="pk" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"></div>';
     rh = root.querySelector('.rh'); rv = root.querySelector('.rv'); mn = root.querySelector('.mn');
     root.addEventListener('pointerdown', (e) => {
       const t = e.target;
@@ -138,6 +138,12 @@
       pkAte = Date.now() + 15000;
       if (pk.showPicker) { try { pk.showPicker(); } catch (er) { pk.click(); } } else pk.click(); pk.style.pointerEvents = 'none';
     }
+    mn.querySelector('.rz').addEventListener('pointerdown', (e) => { // arrastar a borda da barra: larga = com nomes; abaixo de ~120 px encolhe sozinha para só ícones (como as barras do Photoshop e do Illustrator)
+      const x0 = e.clientX, w0 = conf.min ? 78 : (conf.larg || 178);
+      const mv = (ev) => { const w = Math.max(78, Math.min(360, Math.round(w0 + ev.clientX - x0))), fecha = w < 120; if (fecha !== !!conf.min) { conf.min = fecha; } if (!fecha) conf.larg = w; menu(); };
+      const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); grava(); };
+      document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); e.preventDefault(); e.stopPropagation();
+    });
     mn.querySelector('.hd').addEventListener('pointerdown', (e) => {
       if (e.target.closest('button')) return; const r = mn.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
       const mv = (ev) => { conf.x = Math.max(0, Math.round(ev.clientX - dx)); conf.y = Math.max(20, Math.round(ev.clientY - dy)); menu(); };

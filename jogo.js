@@ -98,6 +98,41 @@ const PORTAL_PTS = 10000; // pontuação do primeiro portal e de cada portal seg
 const PORT_N = 10, PORT_W = 33, PORT_H = 62; // quadros do GIF do portal (10 quadros de 33 x 62)
 const T_SUGA = 0.55, T_VIRA = 0.55, T_SOLTA = 0.3; // segundos: o cachorro entra, vira, sai e o portal some
 
+// ---------- tempestade: chuva diagonal com marolas no chão e raios (flash que clareia o cenário) ----------
+// Vem e vai sozinha (começa em 10 a 20 s, dura 18 a 32 s, descansa 25 a 50 s). Com ?chuva na URL fica sempre ligada, para testar.
+const flagChuva = /[?&]chuva(=|&|$)/.test(location.search);
+let ch = null;
+const chReset = () => { ch = { k: flagChuva ? 1 : 0, alvo: flagChuva ? 1 : 0, em: flagChuva ? 1e9 : 10 + Math.random() * 10, gotas: [], ondas: [], raio: null, raioEm: 2.5 }; };
+const chGota = (espalha) => { const cy = chaoY(), yEnd = cy + 6 + Math.random() * Math.max(4, H - cy - 16), perto = Math.random() < 0.35, len = perto ? 30 + Math.random() * 28 : 14 + Math.random() * 18; return { x: -H * 0.5 + Math.random() * (W + H * 0.5), y: espalha ? Math.random() * yEnd : -len, len, v: perto ? 1250 + Math.random() * 400 : 800 + Math.random() * 350, a: perto ? 0.55 + Math.random() * 0.3 : 0.22 + Math.random() * 0.2, w: perto ? 2 : 1, yEnd }; };
+const chRaio = () => { const cy = chaoY(), pts = [[W * (0.12 + Math.random() * 0.76), 0]], ramos = []; let [x, y] = pts[0]; const dr = (Math.random() - 0.5) * 14; while (y < cy + 4) { y += 12 + Math.random() * 16; x += (Math.random() - 0.5) * 30 + dr * 0.3; pts.push([x, y]); } for (let q = 0; q < 3 + Math.floor(Math.random() * 2); q++) { const i = 2 + Math.floor(Math.random() * Math.max(1, pts.length - 4)), s = Math.random() < 0.5 ? -1 : 1, r = [pts[i].slice()]; let [bx, by] = r[0]; for (let m = 0, n = 4 + Math.floor(Math.random() * 5); m < n; m++) { by += 9 + Math.random() * 8; bx += s * (4 + Math.random() * 14); r.push([bx, by]); } ramos.push(r); } return { t: 0, pts, ramos }; };
+const chPasso = (dt) => {
+  if (!ch) chReset();
+  if (!flagChuva) { ch.em -= dt; if (ch.em <= 0) { ch.alvo = ch.alvo ? 0 : 1; ch.em = ch.alvo ? 18 + Math.random() * 14 : 25 + Math.random() * 25; } }
+  ch.k += Math.sign(ch.alvo - ch.k) * Math.min(Math.abs(ch.alvo - ch.k), dt / 2);
+  const n = Math.round(Math.min(160, 40 + W / 10) * ch.k);
+  while (ch.gotas.length < n) ch.gotas.push(chGota(true));
+  for (let i = ch.gotas.length - 1; i >= 0; i--) { const g = ch.gotas[i]; g.y += g.v * dt; g.x += g.v * dt * 0.5; if (g.y >= g.yEnd) { if (Math.random() < 0.5 && ch.ondas.length < 40) ch.ondas.push({ x: g.x, y: g.yEnd, t: 0, r: 4 + Math.random() * 9 }); if (ch.gotas.length > n) ch.gotas.splice(i, 1); else ch.gotas[i] = chGota(false); } }
+  ch.ondas.forEach((o) => { o.t += dt; }); ch.ondas = ch.ondas.filter((o) => o.t < 0.7);
+  if (ch.k > 0.7 && !ch.raio) { ch.raioEm -= dt; if (ch.raioEm <= 0) { ch.raioEm = 3.5 + Math.random() * 5; ch.raio = chRaio(); } }
+  if (ch.raio) { ch.raio.t += dt; if (ch.raio.t > 0.5) ch.raio = null; }
+};
+const chDesenha = () => {
+  if (!ch || ch.k <= 0.01) return;
+  const k = ch.k, cor = escuro() ? '223,233,247' : '70,100,130';
+  cx.fillStyle = 'rgba(10,16,28,' + (0.2 * k) + ')'; cx.fillRect(0, 0, W, H); // céu fecha
+  cx.lineCap = 'butt';
+  ch.gotas.forEach((g) => { cx.strokeStyle = 'rgba(' + cor + ',' + (g.a * k) + ')'; cx.lineWidth = g.w; cx.beginPath(); cx.moveTo(Math.round(g.x), Math.round(g.y)); cx.lineTo(Math.round(g.x - g.len * 0.45), Math.round(g.y - g.len)); cx.stroke(); });
+  ch.ondas.forEach((o) => { const e = o.t / 0.7, r = o.r * (0.35 + e), a = (1 - e) * 0.8 * k; cx.strokeStyle = 'rgba(' + cor + ',' + a + ')'; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(Math.round(o.x), Math.round(o.y), r, r * 0.28, 0, 0, 6.2832); cx.stroke(); if (e > 0.2) { cx.beginPath(); cx.ellipse(Math.round(o.x), Math.round(o.y), r * 0.55, r * 0.15, 0, 0, 6.2832); cx.stroke(); } });
+  const r = ch.raio; if (!r) return;
+  const u = r.t, vis = u < 0.08 || (u > 0.14 && u < 0.3), fade = Math.max(0, 1 - u / 0.5);
+  cx.fillStyle = 'rgba(205,222,255,' + ((vis ? 0.4 : 0.14) * fade) + ')'; cx.fillRect(0, 0, W, H); // clarão
+  if (!vis) return;
+  const traca = (p, w, c) => { cx.strokeStyle = c; cx.lineWidth = w; cx.lineJoin = 'miter'; cx.beginPath(); p.forEach((q, i) => (i ? cx.lineTo(Math.round(q[0]), Math.round(q[1])) : cx.moveTo(Math.round(q[0]), Math.round(q[1])))); cx.stroke(); };
+  traca(r.pts, 9, 'rgba(140,180,255,.22)'); r.ramos.forEach((b) => traca(b, 5, 'rgba(140,180,255,.16)'));
+  r.ramos.forEach((b) => traca(b, 1, 'rgba(235,242,255,.85)'));
+  traca(r.pts, 4, 'rgba(190,215,255,.9)'); traca(r.pts, 2, '#fff');
+};
+
 // ---------- balão: de vez em quando sobe de trás da paisagem (grande, na diagonal) ou passa pequeno ao fundo ----------
 const BAL_AR = 31 / 42; // largura / altura do desenho
 
@@ -129,7 +164,7 @@ const novaNuvem = (x) => {
   return { x, w, y: -8 + Math.random() * Math.max(10, H * 0.62 - h * 0.7), v: 8 + Math.random() * 20 };
 };
 const reinicia = () => {
-  vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -299,6 +334,7 @@ const passo = (agora) => {
   }
   if (estado === 'portal') { if (ave && !ave.rock) ave.x -= vel * dt; chaoX = (chaoX - vel * dt) % CHAO_W; matoX = (matoX - vel * dt * 0.6) % MATO_P; arvAnda(vel, dt); decoX = (decoX - vel * dt * 0.8) % DECO_P; }
   if (avisoFase > 0) avisoFase -= dt;
+  chPasso(dt);
   if (estado === 'jogando' || estado === 'portal') {
     if (!ave) { aveEm -= dt; if (aveEm <= 0) { if (!aveModo) aveModo = Math.random() < 0.5 ? 'pedra' : 'chao'; if (aveModo === 'chao' && !obst.some((o) => o.x + o.w > W - 40 && o.x < W + 60 + AVE_W + 70)) { ave = { x: W + 60, sp: sorteiaAve() }; aveModo = null; } } } // passarinho: ou de pé no chão, ou em cima da próxima pedra
     if (!mor && noite && progFase() < 0.55) { morEm -= dt; if (morEm <= 0) { const peq = Math.random() < 0.4; mor = { x: W + 60, y0: H * (0.08 + Math.random() * 0.3), u: peq ? 0.9 : 1.6, v: (peq ? 130 : 95) + Math.random() * 40, t: 0, f: Math.random() * 6 }; } } // morcego: médio (60%) ou pequeno (40%)
@@ -467,6 +503,7 @@ const desenha = () => {
     cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
     cx.globalAlpha = 1;
   }
+  chDesenha(); // chuva e raios por cima do cenário, abaixo do placar
   // bolinhas: quanto falta para o próximo portal (cada bolinha = 10% do caminho)
   { const prog = Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)), cheias = Math.floor(prog * 10 + 1e-6);
     for (let i = 0; i < 10; i++) {

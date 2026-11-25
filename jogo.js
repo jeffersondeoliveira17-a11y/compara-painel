@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), nuvem: img('icones/nuvem.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), nuvem: img('icones/nuvem.svg'), lua: img('icones/lua.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -401,8 +401,14 @@ const passaro = (a) => {
 // ---------- estrelas do céu da noite: espalhadas, de tamanhos bem variados, com brilho lento ----------
 const ESTRELAS = (() => { let a = 7; const r = () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; const tipos = ['ponto', 'ponto', 'ponto', 'ponto', 'mais', 'mais', 'losango', 'brilho']; const l = [];
   for (let i = 0; i < 34; i++) { const tp = i % 17 === 0 ? 'grande' : tipos[Math.floor(r() * tipos.length)]; l.push({ x: r(), y: r(), tp, c: tp === 'grande' ? 3 : (tp === 'ponto' ? 1 + Math.floor(r() * 2) : 2), vel: 0.35 + r() * 0.5, fase: r() * 6.28 }); } return l; })();
+const desenhaLua = () => { // lua minguante: aparece à noite, anda devagar pelo céu e some com o amanhecer (e na tempestade)
+  const v = (1 - faixa(0.55, 0.85)) * (1 - (ch ? ch.k : 0)), im = IM.lua; if (!noite || v <= 0.02 || !im.complete || !im.naturalWidth) return;
+  const q = 2, w = im.naturalWidth * q, h = im.naturalHeight * q, p = Math.max(0, Math.min(1, progFase()));
+  cx.save(); if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } cx.imageSmoothingEnabled = false; cx.globalAlpha = 0.96 * v;
+  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(46 + 22 * p), w, h); cx.restore(); };
 const desenhaEstrelas = (cyChao) => {
   if (!noite) return;
+  desenhaLua();
   const some = (1 - faixa(0.55, 0.85)) * (1 - 0.8 * (ch ? ch.k : 0)); if (some <= 0.02) return;
   const t = performance.now() / 1000, topo = 30, base = Math.max(topo + 20, cyChao - 70);
   ESTRELAS.forEach((e) => {

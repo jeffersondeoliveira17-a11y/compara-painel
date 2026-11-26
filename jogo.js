@@ -404,11 +404,12 @@ const trenoPasso = (a, v, dt) => {
     if (o.desl) { o.cor = true; const al = o.montado ? v : v * 1.55; o.vs = (o.vs || 0) + (al - (o.vs || 0)) * Math.min(1, (o.montado ? 5 : 2.5) * dt); }
     if (!o.desl) continue;
     for (const t of obst) { // o que o trenó encontra pelo caminho
-      if (t === o || t.treno || t.buraco || t.terra || t.sumiu || (t.moita && !t.boneco && !t.roca)) continue;
+      if (t === o || t.treno || t.buraco || t.sumiu || (t.moita && !t.boneco && !t.roca)) continue;
       if (!(o.x + o.w > t.x + t.w * 0.25 && o.x < t.x + t.w * 0.75)) continue;
       if (t.k > 4) { quebra(o, COR_TRENO, 34); o.sumiu = true; if (o.montado) { o.montado = false; player.vy = -380; player.noChao = false; } break; } // pedra gigante: quem quebra é o trenó
       t.sumiu = true;
       if (t.boneco) { quebra(t, COR_NEVE, 44); quebra(t, ['#c23943', '#160b1e', '#fb7e60', '#2a8f4d'], 8); if (t.roca) quebra({ x: t.x, w: t.w, h: 30 }, COR_PEDRA, 12); }
+      else if (t.terra) quebra(t, ['#ffffff', '#d3e6f6', '#a9c8e3', '#7ea3c6'], 24);
       else if (t.cone) quebra(t, ['#f26a1b', '#ffffff', '#d85a14'], 22);
       else quebra(t, COR_PEDRA, 22);
     }

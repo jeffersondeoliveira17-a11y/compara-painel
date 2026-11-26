@@ -308,8 +308,8 @@ const novoObst = () => {
   const terra = false, kt = 3;
   // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
   const moita = !grande && !cena && Math.random() < 0.1, km = Math.random() < 0.4 ? 2.3 : 1.4 + Math.random() * 0.9, roca = moita && Math.random() < 0.55, rs = 0.55 + 0.45 * Math.min(1, (km - 1.4) / 0.9) * (0.8 + Math.random() * 0.2); // moita: 2.3 e o tamanho maximo; menores levam pedra menor; menos moitas
-  const treno = neve && !moita && !grande && !cena && dist >= trenoLib && Math.random() < 0.3, TS = 2.5;
-  const fant = !treno && !moita && !grande && !cena && (neve || (noite && progFase() < 0.55)) && dist >= fantLib && Math.random() < 0.5, bs = 1 + Math.random() * 0.5, fh = (neve ? 1.16 * bs : 1) * (22 * 1.8 + 46 + 2.3), froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
+  const treno = neve && !moita && !grande && !cena && dist >= trenoLib && Math.random() < 0.3, TS = 3.4;
+  const fant = !treno && !moita && !grande && !cena && (neve || (noite && progFase() < 0.55)) && dist >= fantLib && Math.random() < 0.5, bs = 1 + Math.random() * 0.5, fh = neve ? (Math.random() < 0.5 ? 96 : 142) : (22 * 1.8 + 46 + 2.3), froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
   const o = treno ? { x: W + 20, w: 47 * TS, h: 16 * TS, k: TS, treno: true, vs: 0 } : fant ? { x: W + 20, w: neve ? fh * 36 / 65 : fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, boneco: neve, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   if (fant) fantLib = dist + 1400 + Math.random() * 500; // fantasma é raro: só volta depois de um bom trecho (uns 3 por fase)
   obst.push(o);
@@ -319,7 +319,7 @@ const novoObst = () => {
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
   if (o.treno) { // trenó: às vezes sozinho, às vezes com um alvo logo à frente (boneco de neve ou pedra pequena) para ele arrebentar
-    if (Math.random() < 0.75) { const ax = o.x + o.w + 260 + Math.random() * 160; if (Math.random() < 0.55) { const fh2 = 1.16 * (1 + Math.random() * 0.5) * (22 * 1.8 + 46 + 2.3); fim = { x: ax, w: fh2 * 36 / 65, h: fh2, k: 1, moita: true, fantasma: true, boneco: true, roca: Math.random() < 0.55 ? { w: 32 * 1.5, h: 22 * 1.5 } : null }; } else fim = P(ax); obst.push(fim); }
+    if (Math.random() < 0.75) { const ax = o.x + o.w + 260 + Math.random() * 160; if (Math.random() < 0.55) { const fh2 = Math.random() < 0.5 ? 96 : 142; fim = { x: ax, w: fh2 * 36 / 65, h: fh2, k: 1, moita: true, fantasma: true, boneco: true, roca: Math.random() < 0.55 ? { w: 32 * 1.5, h: 22 * 1.5 } : null }; } else fim = P(ax); obst.push(fim); }
   } else if (grande || o.moita) { /* gigante e moita vêm sozinhas */ } else if (o.cone) {
     if (cena) { // cone, depois (buraco e montinho) em qualquer ordem: um pulo no cone, aterrissa e outro pulo passa o par
       const bu = { x: 0, w: 76, h: 20, buraco: true, jag: Array.from({ length: 16 }, () => [Math.random() < 0.4 ? 4 : 0, Math.random() < 0.4 ? 4 : 0]) }, mt = { x: 0, w: 20 * 3.1, h: 13 * 3.1, k: 3.1, terra: true };
@@ -373,7 +373,7 @@ const trenoPasso = (a, v, dt) => {
     if (o.montado) { // o cachorro vai em cima; sai pulando ou depois de uns 2 segundos
       o.montT = (o.montT || 0) + dt;
       if (player.vy < -50 || o.montT > 2.2) { o.montado = false; o.pulou = 0.5; }
-      else { const tx = player.x + player.w * 0.5 - o.w * 0.45; o.x += (tx - o.x) * Math.min(1, 7 * dt); player.y = topo - player.h; player.vy = 0; player.noChao = true; }
+      else { const tx = player.x + player.w * 0.5 - o.w * 0.45; o.x += (tx - o.x) * Math.min(1, 7 * dt); player.y = topo - player.h + 6; player.vy = 0; player.noChao = true; }
     } else if (!(o.pulou > 0) && estado === 'jogando' && a.x + a.w > o.x + 6 && a.x < o.x + o.w - 6 && a.y + a.h > topo + 4 && a.y < chaoY()) {
       if (player.vy >= 0 && a.y + a.h <= topo + 24) { o.montado = true; o.desl = true; o.montT = 0; }
       else { if (!o.desl) { o.desl = true; player.vy = -430; player.noChao = false; } o.pulou = 0.3; } // bateu com a perna: o trenó sai deslizando e o cachorro dá um pulinho (sem se machucar)
@@ -408,7 +408,7 @@ const passo = (agora) => {
     player.vy += GRAV * dt; player.y += player.vy * dt;
     const solo = chaoY() - player.h;
     if (player.y >= solo) { if (!player.noChao && player.vy > 250) { sopra(player.x + 25, chaoY() + 2, 4, 1.2); sopra(player.x + 85, chaoY() + 2, 3, 0.8); } player.y = solo; player.vy = 0; player.noChao = true; }
-    if (player.noChao) { poeiraEm -= dt; if (poeiraEm <= 0) { poeiraEm = 0.1; sopra(player.x + 24, chaoY() + 2, 1, 1); } }
+    if (player.noChao && !obst.some((o) => o.treno && o.montado)) { poeiraEm -= dt; if (poeiraEm <= 0) { poeiraEm = 0.1; sopra(player.x + 24, chaoY() + 2, 1, 1); } }
     atualizaPoeira(dt, v); nevePegas(dt, v);
     prox -= v * dt;
     const alvo = PORTAL_PTS * (fase + 1);
@@ -586,7 +586,7 @@ const desenha = () => {
   cx.save();
   const sx = player.x + player.w / 2, sy = player.y + player.h / 2;
   // cachorro: 6 quadros do GIF (agacha, impulso, sobe esticando, pico, voo, aterrissa)
-  const corre = (player.noChao && estado === 'jogando');
+  const corre = (player.noChao && estado === 'jogando' && !obst.some((o) => o.treno && o.montado)); // dentro do trenó o cachorro fica parado
   const q = corre ? Math.floor(dist / PASSO) % 6 : 0;
   const pose = player.noChao ? IM['cao' + (q + 1)] : IM.cao5; // no pulo: quadro do voo esticado
   const queda = AFUNDA - 2; // pés um pouco dentro da grama

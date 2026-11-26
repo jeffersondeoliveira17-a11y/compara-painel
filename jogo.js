@@ -133,13 +133,13 @@ let pedraTop = null;
 const calcTopo = () => { const im = IM0.pedra; if (pedraTop || !im.complete || !im.naturalWidth) return; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0); let d; try { d = g.getImageData(0, 0, c.width, c.height).data; } catch (e) { pedraTop = []; return; } pedraTop = []; for (let x = 0; x < c.width; x++) { let y = 0; while (y < c.height && d[(y * c.width + x) * 4 + 3] < 100) y++; pedraTop.push(y); } };
 const montinhoPedra = (o, cy) => {
   calcTopo(); if (!pedraTop || !pedraTop.length) return;
-  const n = pedraTop.length, cs = n / 32, sc = o.w / n, u = cs * sc, ry = cy - o.h + AFUNDA + (o.baixo || 0), alt = 3 + neveLv * 1.1; // 32 quadradinhos de largura
+  const n = pedraTop.length, cs = n / 32, sc = o.w / n, u = cs * sc, ry = cy - o.h + AFUNDA + (o.baixo || 0), alt = 2.4, cob = 0.6 + neveLv * 1.1; // altura fixa acima da pedra; a neve acumulada só desce, cobrindo a parte de cima da pedra. 32 quadradinhos de largura
   cx.globalAlpha = 1; const cols = [];
   for (let ci = 5; ci < 28; ci++) {
     const t = (ci + 0.5 - 16) / 11.5; if (Math.abs(t) >= 1) continue;
     let top = Infinity; for (let x = Math.floor(ci * cs); x < Math.floor((ci + 1) * cs) && x < n; x++) top = Math.min(top, pedraTop[x]); if (top >= IM0.pedra.naturalHeight) continue;
     const hh = Math.max(1, Math.round(alt * Math.sqrt(1 - t * t) + (hashN(ci * 5.3) < 0.3 ? -1 : 0)));
-    cols.push({ x: Math.round(o.x + ci * u), w: Math.ceil(u) + 1, y: Math.round(ry + top * sc - hh * u), h: Math.ceil(hh * u + u * 0.6), hh, u });
+    cols.push({ x: Math.round(o.x + ci * u), w: Math.ceil(u) + 1, y: Math.round(ry + top * sc - hh * u), h: Math.ceil((hh + cob) * u), hh, u });
   }
   const px = Math.max(2, Math.round(u * 0.45));
   cx.fillStyle = cor('#6f95c4', '#7b8aa3'); cols.forEach((q) => cx.fillRect(q.x - (q === cols[0] ? px : 0), q.y - px, q.w + (q === cols[cols.length - 1] ? px : 0) + (q === cols[0] ? px : 0), q.h + px)); // contorno azulado

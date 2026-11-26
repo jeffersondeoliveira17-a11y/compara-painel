@@ -67,7 +67,9 @@ const hashN = (n) => { const q = Math.sin(n * 12.9898 + 4.1) * 43758.5453; retur
 const NV_COBERTO = [[126, 163, 198], [169, 200, 227], [211, 230, 246], [255, 255, 255]]; // cone e montinho cobertos de neve: só o formato, em tons de branco e azul
 const NV_BRANCO = [255, 255, 255], NV_SOMBRA = [185, 214, 236], NV_CHAO = [[159, 194, 224], [196, 220, 240], [227, 240, 250], [255, 255, 255]];
 // devolve uma cópia do desenho com neve: 'chao' recolore tudo em tons de neve; 'topo' cobre as bordas de cima (2 a 4 quadradinhos) com neve
-const nevaSprite = (im, modo, k) => {
+const NV_MIX = [0, 0.18, 0.4, 0.66], NV_ESP = [1, 1.7, 2.5, 3.5]; // nível 0..3: neve acumulando (cobertura mais grossa e tudo mais branco); nível 4: coberto por completo
+const nevaSprite = (im, modo, k, lv) => {
+  lv = lv || 0; if (lv >= 4 && modo === 'topo') modo = 'coberto';
   const w = im.naturalWidth * k, h = im.naturalHeight * k, c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, w, h);
   let d; try { d = g.getImageData(0, 0, w, h); } catch (e) { return null; }
@@ -77,9 +79,10 @@ const nevaSprite = (im, modo, k) => {
     ls.sort((a, b) => a - b); const q = [0.2, 0.5, 0.8].map((f) => ls[Math.floor(f * (ls.length - 1))]);
     for (let n = 0; n < p.length; n += 4) { if (p[n + 3] <= 100) continue; const l = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2], t = pal[l <= q[0] ? 0 : l <= q[1] ? 1 : l <= q[2] ? 2 : 3]; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; }
   } else {
+    if (lv > 0) for (let n = 0; n < p.length; n += 4) if (p[n + 3] > 100) { const m = NV_MIX[lv]; p[n] += (226 - p[n]) * m; p[n + 1] += (238 - p[n + 1]) * m; p[n + 2] += (250 - p[n + 2]) * m; }
     const a0 = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) a0[y * w + x] = op(x, y) ? 1 : 0;
     for (let x = 0; x < w; x++) {
-      const col = Math.floor(x / k), gro = 3 + (hashN(col) < 0.4 ? 1 : 0) + (hashN(col * 3.7) < 0.15 ? 1 : 0);
+      const col = Math.floor(x / k), gro = Math.round((3 + (hashN(col) < 0.4 ? 1 : 0) + (hashN(col * 3.7) < 0.15 ? 1 : 0)) * NV_ESP[lv]);
       for (let y = 0; y < h; y++) {
         if (!a0[y * w + x] || (y > 0 && a0[(y - 1) * w + x])) continue; // só onde começa um trecho com ar em cima
         for (let j = 0; j < gro * k; j++) { if (y + j >= h || !a0[(y + j) * w + x]) break; pinta(x, y + j, j >= (gro - 1) * k ? NV_SOMBRA : NV_BRANCO); }
@@ -90,11 +93,13 @@ const nevaSprite = (im, modo, k) => {
 };
 const neveTroca = (orig, modo, k, aplica) => {
   if (!neve) { aplica(orig); return; }
-  let v = NV_C.get(orig); if (v) { if (v === orig || (v.complete && v.naturalWidth)) aplica(v); return; }
+  const ch = orig, lv = neveLv; let mp = NV_C.get(ch); if (!mp) { mp = new Map(); NV_C.set(ch, mp); }
+  let v = mp.get(lv); if (v) { if (v === orig || (v.complete && v.naturalWidth)) aplica(v); return; }
   if (!orig.complete || !orig.naturalWidth) return; // ainda carregando: tenta de novo
-  const c = nevaSprite(orig, modo, k || Math.max(1, Math.round(160 / Math.max(orig.naturalWidth, orig.naturalHeight)))); if (!c) { NV_C.set(orig, orig); return; }
-  v = new Image(); NV_C.set(orig, v); v.onload = () => { if (neve) aplica(v); }; v.src = c.toDataURL();
+  const c = nevaSprite(orig, modo, k || Math.max(1, Math.round(160 / Math.max(orig.naturalWidth, orig.naturalHeight))), lv); if (!c) { mp.set(lv, orig); return; }
+  v = new Image(); mp.set(lv, v); v.onload = () => { if (neve && neveLv === lv) aplica(v); }; v.src = c.toDataURL();
 };
+let neveLv = 0; // nível de neve acumulada (0 a 4)
 const NEVE_ITENS = [['chao', 'chao'], ['mato', 'topo'], ['pedra', 'topo'], ['terra', 'coberto'], ['cone', 'coberto'], ['moita', 'topo'], ['balao', 'topo']];
 const neveAtualiza = () => { // troca os desenhos do cenário pelas versões com neve (ou volta aos originais)
   NEVE_ITENS.forEach(([k, m]) => neveTroca(IM0[k], m, 0, (im) => { IM[k] = im; }));
@@ -106,7 +111,8 @@ let nev = [], pegs = [], pegEm = 0, pegAlt = 0, neveT = 0; // neveT: a neve come
 const novoFloco = (espalha) => { const r = Math.random(); return { x: Math.random() * (W + 40), y: espalha ? Math.random() * H : -6, s: r < 0.55 ? 2 : r < 0.85 ? 3 : 4, vy: 38 + Math.random() * 48, fq: 0.8 + Math.random() * 1.4, ph: Math.random() * 6.28, t: 0, fim: chaoY() + 4 + Math.random() * (CHAO_H * 0.7) }; };
 const neveAnda = (dt) => {
   if (!neve) { nev.length = 0; pegs.length = 0; return; }
-  neveT += dt; const alvo = Math.round(Math.min(120, 28 + W / 9) * Math.min(1, 0.15 + neveT / 25)); while (nev.length < alvo) nev.push(novoFloco(true));
+  neveT += dt; const lv = Math.min(4, Math.floor(neveT / 25)); if (lv !== neveLv) { neveLv = lv; neveAtualiza(); }
+  const alvo = Math.round(Math.min(120, 28 + W / 9) * Math.min(1, 0.15 + neveT / 25)); while (nev.length < alvo) nev.push(novoFloco(true));
   while (nev.length > alvo) nev.pop();
   nev.forEach((f, i) => { f.t += dt; f.y += f.vy * dt * (0.7 + f.s * 0.12); f.x += (Math.sin(f.t * f.fq + f.ph) * 16 - 14) * dt; if (f.y > f.fim || f.x < -8) nev[i] = novoFloco(false); });
 };
@@ -121,6 +127,23 @@ const nevePegasDesenha = () => {
   pegs.forEach((q) => { const a = Math.max(0, Math.min(1, (q.x + 10) / (player.x + 70))); if (a <= 0.02) return; cx.globalAlpha = a * 0.9; const x = Math.round(q.x), y = Math.round(q.y);
     cx.fillRect(x - 5, y, 3, 3); cx.fillRect(x - 1, y - 3, 3, 3); cx.fillRect(x + 3, y, 3, 3); cx.fillRect(x - 3, y + 3, 7, 3); }); // pata: três dedos e a almofada
   cx.globalAlpha = 1;
+};
+// montinho de neve em cima das pedras grandes (acompanha o contorno de cima da pedra e engrossa com a neve acumulada)
+let pedraTop = null;
+const calcTopo = () => { const im = IM0.pedra; if (pedraTop || !im.complete || !im.naturalWidth) return; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0); let d; try { d = g.getImageData(0, 0, c.width, c.height).data; } catch (e) { pedraTop = []; return; } pedraTop = []; for (let x = 0; x < c.width; x++) { let y = 0; while (y < c.height && d[(y * c.width + x) * 4 + 3] < 100) y++; pedraTop.push(y); } };
+const montinhoPedra = (o, cy) => {
+  calcTopo(); if (!pedraTop || !pedraTop.length) return;
+  const n = pedraTop.length, cs = n / 32, sc = o.w / n, u = cs * sc, ry = cy - o.h + AFUNDA + (o.baixo || 0), alt = 3 + neveLv * 1.1; // 32 quadradinhos de largura
+  cx.globalAlpha = 1; const cols = [];
+  for (let ci = 5; ci < 28; ci++) {
+    const t = (ci + 0.5 - 16) / 11.5; if (Math.abs(t) >= 1) continue;
+    let top = Infinity; for (let x = Math.floor(ci * cs); x < Math.floor((ci + 1) * cs) && x < n; x++) top = Math.min(top, pedraTop[x]); if (top >= IM0.pedra.naturalHeight) continue;
+    const hh = Math.max(1, Math.round(alt * Math.sqrt(1 - t * t) + (hashN(ci * 5.3) < 0.3 ? -1 : 0)));
+    cols.push({ x: Math.round(o.x + ci * u), w: Math.ceil(u) + 1, y: Math.round(ry + top * sc - hh * u), h: Math.ceil(hh * u + u * 0.6), hh, u });
+  }
+  const px = Math.max(2, Math.round(u * 0.45));
+  cx.fillStyle = cor('#6f95c4', '#7b8aa3'); cols.forEach((q) => cx.fillRect(q.x - (q === cols[0] ? px : 0), q.y - px, q.w + (q === cols[cols.length - 1] ? px : 0) + (q === cols[0] ? px : 0), q.h + px)); // contorno azulado
+  cols.forEach((q) => { cx.fillStyle = cor('#ffffff', '#e3e9f2'); cx.fillRect(q.x, q.y, q.w, q.h); cx.fillStyle = cor('#b9d6ec', '#b4bfce'); cx.fillRect(q.x, q.y + q.h - Math.ceil(q.u * 0.9), q.w, Math.ceil(q.u * 0.5)); });
 };
 const neveDesenha = () => {
   if (!neve || !nev.length) return;
@@ -247,7 +270,7 @@ const novaNuvem = (x) => {
 };
 let fantLib = 0, trenoLib = 0;
 const reinicia = () => {
-  fantLib = 0; trenoLib = 0; neveT = 0; chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  fantLib = 0; trenoLib = 0; neveT = 0; if (neveLv) { neveLv = 0; neveAtualiza(); } chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -578,6 +601,7 @@ const desenha = () => {
   if (ave && !ave.rock) piaAve();
   // pedras
   obst.forEach((o) => o.moita ? (o.roca && !o.fantasma && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy)   : o.treno ? cx.drawImage(o.cor ? IM.treno : S(IM.treno), Math.round(o.x), Math.round(cy - o.h + AFUNDA), o.w, o.h) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  if (neve) obst.forEach((o) => { if (o.k > 4 && !o.moita && !o.treno && !o.cone && !o.terra && !o.buraco) montinhoPedra(o, cy); });
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
   if (burst && IM.fumaca.complete && IM.fumaca.naturalWidth) { const f = BURST_ORD[Math.min(BURST_ORD.length - 1, Math.floor(burst.t / BURST_DT))], w = BURST_W * BURST_ESC, h = BURST_H * BURST_ESC; cx.save(); if (noite) cx.globalAlpha = 0.9; cx.drawImage(IM.fumaca, (f % 6) * BURST_W, Math.floor(f / 6) * BURST_H, BURST_W, BURST_H, Math.round(burst.x - w / 2), Math.round(burst.y - h / 2), w, h); cx.restore(); }
@@ -712,7 +736,7 @@ window.addEventListener('resize', () => { if (aberto) { mede(); } });
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
-document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'v' || e.key === 'V')) { neve = !neve; neveT = 0; neveAtualiza(); } });
+document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'v' || e.key === 'V')) { neve = !neve; neveT = 0; neveLv = 0; neveAtualiza(); } });
 document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; if (!noite) mor = null; aplicaTema(); } });
 document.addEventListener('keyup', (e) => { if (aberto && ['ArrowRight', 'ArrowLeft', 'd', 'D', 'a', 'A'].includes(e.key)) alvoAcel = 1; });
 document.addEventListener('keydown', (e) => {

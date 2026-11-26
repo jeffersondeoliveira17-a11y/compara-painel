@@ -64,6 +64,7 @@ const qNeve = /[?&]neve(=0)?(&|$)/.exec(location.search);
 let neve = qNeve ? !qNeve[1] : NEVE_TESTE;
 const IM0 = Object.assign({}, IM, { arv: IM.arv.slice() }), NV_C = new Map();
 const hashN = (n) => { const q = Math.sin(n * 12.9898 + 4.1) * 43758.5453; return q - Math.floor(q); };
+const NV_COBERTO = [[126, 163, 198], [169, 200, 227], [211, 230, 246], [255, 255, 255]]; // cone e montinho cobertos de neve: só o formato, em tons de branco e azul
 const NV_BRANCO = [255, 255, 255], NV_SOMBRA = [185, 214, 236], NV_CHAO = [[159, 194, 224], [196, 220, 240], [227, 240, 250], [255, 255, 255]];
 // devolve uma cópia do desenho com neve: 'chao' recolore tudo em tons de neve; 'topo' cobre as bordas de cima (2 a 4 quadradinhos) com neve
 const nevaSprite = (im, modo, k) => {
@@ -71,10 +72,10 @@ const nevaSprite = (im, modo, k) => {
   const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, w, h);
   let d; try { d = g.getImageData(0, 0, w, h); } catch (e) { return null; }
   const p = d.data, op = (x, y) => x >= 0 && x < w && y >= 0 && y < h && p[(y * w + x) * 4 + 3] > 100, pinta = (x, y, t) => { const n = (y * w + x) * 4; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; };
-  if (modo === 'chao') {
-    const ls = []; for (let n = 0; n < p.length; n += 4) if (p[n + 3] > 100) ls.push(0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]);
+  if (modo === 'chao' || modo === 'coberto') {
+    const pal = modo === 'coberto' ? NV_COBERTO : NV_CHAO, ls = []; for (let n = 0; n < p.length; n += 4) if (p[n + 3] > 100) ls.push(0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]);
     ls.sort((a, b) => a - b); const q = [0.2, 0.5, 0.8].map((f) => ls[Math.floor(f * (ls.length - 1))]);
-    for (let n = 0; n < p.length; n += 4) { if (p[n + 3] <= 100) continue; const l = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2], t = NV_CHAO[l <= q[0] ? 0 : l <= q[1] ? 1 : l <= q[2] ? 2 : 3]; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; }
+    for (let n = 0; n < p.length; n += 4) { if (p[n + 3] <= 100) continue; const l = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2], t = pal[l <= q[0] ? 0 : l <= q[1] ? 1 : l <= q[2] ? 2 : 3]; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; }
   } else {
     const a0 = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) a0[y * w + x] = op(x, y) ? 1 : 0;
     for (let x = 0; x < w; x++) {
@@ -94,18 +95,18 @@ const neveTroca = (orig, modo, k, aplica) => {
   const c = nevaSprite(orig, modo, k || Math.max(1, Math.round(160 / Math.max(orig.naturalWidth, orig.naturalHeight)))); if (!c) { NV_C.set(orig, orig); return; }
   v = new Image(); NV_C.set(orig, v); v.onload = () => { if (neve) aplica(v); }; v.src = c.toDataURL();
 };
-const NEVE_ITENS = [['chao', 'chao'], ['mato', 'topo'], ['pedra', 'topo'], ['terra', 'topo'], ['cone', 'topo'], ['moita', 'topo'], ['balao', 'topo']];
+const NEVE_ITENS = [['chao', 'chao'], ['mato', 'topo'], ['pedra', 'topo'], ['terra', 'coberto'], ['cone', 'coberto'], ['moita', 'topo'], ['balao', 'topo']];
 const neveAtualiza = () => { // troca os desenhos do cenário pelas versões com neve (ou volta aos originais)
   NEVE_ITENS.forEach(([k, m]) => neveTroca(IM0[k], m, 0, (im) => { IM[k] = im; }));
   [0, 1, 2].forEach((i) => neveTroca(IM0.arv[i], 'topo', 1, (im) => { IM.arv[i] = im; })); // árvores mantêm o tamanho original
 };
 neveAtualiza(); { let n = 0; const tm = setInterval(() => { neveAtualiza(); if (++n > 40) clearInterval(tm); }, 400); }
 // flocos caindo (na frente de tudo, abaixo do placar) e pegadas do cachorro na neve do chão
-let nev = [], pegs = [], pegEm = 0, pegAlt = 0;
+let nev = [], pegs = [], pegEm = 0, pegAlt = 0, neveT = 0; // neveT: a neve começa fraquinha e vai aumentando
 const novoFloco = (espalha) => { const r = Math.random(); return { x: Math.random() * (W + 40), y: espalha ? Math.random() * H : -6, s: r < 0.55 ? 2 : r < 0.85 ? 3 : 4, vy: 38 + Math.random() * 48, fq: 0.8 + Math.random() * 1.4, ph: Math.random() * 6.28, t: 0, fim: chaoY() + 4 + Math.random() * (CHAO_H * 0.7) }; };
 const neveAnda = (dt) => {
   if (!neve) { nev.length = 0; pegs.length = 0; return; }
-  const alvo = Math.round(Math.min(120, 28 + W / 9)); while (nev.length < alvo) nev.push(novoFloco(true));
+  neveT += dt; const alvo = Math.round(Math.min(120, 28 + W / 9) * Math.min(1, 0.15 + neveT / 25)); while (nev.length < alvo) nev.push(novoFloco(true));
   while (nev.length > alvo) nev.pop();
   nev.forEach((f, i) => { f.t += dt; f.y += f.vy * dt * (0.7 + f.s * 0.12); f.x += (Math.sin(f.t * f.fq + f.ph) * 16 - 14) * dt; if (f.y > f.fim || f.x < -8) nev[i] = novoFloco(false); });
 };
@@ -246,7 +247,7 @@ const novaNuvem = (x) => {
 };
 let fantLib = 0;
 const reinicia = () => {
-  fantLib = 0; chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  fantLib = 0; neveT = 0; chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -254,7 +255,12 @@ const reinicia = () => {
 // buraco no chão (obra): bacia em degraus de 4 px aberta na grama (cantinhos verdes arredondados), terra marrom clara na borda e mais escura no fundo
 const mistCor = (h, alvo, t) => { const a = [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)), b = [1, 3, 5].map((k) => parseInt(alvo.slice(k, k + 2), 16)); return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',') + ')'; };
 const desenhaBuraco = (o, cy) => {
-  const esc = noite && !o.cor, P = (h) => { // antes de o cachorro passar o buraco é cinza azulado, como as pedras; depois ganha cor
+  const esc = noite && !o.cor, P = (h0) => { // antes de o cachorro passar o buraco é cinza azulado, como as pedras; depois ganha cor
+    let h = h0;
+    if (neve) { // na neve o buraco fica coberto: brancos e azuis um pouco mais escuros que o chão; a grama vira neve
+      const r = parseInt(h0.slice(1, 3), 16), g = parseInt(h0.slice(3, 5), 16), b = parseInt(h0.slice(5, 7), 16), Ln = (0.299 * r + 0.587 * g + 0.114 * b) / 255, t = g > r + 20 && g > b + 20 ? 1 : Math.min(1, 0.1 + Ln * 1.3), hx = (a0, a1) => Math.round(a0 + (a1 - a0) * t).toString(16).padStart(2, '0');
+      h = '#' + hx(0x86, 0xf2) + hx(0xa9, 0xf8) + hx(0xcb, 0xfd);
+    }
     if (!esc) return h;
     const L = (0.299 * parseInt(h.slice(1, 3), 16) + 0.587 * parseInt(h.slice(3, 5), 16) + 0.114 * parseInt(h.slice(5, 7), 16)) / 255;
     return mistCor('#26303f', '#8b9bb3', Math.min(1, 0.15 + L * 1.1));
@@ -302,7 +308,7 @@ const novoObst = () => {
   const terra = false, kt = 3;
   // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
   const moita = !grande && !cena && Math.random() < 0.1, km = Math.random() < 0.4 ? 2.3 : 1.4 + Math.random() * 0.9, roca = moita && Math.random() < 0.55, rs = 0.55 + 0.45 * Math.min(1, (km - 1.4) / 0.9) * (0.8 + Math.random() * 0.2); // moita: 2.3 e o tamanho maximo; menores levam pedra menor; menos moitas
-  const fant = !moita && !grande && !cena && (neve || (noite && progFase() < 0.55)) && dist >= fantLib && Math.random() < 0.5, fh = (neve ? 1.16 : 1) * (22 * 1.8 + 46 + 2.3), froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
+  const fant = !moita && !grande && !cena && (neve || (noite && progFase() < 0.55)) && dist >= fantLib && Math.random() < 0.5, bs = 1 + Math.random() * 0.5, fh = (neve ? 1.16 * bs : 1) * (22 * 1.8 + 46 + 2.3), froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
   const o = fant ? { x: W + 20, w: neve ? fh * 36 / 65 : fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, boneco: neve, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   if (fant) fantLib = dist + 1400 + Math.random() * 500; // fantasma é raro: só volta depois de um bom trecho (uns 3 por fase)
   obst.push(o);
@@ -391,7 +397,7 @@ const passo = (agora) => {
     const a = { x: player.x + 18, y: player.y + 8, w: player.w - 40, h: player.h - 12 };
     if (invul > 0) invul -= dt;
     if (curaT > 0) curaT -= dt;
-    for (const o of obst) if (o.fantasma) { if (o.flashT === undefined && o.x - (player.x + player.w) < 340 && o.x > player.x) o.flashT = 0.4; else if (o.flashT > 0) o.flashT -= dt; } // relâmpago: pouco antes do fantasma chegar, clareia e mostra o que está debaixo do lençol
+    for (const o of obst) if (o.fantasma && !o.boneco) { if (o.flashT === undefined && o.x - (player.x + player.w) < 340 && o.x > player.x) o.flashT = 0.4; else if (o.flashT > 0) o.flashT -= dt; } // relâmpago: pouco antes do fantasma chegar, clareia e mostra o que está debaixo do lençol
     voam.forEach((h) => { h.t += dt; }); voam = voam.filter((h) => h.t < 1.8);
     for (const o of obst) {
       if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
@@ -569,7 +575,7 @@ const desenha = () => {
   // moitas do chão: ficam na frente do cachorro, que passa por dentro delas
   const SIL = '#0b0f16', silDe = (im, w, h, olho) => { const k = im.src + w + h + olho; silDe.c = silDe.c || {}; if (silDe.c[k]) return silDe.c[k]; const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, w, h); g.globalCompositeOperation = 'source-atop'; g.fillStyle = SIL; g.fillRect(0, 0, w, h); if (olho) { g.globalCompositeOperation = 'destination-out'; g.fillRect(0, 0, Math.round(w * 13 / 33), Math.round(h * 15 / 31)); g.globalCompositeOperation = 'source-over'; g.fillStyle = '#fff'; g.fillRect(Math.round(w * 17 / 33), Math.round(h * 12 / 31), Math.round(w * 3 / 33), Math.round(h * 3 / 31)); } return (silDe.c[k] = c); };
   obst.forEach((o) => { // relâmpago do fantasma: dois clarões rápidos que mostram a silhueta da pedra e do passarinho escondidos
-    if (!o.fantasma) return; if (!(o.flashT > 0)) { o.piscando = false; return; } const u = 0.4 - o.flashT; o.piscando = u < 0.09 || (u > 0.15 && u < 0.36); if (!o.piscando) return;
+    if (!o.fantasma || o.boneco) return; if (!(o.flashT > 0)) { o.piscando = false; return; } const u = 0.4 - o.flashT; o.piscando = u < 0.09 || (u > 0.15 && u < 0.36); if (!o.piscando) return;
     cx.globalAlpha = 0.24; cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); cx.globalAlpha = 1;
     if (!o.roca) return; const r = o.roca, rx = o.x + (o.w - r.w) / 2, ry = cy - r.h + AFUNDA;
     if (IM.pedra.complete && IM.pedra.naturalWidth) cx.drawImage(silDe(IM.pedra, Math.round(r.w), Math.round(r.h), false), Math.round(rx), Math.round(ry));
@@ -672,7 +678,7 @@ window.addEventListener('resize', () => { if (aberto) { mede(); } });
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
-document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'v' || e.key === 'V')) { neve = !neve; neveAtualiza(); } });
+document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'v' || e.key === 'V')) { neve = !neve; neveT = 0; neveAtualiza(); } });
 document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; if (!noite) mor = null; aplicaTema(); } });
 document.addEventListener('keyup', (e) => { if (aberto && ['ArrowRight', 'ArrowLeft', 'd', 'D', 'a', 'A'].includes(e.key)) alvoAcel = 1; });
 document.addEventListener('keydown', (e) => {

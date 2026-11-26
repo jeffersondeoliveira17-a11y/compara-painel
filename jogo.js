@@ -403,13 +403,13 @@ const passaro = (a) => {
 // ---------- estrelas do céu da noite: espalhadas, de tamanhos bem variados, com brilho lento ----------
 const ESTRELAS = (() => { let a = 7; const r = () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; const tipos = ['ponto', 'ponto', 'ponto', 'ponto', 'mais', 'mais', 'losango', 'brilho']; const l = [];
   for (let i = 0; i < 34; i++) { const tp = i % 17 === 0 ? 'grande' : tipos[Math.floor(r() * tipos.length)]; l.push({ x: r(), y: r(), tp, c: tp === 'grande' ? 3 : (tp === 'ponto' ? 1 + Math.floor(r() * 2) : 2), vel: 0.35 + r() * 0.5, fase: r() * 6.28 }); } return l; })();
-const desenhaLua = (cyChao) => { // a imagem da lua tem 3 px de halo em volta: por isso sobe 3 px (3 * q) para a lua continuar alinhada à guia
+const desenhaLua = (cyChao) => { // a imagem da lua tem 2 px de halo em volta: por isso sobe 2 px (2 * q) para a lua continuar alinhada à guia
  // lua minguante: aparece à noite, anda devagar pelo céu e, com o amanhecer, desce e se esconde atrás do chão (e some na tempestade)
   const t = faixa(0.5, 0.92), v = 1 - (ch ? ch.k : 0), im = IM.lua; if (!noite || t >= 1 || v <= 0.02 || !im.complete || !im.naturalWidth) return;
-  const q = 4, w = im.naturalWidth * q, h = im.naturalHeight * q, p = Math.max(0, Math.min(1, progFase())), y0 = 24, desce = (cyChao - y0 + 6) * t * t * (3 - 2 * t); // desce suave até passar da linha do chão
+  const q = 3.5, w = Math.round(im.naturalWidth * q), h = Math.round(im.naturalHeight * q), p = Math.max(0, Math.min(1, progFase())), y0 = 24, desce = (cyChao - y0 + 6) * t * t * (3 - 2 * t); // desce suave até passar da linha do chão
   cx.save(); cx.beginPath(); cx.rect(0, 0, W, cyChao); cx.clip(); // o chão esconde a parte de baixo
   if (espelho) { cx.translate(W, 0); cx.scale(-1, 1); } cx.imageSmoothingEnabled = false; cx.globalAlpha = 0.96 * v * (1 - 0.5 * t);
-  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(y0 + desce - 3 * q), w, h); cx.restore(); };
+  cx.drawImage(im, Math.round(W * (0.78 - 0.35 * p) - w / 2), Math.round(y0 + desce - 2 * q), w, h); cx.restore(); };
 const desenhaEstrelas = (cyChao) => {
   if (!noite) return;
   desenhaLua(cyChao);

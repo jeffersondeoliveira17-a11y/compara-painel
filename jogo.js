@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), nuvem: img('icones/nuvem.svg'), lua: img('icones/lua.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), boneco: img('icones/boneco-neve.svg'), nuvem: img('icones/nuvem.svg'), lua: img('icones/lua.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -55,8 +55,76 @@ const nuvemTemp = () => { const im = IM.nuvem; if (nuvTemp || !im.complete || !i
   let d; try { d = g.getImageData(0, 0, c.width, c.height); } catch (e) { return null; } const p = d.data;
   for (let n = 0; n < p.length; n += 4) { if (p[n + 3] < 8) continue; const lu = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2], t = TOM_TEMP[Math.min(4, Math.floor(lu / (256 / 5)))]; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = p[n + 3] < 128 ? 0 : 255; }
   g.putImageData(d, 0, 0); return (nuvTemp = c); };
-const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao ? 3 : (im === IM.mato || IM.arv.includes(im)) ? 1 : 0)) : im);
+const S = (im) => (noite ? mono(im, im === IM.nuvem ? 2 : (im === IM.chao ? (neve ? 1 : 3) : (im === IM.mato || IM.arv.includes(im)) ? 1 : 0)) : im);
 const TINTA = () => (noite && !ceuClaro() ? NOITE_TOM[0] : '#102532'), TINTA2 = () => (noite && !ceuClaro() ? NOITE_TOM[1] : '#2c4a5c');
+// ---------- tema neve (Natal): chão branco, neve em cima das árvores, pedras, moitas e balão, flocos caindo e pegadas do cachorro ----------
+// Fase de testes: o jogo já começa na neve. ?neve=0 desliga e a tecla V liga e desliga na hora.
+const NEVE_TESTE = true;
+const qNeve = /[?&]neve(=0)?(&|$)/.exec(location.search);
+let neve = qNeve ? !qNeve[1] : NEVE_TESTE;
+const IM0 = Object.assign({}, IM, { arv: IM.arv.slice() }), NV_C = new Map();
+const hashN = (n) => { const q = Math.sin(n * 12.9898 + 4.1) * 43758.5453; return q - Math.floor(q); };
+const NV_BRANCO = [255, 255, 255], NV_SOMBRA = [185, 214, 236], NV_CHAO = [[159, 194, 224], [196, 220, 240], [227, 240, 250], [255, 255, 255]];
+// devolve uma cópia do desenho com neve: 'chao' recolore tudo em tons de neve; 'topo' cobre as bordas de cima (2 a 4 quadradinhos) com neve
+const nevaSprite = (im, modo, k) => {
+  const w = im.naturalWidth * k, h = im.naturalHeight * k, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, w, h);
+  let d; try { d = g.getImageData(0, 0, w, h); } catch (e) { return null; }
+  const p = d.data, op = (x, y) => x >= 0 && x < w && y >= 0 && y < h && p[(y * w + x) * 4 + 3] > 100, pinta = (x, y, t) => { const n = (y * w + x) * 4; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; };
+  if (modo === 'chao') {
+    const ls = []; for (let n = 0; n < p.length; n += 4) if (p[n + 3] > 100) ls.push(0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2]);
+    ls.sort((a, b) => a - b); const q = [0.2, 0.5, 0.8].map((f) => ls[Math.floor(f * (ls.length - 1))]);
+    for (let n = 0; n < p.length; n += 4) { if (p[n + 3] <= 100) continue; const l = 0.299 * p[n] + 0.587 * p[n + 1] + 0.114 * p[n + 2], t = NV_CHAO[l <= q[0] ? 0 : l <= q[1] ? 1 : l <= q[2] ? 2 : 3]; p[n] = t[0]; p[n + 1] = t[1]; p[n + 2] = t[2]; p[n + 3] = 255; }
+  } else {
+    const a0 = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) a0[y * w + x] = op(x, y) ? 1 : 0;
+    for (let x = 0; x < w; x++) {
+      const col = Math.floor(x / k), gro = 3 + (hashN(col) < 0.4 ? 1 : 0) + (hashN(col * 3.7) < 0.15 ? 1 : 0);
+      for (let y = 0; y < h; y++) {
+        if (!a0[y * w + x] || (y > 0 && a0[(y - 1) * w + x])) continue; // só onde começa um trecho com ar em cima
+        for (let j = 0; j < gro * k; j++) { if (y + j >= h || !a0[(y + j) * w + x]) break; pinta(x, y + j, j >= (gro - 1) * k ? NV_SOMBRA : NV_BRANCO); }
+      }
+    }
+  }
+  g.putImageData(d, 0, 0); return c;
+};
+const neveTroca = (orig, modo, k, aplica) => {
+  if (!neve) { aplica(orig); return; }
+  let v = NV_C.get(orig); if (v) { if (v === orig || (v.complete && v.naturalWidth)) aplica(v); return; }
+  if (!orig.complete || !orig.naturalWidth) return; // ainda carregando: tenta de novo
+  const c = nevaSprite(orig, modo, k || Math.max(1, Math.round(160 / Math.max(orig.naturalWidth, orig.naturalHeight)))); if (!c) { NV_C.set(orig, orig); return; }
+  v = new Image(); NV_C.set(orig, v); v.onload = () => { if (neve) aplica(v); }; v.src = c.toDataURL();
+};
+const NEVE_ITENS = [['chao', 'chao'], ['mato', 'topo'], ['pedra', 'topo'], ['terra', 'topo'], ['cone', 'topo'], ['moita', 'topo'], ['balao', 'topo']];
+const neveAtualiza = () => { // troca os desenhos do cenário pelas versões com neve (ou volta aos originais)
+  NEVE_ITENS.forEach(([k, m]) => neveTroca(IM0[k], m, 0, (im) => { IM[k] = im; }));
+  [0, 1, 2].forEach((i) => neveTroca(IM0.arv[i], 'topo', 1, (im) => { IM.arv[i] = im; })); // árvores mantêm o tamanho original
+};
+neveAtualiza(); { let n = 0; const tm = setInterval(() => { neveAtualiza(); if (++n > 40) clearInterval(tm); }, 400); }
+// flocos caindo (na frente de tudo, abaixo do placar) e pegadas do cachorro na neve do chão
+let nev = [], pegs = [], pegEm = 0, pegAlt = 0;
+const novoFloco = (espalha) => { const r = Math.random(); return { x: Math.random() * (W + 40), y: espalha ? Math.random() * H : -6, s: r < 0.55 ? 2 : r < 0.85 ? 3 : 4, vy: 38 + Math.random() * 48, fq: 0.8 + Math.random() * 1.4, ph: Math.random() * 6.28, t: 0, fim: chaoY() + 4 + Math.random() * (CHAO_H * 0.7) }; };
+const neveAnda = (dt) => {
+  if (!neve) { nev.length = 0; pegs.length = 0; return; }
+  const alvo = Math.round(Math.min(120, 28 + W / 9)); while (nev.length < alvo) nev.push(novoFloco(true));
+  while (nev.length > alvo) nev.pop();
+  nev.forEach((f, i) => { f.t += dt; f.y += f.vy * dt * (0.7 + f.s * 0.12); f.x += (Math.sin(f.t * f.fq + f.ph) * 16 - 14) * dt; if (f.y > f.fim || f.x < -8) nev[i] = novoFloco(false); });
+};
+const nevePegas = (dt, v) => { // uma pegada a cada passo (traseira, dianteira, traseira...), que anda para trás junto com o chão e vai sumindo
+  if (!neve) return;
+  if (player.noChao && estado === 'jogando') { pegEm -= dt; if (pegEm <= 0) { pegEm = 0.105; pegAlt ^= 1; pegs.push({ x: player.x + (pegAlt ? 30 : 80), y: chaoY() + 11 + (pegAlt ? 0 : 5) }); } }
+  pegs.forEach((q) => { q.x -= v * dt; }); pegs = pegs.filter((q) => q.x > -10);
+};
+const nevePegasDesenha = () => {
+  if (!neve || !pegs.length) return;
+  const cor = escuro() ? '96,112,140' : '120,150,185'; cx.fillStyle = 'rgba(' + cor + ',1)';
+  pegs.forEach((q) => { const a = Math.max(0, Math.min(1, (q.x + 10) / (player.x + 70))); if (a <= 0.02) return; cx.globalAlpha = a * 0.9; const x = Math.round(q.x), y = Math.round(q.y);
+    cx.fillRect(x - 5, y, 3, 3); cx.fillRect(x - 1, y - 3, 3, 3); cx.fillRect(x + 3, y, 3, 3); cx.fillRect(x - 3, y + 3, 7, 3); }); // pata: três dedos e a almofada
+  cx.globalAlpha = 1;
+};
+const neveDesenha = () => {
+  if (!neve || !nev.length) return;
+  nev.forEach((f) => { const x = Math.round(f.x), y = Math.round(f.y); cx.fillStyle = 'rgba(120,150,190,0.35)'; cx.fillRect(x + 1, y + 1, f.s, f.s); cx.fillStyle = 'rgba(255,255,255,0.95)'; cx.fillRect(x, y, f.s, f.s); });
+};
 
 // ---------- camada do jogo ----------
 const box = document.createElement('div');
@@ -234,8 +302,8 @@ const novoObst = () => {
   const terra = false, kt = 3;
   // moita no chão (48x39 quadradinhos): o cachorro atravessa, mas metade esconde uma pedra menor lá dentro
   const moita = !grande && !cena && Math.random() < 0.1, km = Math.random() < 0.4 ? 2.3 : 1.4 + Math.random() * 0.9, roca = moita && Math.random() < 0.55, rs = 0.55 + 0.45 * Math.min(1, (km - 1.4) / 0.9) * (0.8 + Math.random() * 0.2); // moita: 2.3 e o tamanho maximo; menores levam pedra menor; menos moitas
-  const fant = !moita && !grande && !cena && noite && progFase() < 0.55 && dist >= fantLib && Math.random() < 0.5, fh = 22 * 1.8 + 46 + 2.3, froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
-  const o = fant ? { x: W + 20, w: fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
+  const fant = !moita && !grande && !cena && (neve || (noite && progFase() < 0.55)) && dist >= fantLib && Math.random() < 0.5, fh = (neve ? 1.16 : 1) * (22 * 1.8 + 46 + 2.3), froca = fant && Math.random() < 0.55; // fantasma (teste de Halloween): lençol do tamanho da pedra + passarinho; ou vazio (atravessa) ou cobrindo uma pedra
+  const o = fant ? { x: W + 20, w: neve ? fh * 36 / 64 : fh * 32 / 38 * 1.3, h: fh, k: 1, moita: true, fantasma: true, boneco: neve, roca: froca ? { w: 32 * 1.5, h: 22 * 1.5 } : null } : moita ? { x: W + 20, w: 48 * km, h: 39 * km, k: km, moita: true, roca: roca ? { w: 32 * 1.5 * rs, h: 22 * 1.5 * rs } : null } : terra ? { x: W + 20, w: 20 * kt, h: 13 * kt, k: kt, terra: true } : cone ? { x: W + 20, w: 22 * kc, h: 24 * kc, k: kc, cone: true } : { x: W + 20, w: 32 * k, h: 22 * k, k, baixo: grande ? 8 : 0 }; // a pedra gigante afunda mais 10 px no chão
   if (fant) fantLib = dist + 1400 + Math.random() * 500; // fantasma é raro: só volta depois de um bom trecho (uns 3 por fase)
   obst.push(o);
   if (!ave && aveEm <= 0 && aveModo === 'pedra' && !o.cone && !o.terra && !o.moita) { ave = { rock: o, sp: sorteiaAve() }; aveModo = null; poleiro = true; }
@@ -302,7 +370,7 @@ const passo = (agora) => {
     const solo = chaoY() - player.h;
     if (player.y >= solo) { if (!player.noChao && player.vy > 250) { sopra(player.x + 25, chaoY() + 2, 4, 1.2); sopra(player.x + 85, chaoY() + 2, 3, 0.8); } player.y = solo; player.vy = 0; player.noChao = true; }
     if (player.noChao) { poeiraEm -= dt; if (poeiraEm <= 0) { poeiraEm = 0.1; sopra(player.x + 24, chaoY() + 2, 1, 1); } }
-    atualizaPoeira(dt, v);
+    atualizaPoeira(dt, v); nevePegas(dt, v);
     prox -= v * dt;
     const alvo = PORTAL_PTS * (fase + 1);
     if (!portal && dist >= alvo) { // hora do portal: ele entra depois da última pedra, sem pedras novas na frente
@@ -366,7 +434,7 @@ const passo = (agora) => {
     const ult = nuvensF.reduce((m, n) => Math.max(m, n.x + n.w), 0);
     if (ult < W + 120) nuvensF.push(novaNuvem(Math.max(W + 30, ult) + 150 + Math.random() * 450));
   }
-  desenha();
+  neveAnda(dt); desenha();
 };
 const pts5 = (n) => String(Math.floor(n)).padStart(5, '0');
 // ---------- cenário ao fundo: cerquinha, banco, tufos de grama e passarinho (tudo desenhado em código) ----------
@@ -463,6 +531,7 @@ const desenha = () => {
   // moitas ao fundo (andam mais devagar que o chão)
   for (let x = matoX - MATO_P; x < W + MATO_W; x += MATO_P) dCor(IM.mato, faixa(0.35, 0.7), x, cy - MATO_H + 4, MATO_W, MATO_H);
   for (let x = chaoX - CHAO_W; x < W; x += CHAO_W) dCor(IM.chao, faixa(0.55, 0.9), Math.round(x), cy, CHAO_W + 1, CHAO_H);
+  nevePegasDesenha(); // pegadas do cachorro na neve
   // árvore em pé na grama, na frente das moitas
   if (arvO && arvO.tipo === 'chao') { const ai = IM.arv[arvO.v], [aw, ah] = arvTam('chao'); if (ai && ai.complete && ai.naturalWidth) { if (arvO.cor) cx.drawImage(ai, Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); else dCor(ai, faixa(0.55, 0.9), Math.round(arvO.x), Math.round(cy + 2 - ah), aw, ah); } }
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
@@ -506,7 +575,7 @@ const desenha = () => {
     if (IM.pedra.complete && IM.pedra.naturalWidth) cx.drawImage(silDe(IM.pedra, Math.round(r.w), Math.round(r.h), false), Math.round(rx), Math.round(ry));
     const im = IM.ave; if (im.complete && im.naturalWidth) { const u2 = 2, w = im.naturalWidth * u2, h = im.naturalHeight * u2; cx.save(); cx.translate(Math.round(o.x + o.w / 2 - w / 2) + w, Math.round(ry + 3 - h)); cx.scale(-1, 1); cx.drawImage(silDe(im, w, h, true), 0, 0); cx.restore(); }
   });
-  obst.forEach((o) => { const mi = o.fantasma ? IM.fantasma : IM.moita; if (o.fantasma && o.piscando) cx.globalAlpha = 0.16; if (o.moita && mi.complete && mi.naturalWidth) cx.drawImage(o.cor ? mi : S(mi), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); cx.globalAlpha = 1; });
+  obst.forEach((o) => { const mi = o.fantasma ? (o.boneco ? IM.boneco : IM.fantasma) : IM.moita; if (o.fantasma && o.piscando) cx.globalAlpha = 0.16; if (o.moita && mi.complete && mi.naturalWidth) cx.drawImage(o.cor ? mi : S(mi), Math.round(o.x), Math.round(cy - o.h + AFUNDA), Math.round(o.w), Math.round(o.h)); cx.globalAlpha = 1; });
   voam.forEach((h) => { const e = h.t / 1.8, ang = h.f + h.t * 7, raio = 6 + 20 * e; cx.globalAlpha = Math.min(1, (1 - e) * 2.2); desenhaCoracao(h.x + Math.cos(ang) * raio - 10, h.y - h.t * 62 + Math.sin(ang) * raio * 0.35, 2, true); cx.globalAlpha = 1; }); // coração subindo em espiral
   folhas.forEach((f) => { cx.globalAlpha = Math.min(1, (f.vida - f.t) * 3); cx.fillStyle = FOLHA_COR[f.c]; cx.fillRect(Math.round(f.x), Math.round(f.y), f.r, f.r); cx.globalAlpha = 1; });
   // portal (10 quadros do GIF, 10 por segundo)
@@ -527,7 +596,7 @@ const desenha = () => {
     cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
     cx.globalAlpha = 1;
   }
-  chDesenha(); // chuva e raios por cima do cenário, abaixo do placar
+  neveDesenha(); chDesenha(); // chuva e raios por cima do cenário, abaixo do placar
   // bolinhas: quanto falta para o próximo portal (cada bolinha = 10% do caminho)
   { const prog = Math.max(0, Math.min(1, (dist - PORTAL_PTS * fase) / PORTAL_PTS)), cheias = Math.floor(prog * 10 + 1e-6);
     for (let i = 0; i < 10; i++) {
@@ -603,6 +672,7 @@ window.addEventListener('resize', () => { if (aberto) { mede(); } });
 // ---------- teclado: pular, sair e código Konami ----------
 const KON = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let pos = 0;
+document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'v' || e.key === 'V')) { neve = !neve; neveAtualiza(); } });
 document.addEventListener('keydown', (e) => { if (!box.hidden && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'n' || e.key === 'N')) { noite = !noite; if (!noite) mor = null; aplicaTema(); } });
 document.addEventListener('keyup', (e) => { if (aberto && ['ArrowRight', 'ArrowLeft', 'd', 'D', 'a', 'A'].includes(e.key)) alvoAcel = 1; });
 document.addEventListener('keydown', (e) => {

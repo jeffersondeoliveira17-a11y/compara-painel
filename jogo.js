@@ -16,7 +16,7 @@ let usado = leUso(), cont = 0;
 const gravaUso = () => { try { localStorage.setItem(CT, JSON.stringify({ dia: hoje(), s: Math.round(usado) })); } catch (e) { /* segue sem salvar */ } };
 const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
 const img = (src) => { const i = new Image(); i.src = src + '?v=' + V; return i; };
-const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), boneco: img('icones/boneco-neve.svg'), treno: img('icones/treno.svg'), nuvem: img('icones/nuvem.svg'), lua: img('icones/lua.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
+const IM = { moita: img('icones/moita-chao.svg'), fantasma: img('icones/fantasma.svg'), boneco: img('icones/boneco-neve.svg'), treno: img('icones/treno.svg'), papai: img('icones/papai-chamine.svg'), nuvem: img('icones/nuvem.svg'), lua: img('icones/lua.svg'), cao1: img('icones/cao1.svg'), cao2: img('icones/cao2.svg'), cao3: img('icones/cao3.svg'), cao4: img('icones/cao4.svg'), cao5: img('icones/cao5.svg'), cao6: img('icones/cao6.svg'), pedra: img('icones/pedra.svg'), cone: img('icones/cone.svg'), terra: img('icones/terra.svg'), mato: img('icones/mato.svg'), chao: img('icones/chao.svg'), fim: img('icones/game-over.svg'), portal: img('icones/portal.png'), balao: img('icones/balao.svg'), ave: img('icones/passarinho-completo.svg'), ave2: img('icones/passarinho-cafe.svg'), vida1: img('icones/coracao-cheio.svg'), vida0: img('icones/coracao-vazio.svg'), arv: ['rosa', 'azul', 'verde'].map((k) => img('icones/arvore-' + k + '.svg')), fumaca: img('icones/fumaca-inicio.png'), mor: [1, 2, 3, 4].map((q) => img('icones/morcego' + q + '.svg')) };
 // ---------- tema noite: tons de cinza no estilo Game Boy, para descansar a vista ----------
 // Alterna a cada fase (portal), com a tecla N, ou fica sempre ligado com ?noite na URL.
 const flagNoite = /[?&]noite(=|&|$)/.test(location.search);
@@ -243,7 +243,7 @@ const BAL_AR = 31 / 42; // largura / altura do desenho
 
 // ---------- estado ----------
 let curaT = 0, voam = []; // curaT: brilho do coração que voltou; voam: coraçõezinhos que sobem em espiral
-let vidas = 3, invul = 0; // 3 vidas: cada batida tira uma e o cachorro vai perdendo a cor
+let vidas = 3, VMAX = 3, papaiJa = false, papaiFeito = false, hoT = 0, hoX = 0, invul = 0; // 3 vidas: cada batida tira uma e o cachorro vai perdendo a cor
 let mor = null, morEm = 7, aveModo = null, decoX = 0, ave = null, aveEm = 6; // decoX: cenário ao fundo (cerca e banco); ave: passarinho que cruza o céu
 let balao = null, balaoEm = 8; // balaoEm: segundos de jogo até o próximo balão
 let fase = 0, espelho = false, portal = null, tPortal = 0, viraFeito = false, fasePt = 0, avisoFase = 0;
@@ -270,7 +270,7 @@ const novaNuvem = (x) => {
 };
 let fantLib = 0, trenoLib = 0;
 const reinicia = () => {
-  fantLib = 0; trenoLib = 0; neveT = 0; if (neveLv) { neveLv = 0; neveAtualiza(); } chReset(); vidas = 3; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
+  fantLib = 0; trenoLib = 0; neveT = 0; if (neveLv) { neveLv = 0; neveAtualiza(); } chReset(); vidas = 3; VMAX = 3; papaiJa = false; papaiFeito = false; hoT = 0; invul = 0; voam = []; curaT = 0; burst = null; poeira = []; folhas = []; mor = null; morEm = 5 + Math.random() * 5; acel = 1; alvoAcel = 1; player.x = 90; vel = 430; dist = PORTAL_PTS * FASE0; matoX = 0; arvO = { tipo: 'chao', x: 600, v: FASE0 % 3 }; arvEm = 0; arvTipo = 'fundo'; obst = []; chaoX = 0; prox = 900; fase = FASE0; noite = true; aplicaTema(); espelho = FASE0 % 2 === 1; portal = null; avisoFase = 0; balao = null; balaoEm = 6 + Math.random() * 6; decoX = 0; ave = null; aveEm = 10 + Math.random() * 8;
   nuvensF = []; let nx = -Math.random() * 200;
   while (nx < W * 1.4) { const n = novaNuvem(nx); nuvensF.push(n); nx += n.w + 150 + Math.random() * 450; }
   player.y = chaoY() - player.h; player.vy = 0; player.noChao = true;
@@ -342,7 +342,7 @@ const novoObst = () => {
   const P = (x) => ({ x, w: 32 * 1.8, h: 22 * 1.8, k: 1.8 });
   let fim = o;
   if (o.treno) { // trenó: às vezes sozinho, às vezes com um alvo logo à frente (boneco de neve ou pedra pequena) para ele arrebentar
-    if (Math.random() < 0.75) { const ax = o.x + o.w + 260 + Math.random() * 160; if (Math.random() < 0.55) { const fh2 = Math.random() < 0.5 ? 108 : 132; fim = { x: ax, w: fh2 * 36 / 65, h: fh2, k: 1, moita: true, fantasma: true, boneco: true, roca: Math.random() < 0.55 ? { w: 32 * 1.5, h: 22 * 1.5 } : null }; } else fim = P(ax); obst.push(fim); }
+    if (Math.random() < 0.75) { const ax = o.x + o.w + 260 + Math.random() * 160; if (neve && !papaiJa && Math.random() < 0.5) { papaiJa = true; const ps = 1.3; fim = { x: ax, w: 101 * ps, h: 87 * ps, k: 1, papai: true }; } else if (Math.random() < 0.55) { const fh2 = Math.random() < 0.5 ? 108 : 132; fim = { x: ax, w: fh2 * 36 / 65, h: fh2, k: 1, moita: true, fantasma: true, boneco: true, roca: Math.random() < 0.55 ? { w: 32 * 1.5, h: 22 * 1.5 } : null }; } else fim = P(ax); obst.push(fim); }
   } else if (grande || o.moita) { /* gigante e moita vêm sozinhas */ } else if (o.cone) {
     if (cena) { // cone, depois (buraco e montinho) em qualquer ordem: um pulo no cone, aterrissa e outro pulo passa o par
       const bu = { x: 0, w: 76, h: 20, buraco: true, jag: Array.from({ length: 16 }, () => [Math.random() < 0.4 ? 4 : 0, Math.random() < 0.4 ? 4 : 0]) }, mt = { x: 0, w: 20 * 3.1, h: 13 * 3.1, k: 3.1, terra: true };
@@ -380,7 +380,7 @@ const passoPortal = (dt) => {
   tPortal += dt;
   if (tPortal < T_SUGA) { vel = fasePt * Math.max(0, 1 - tPortal / T_SUGA); }
   else {
-    if (!viraFeito) { viraFeito = true; fase++; if (vidas < 3) vidas++; mor = null; morEm = 5 + Math.random() * 5; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
+    if (!viraFeito) { viraFeito = true; fase++; if (vidas < VMAX) vidas++; mor = null; morEm = 5 + Math.random() * 5; aplicaTema(); espelho = !espelho; obst = []; vel = 0; prox = 700; avisoFase = 2.6;
       portal = { x: player.x + player.w / 2 - portalAlt() * PORT_W / PORT_H / 2, w: portalAlt() * PORT_W / PORT_H, h: portalAlt() }; }
     if (tPortal >= T_SUGA + T_VIRA + T_SOLTA) { portal = null; vel = 520 + 50 * fase; estado = 'jogando'; }
   }
@@ -389,6 +389,7 @@ const passoPortal = (dt) => {
 const quebra = (al, cores, n) => { for (let q = 0; q < n; q++) folhas.push({ x: al.x + al.w * Math.random(), y: chaoY() - al.h * Math.random(), vx: 40 + Math.random() * 280, vy: -120 - Math.random() * 340, t: 0, vida: 0.8 + Math.random() * 0.8, c: 0, k: cores[Math.floor(Math.random() * cores.length)], r: 4 + 2 * Math.floor(Math.random() * 3) }); };
 const COR_NEVE = ['#ffffff', '#e7fafe', '#9ad3f4', '#77a7d0'], COR_PEDRA = ['#8c8a96', '#6c6a78', '#b3b1bd', '#55535f'], COR_TRENO = ['#f8a830', '#d87040', '#f8e860', '#b4583a'];
 const trenoPasso = (a, v, dt) => {
+  if (hoT > 0) { hoT -= dt; hoX -= v * dt; }
   for (const o of obst) {
     if (!o.treno || o.sumiu) continue;
     const topo = chaoY() - o.h + AFUNDA + 3 * o.k; // altura do banco do trenó
@@ -408,6 +409,7 @@ const trenoPasso = (a, v, dt) => {
       if (!(o.x + o.w > t.x + t.w * 0.25 && o.x < t.x + t.w * 0.75)) continue;
       if (t.k > 4) { quebra(o, COR_TRENO, 34); o.sumiu = true; if (o.montado) { o.montado = false; player.vy = -380; player.noChao = false; } break; } // pedra gigante: quem quebra é o trenó
       t.sumiu = true;
+      if (t.papai) { quebra(t, ['#aa7241', '#ca8f58', '#8d5c32', '#714a28'], 30); quebra(t, ['#c90b0d', '#b1090c', '#e11013', '#ffffff'], 24); quebra(t, ['#e4e3e1', '#b4c5c7', '#ffffff'], 16); papaiFeito = true; VMAX = 4; vidas = Math.min(VMAX, vidas + 2); curaT = 1.6; hoT = 2.4; hoX = t.x + t.w * 0.5; for (let q = 0; q < 2; q++) voam.push({ x: player.x + player.w * (0.35 + 0.3 * q), y: player.y - 6 * q, t: 0, f: Math.random() * 6.28 }); continue; }
       if (t.boneco) { quebra(t, COR_NEVE, 44); quebra(t, ['#c23943', '#160b1e', '#fb7e60', '#2a8f4d'], 8); if (t.roca) quebra({ x: t.x, w: t.w, h: 30 }, COR_PEDRA, 12); }
       else if (t.terra) quebra(t, ['#ffffff', '#d3e6f6', '#a9c8e3', '#7ea3c6'], 24);
       else if (t.cone) quebra(t, ['#f26a1b', '#ffffff', '#d85a14'], 22);
@@ -460,13 +462,13 @@ const passo = (agora) => {
     for (const o of obst) {
       if (o.moita) { // o cachorro passando pela moita: folhinhas voam e ficam para trás
         const dentro = a.x + a.w > o.x + 8 && a.x < o.x + o.w - 8 && a.y + a.h > chaoY() - o.h + 8;
-        if (dentro && !o.roca && !o.vidaDada && vidas < 3 && estado === 'jogando') { o.vidaDada = true; vidas++; curaT = 1.2; voam.push({ x: player.x + player.w * 0.55, y: player.y + 4, t: 0, f: Math.random() * 6.28 }); for (let q = 0; q < (o.fantasma ? 0 : 10); q++) folhas.push({ x: a.x + a.w * Math.random(), y: a.y + a.h * (0.2 + Math.random() * 0.5), vx: -20 - Math.random() * 60, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } // moita vazia: recupera uma vida
+        if (dentro && !o.roca && !o.vidaDada && vidas < VMAX && estado === 'jogando') { o.vidaDada = true; vidas++; curaT = 1.2; voam.push({ x: player.x + player.w * 0.55, y: player.y + 4, t: 0, f: Math.random() * 6.28 }); for (let q = 0; q < (o.fantasma ? 0 : 10); q++) folhas.push({ x: a.x + a.w * Math.random(), y: a.y + a.h * (0.2 + Math.random() * 0.5), vx: -20 - Math.random() * 60, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } // moita vazia: recupera uma vida
         if (dentro && !o.fantasma) { o.folhaT = (o.folhaT || 0) - dt; if (o.folhaT <= 0) { o.folhaT = 0.045; for (let q = 0; q < 2; q++) folhas.push({ x: a.x + a.w * (0.2 + Math.random() * 0.6), y: a.y + a.h * (0.3 + Math.random() * 0.6), vx: -30 - Math.random() * 90, vy: -80 - Math.random() * 90, t: 0, vida: 0.7 + Math.random() * 0.5, c: Math.floor(Math.random() * FOLHA_COR.length), r: Math.random() < 0.4 ? 4 : 3 }); } }
       }
       if (o.batida || o.treno || (o.moita && !o.roca)) continue; // moita sem pedra: o cachorro atravessa
       // buraco: só pega quem está com as patas no chão em cima dele (pulando alto, passa)
       const rk = o.moita ? o.roca : null; // moita com pedra: só a pedra escondida machuca
-      const b = o.buraco ? { x: o.x + 12, y: chaoY() - 14, w: o.w - 24, h: 24 } : rk ? { x: o.x + (o.w - rk.w) / 2 + rk.w * 0.14, y: chaoY() - rk.h + AFUNDA + rk.h * 0.2, w: rk.w * 0.72, h: rk.h * 0.8 } : { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
+      const b = o.papai ? { x: o.x + o.w * 0.3, y: chaoY() - o.h + AFUNDA + o.h * 0.12, w: o.w * 0.4, h: o.h * 0.88 } : o.buraco ? { x: o.x + 12, y: chaoY() - 14, w: o.w - 24, h: 24 } : rk ? { x: o.x + (o.w - rk.w) / 2 + rk.w * 0.14, y: chaoY() - rk.h + AFUNDA + rk.h * 0.2, w: rk.w * 0.72, h: rk.h * 0.8 } : { x: o.x + o.w * 0.14, y: chaoY() - o.h + AFUNDA + (o.baixo || 0) + o.h * 0.2, w: o.w * 0.72, h: o.h * 0.8 };
       const ax = o.buraco ? a.x + 14 : a.x, aw = o.buraco ? a.w - 28 : a.w;
       if (ax < b.x + b.w && ax + aw > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
         if (invul > 0) continue;
@@ -601,7 +603,7 @@ const desenha = () => {
   const piaAve = () => { const im = ave && (ave.sp || IM.ave); if (!(im && im.complete && im.naturalWidth)) return; const u = 2, w = im.naturalWidth * u, h = im.naturalHeight * u; const r = ave.rock; const ax = r ? r.x + r.w / 2 - w / 2 : ave.x, ay = r ? cy - r.h + AFUNDA + (r.baixo || 0) + 3 - h : cy + 5 - h; cx.save(); cx.translate(Math.round(ax) + w, Math.round(ay)); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); cx.restore(); }; // olhando para o cachorro
   if (ave && !ave.rock) piaAve();
   // pedras
-  obst.forEach((o) => o.moita ? (o.roca && !o.fantasma && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy)   : o.treno ? cx.drawImage(o.cor ? IM.treno : S(IM.treno), Math.round(o.x), Math.round(cy - o.h + AFUNDA), o.w, o.h) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
+  obst.forEach((o) => o.moita ? (o.roca && !o.fantasma && cx.drawImage(o.cor ? IM.pedra : S(IM.pedra), o.x + (o.w - o.roca.w) / 2, cy - o.roca.h + AFUNDA, o.roca.w, o.roca.h)) : o.buraco ? desenhaBuraco(o, cy)   : o.papai ? cx.drawImage(S(IM.papai), Math.round(o.x), Math.round(cy - o.h + AFUNDA), o.w, o.h) : o.treno ? cx.drawImage(o.cor ? IM.treno : S(IM.treno), Math.round(o.x), Math.round(cy - o.h + AFUNDA), o.w, o.h) : cx.drawImage(o.terra ? (o.cor ? IM.terra : S(IM.terra)) : o.cone ? (o.cor ? IM.cone : S(IM.cone)) : (o.cor ? IM.pedra : S(IM.pedra)), o.x, cy - o.h + AFUNDA + (o.baixo || 0), o.w, o.h));
   if (neve) obst.forEach((o) => { if (o.k > 4 && !o.moita && !o.treno && !o.cone && !o.terra && !o.buraco) montinhoPedra(o, cy); });
   if (ave && ave.rock) piaAve();
   // fumaça da largada (atrás do cachorro) e poeirinha nas patas
@@ -656,6 +658,9 @@ const desenha = () => {
     const d = Math.abs(tPortal - T_SUGA - T_VIRA / 2) / (T_VIRA / 2 + 0.15);
     if (d < 1) { cx.fillStyle = (escuro() ? 'rgba(154,165,181,' : 'rgba(35,62,246,') + (0.85 * (1 - d)).toFixed(3) + ')'; cx.fillRect(0, 0, W, H); }
   }
+  if (hoT > 0 && estado !== 'fim') { // Papai Noel solto: HO HO HO subindo
+    const u = 2.4 - hoT; cx.save(); cx.globalAlpha = Math.min(1, hoT * 1.5); cx.textAlign = 'center'; cx.font = '700 26px system-ui, sans-serif'; const hy = chaoY() - 120 - u * 26; cx.lineWidth = 5; cx.strokeStyle = '#ffffff'; cx.strokeText('HO HO HO!', hoX, hy); cx.fillStyle = '#c90b0d'; cx.fillText('HO HO HO!', hoX, hy); cx.restore();
+  }
   if (avisoFase > 0 && estado !== 'portal') {
     cx.globalAlpha = Math.min(1, avisoFase); cx.fillStyle = TINTA(); cx.textAlign = 'center'; cx.font = '700 18px system-ui, sans-serif';
     cx.fillText('Fase ' + (fase + 1) + ' · agora é ' + (espelho ? 'da direita para a esquerda' : 'da esquerda para a direita'), W / 2, Math.max(24, H * 0.34));
@@ -680,7 +685,7 @@ const desenha = () => {
   cx.fillText('HI ' + pts5(recorde) + '   ' + pts5(dist), W - 58, 30);
   if (estado !== 'fim') { cx.fillStyle = TINTA2(); cx.font = '600 13px ui-monospace, Menlo, Consolas, monospace'; cx.textAlign = 'left'; cx.fillText('restam ' + mmss(LIMITE - usado), 16, 28); }
   if (estado !== 'fim') { // vidas: 3 corações
-    for (let i = 0; i < 3; i++) { const pulsa = curaT > 0 && i === vidas - 1 && Math.floor(curaT * 8) % 2 === 0; desenhaCoracao(16 + i * 26 - (pulsa ? 2 : 0), 40 - (pulsa ? 2 : 0), pulsa ? 4 : 3, i < vidas); }
+    for (let i = 0; i < VMAX; i++) { const pulsa = curaT > 0 && i === vidas - 1 && Math.floor(curaT * 8) % 2 === 0; desenhaCoracao(16 + i * 26 - (pulsa ? 2 : 0), 40 - (pulsa ? 2 : 0), pulsa ? 4 : 3, i < vidas); }
   }
   if (estado === 'fim') {
     cx.fillStyle = 'rgba(16,37,50,.72)'; cx.fillRect(0, 0, W, H);
